@@ -1,0 +1,23 @@
+[package]
+name = "nonagon"
+version = "0.1.0"
+authors = ["meh. <meh@schizofreni.co>"]
+
+[dependencies]
+openal-rs = "*"
+clock_ticks = "*"
+image = "*"
+docopt = "*"
+docopt_macros = "*"
+rustc-serialize = "*"
+log = "*"
+
+[dependencies.ffmpeg]
+path = "../ffmpeg"
+
+default-features = false
+features         = ["codec", "format", "software-conversion"]
+
+[dependencies.glium]
+version  = "*"
+features = ["image"]
