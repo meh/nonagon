@@ -71,15 +71,15 @@ impl Source {
 				}
 			))).unwrap();
 
-			let mut packet = context.packet();
+			let mut packet  = context.packet();
+			let mut v_frame = frame::Video::new();
+			let mut a_frame = frame::Audio::new();
 
 			while packet.read().is_ok() {
 				if let Some((ref stream, ref mut codec)) = video {
 					if packet.stream() == *stream {
-						let mut frame = frame::Video::new();
-						
-						match codec.decode(&packet, &mut frame) {
-							Ok(true)   => video_sender.send(video::Data::Frame(frame)).unwrap(),
+						match codec.decode(&packet, &mut v_frame) {
+							Ok(true)   => video_sender.send(video::Data::Frame(v_frame.clone())).unwrap(),
 							Ok(false)  => (),
 							Err(error) => video_sender.send(video::Data::Error(error)).unwrap(),
 						}
@@ -88,10 +88,8 @@ impl Source {
 
 				if let Some((ref stream, ref mut codec)) = audio {
 					if packet.stream() == *stream {
-						let mut frame = frame::Audio::new();
-
-						match codec.decode(&packet, &mut frame) {
-							Ok(true)   => audio_sender.send(audio::Data::Frame(frame)).unwrap(),
+						match codec.decode(&packet, &mut a_frame) {
+							Ok(true)   => audio_sender.send(audio::Data::Frame(a_frame.clone())).unwrap(),
 							Ok(false)  => (),
 							Err(error) => audio_sender.send(audio::Data::Error(error)).unwrap(),
 						}
