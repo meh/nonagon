@@ -8,7 +8,7 @@ extern crate glium;
 use glium::{DisplayBuild, Surface};
 use glium::glutin;
 
-#[macro_use]
+extern crate cpal;
 
 extern crate clock_ticks;
 
@@ -27,6 +27,9 @@ use source::Source;
 
 mod video;
 use video::Video;
+
+mod audio;
+use audio::Audio;
 
 docopt!(Args derive Debug, "
 Usage: nonagon [options] <source>
@@ -62,6 +65,8 @@ fn main() {
 			exit(3);
 		}));
 
+	let mut audio = source.audio().map(|a| Audio::new(a));
+
 	loop {
 		let mut target = display.draw();
 		target.clear_color(0.0, 0.0, 0.0, 0.0);
@@ -70,19 +75,11 @@ fn main() {
 			video.as_mut().unwrap().draw(&mut target);
 		}
 
-		target.finish();
-
-		if let Some(channel) = source.audio() {
-			match channel.try_recv() {
-				Ok(source::audio::Data::Frame(..)) => {
-				},
-
-				Ok(source::audio::Data::Error(error)) =>
-					println!("error: ffmpeg: audio: {:?}", error),
-
-				_ => ()
-			}
+		if audio.is_some() {
+			audio.as_mut().unwrap().play();
 		}
+
+		target.finish();
 
 		for event in display.poll_events() {
 			match event {
