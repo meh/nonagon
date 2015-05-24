@@ -20,8 +20,6 @@ pub struct Source {
 
 impl Source {
 	pub fn new(path: String) -> Result<Self, Error> {
-		format::register_all();
-
 		let (video_sender, video_receiver) = sync_channel(BOUND);
 		let (audio_sender, audio_receiver) = sync_channel(BOUND);
 

@@ -16,6 +16,7 @@ extern crate image;
 
 #[macro_use]
 extern crate log;
+extern crate env_logger;
 
 extern crate docopt;
 extern crate rustc_serialize;
@@ -40,6 +41,9 @@ Options:
 ");
 
 fn main() {
+	env_logger::init().unwrap();
+	ffmpeg::format::register_all();
+
 	let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
 
 	let source = Source::new(args.arg_source.clone()).unwrap_or_else(|err| {

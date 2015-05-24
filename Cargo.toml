@@ -11,6 +11,7 @@ docopt = "*"
 docopt_macros = "*"
 rustc-serialize = "*"
 log = "*"
+env_logger = "*"
 
 [dependencies.ffmpeg]
 path = "../ffmpeg"
