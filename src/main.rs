@@ -1,4 +1,4 @@
-#![feature(plugin)]
+#![feature(plugin, scoped)]
 #![plugin(docopt_macros)]
 
 extern crate ffmpeg;
