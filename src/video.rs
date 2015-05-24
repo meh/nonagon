@@ -2,14 +2,14 @@ use std::borrow::Cow;
 use std::default::Default;
 
 use ffmpeg::software::Converter;
-use ffmpeg::{Error, frame, format};
+use ffmpeg::{Error, format};
 
 use glium::texture::{Texture2dDataSource, RawImage2d, SrgbTexture2d};
 use glium::texture::ClientFormat::U8U8U8;
 use glium::{Program, Display, VertexBuffer, IndexBuffer, Surface};
 use glium::index::TriangleStrip;
 
-use ::source;
+use ::source::video as source;
 
 pub struct Video<'a> {
 	converter: Converter<'a>,
@@ -132,27 +132,24 @@ impl<'a> Video<'a> {
 		})
 	}
 
-	pub fn texture(&self) -> SrgbTexture2d {
-		SrgbTexture2d::new(self.display, Texture {
-			data: self.converter.data()[0],
-
-			width:  self.converter.width(),
-			height: self.converter.height(),
-		})
-	}
-
 	pub fn draw<T: Surface>(&mut self, target: &mut T) {
 		match self.source.try_recv() {
-			Ok(source::video::Data::Frame(frame)) =>
-				self.converter.convert(&frame.picture()).unwrap(),
+			Ok(source::Data::Frame(frame)) => {
+				self.converter.convert(&frame.picture()).unwrap();
+			},
 
-			Ok(source::video::Data::Error(error)) =>
+			Ok(source::Data::Error(error)) =>
 				println!("error: ffmpeg: video: {:?}", error),
 
 			_ => ()
 		}
 
-		let texture = self.texture();
+		let texture = SrgbTexture2d::new(self.display, Texture {
+			data: self.converter.data()[0],
+
+			width:  self.converter.width(),
+			height: self.converter.height(),
+		});
 
 		let uniforms = uniform! {
 			matrix: [
