@@ -1,5 +1,6 @@
-#![feature(plugin, scoped)]
+#![feature(plugin)]
 #![plugin(docopt_macros)]
+#![allow(dead_code)]
 
 extern crate ffmpeg;
 
@@ -9,8 +10,6 @@ use glium::{DisplayBuild, Surface};
 use glium::glutin;
 
 extern crate cpal;
-
-extern crate clock_ticks;
 
 extern crate image;
 
@@ -42,7 +41,7 @@ Options:
 
 fn main() {
 	env_logger::init().unwrap();
-	ffmpeg::format::register_all();
+	ffmpeg::init().unwrap();
 
 	let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
 
@@ -69,18 +68,28 @@ fn main() {
 			exit(3);
 		}));
 
-	let mut audio = source.audio().map(|a| Audio::new(a));
+	let mut audio = source.audio().map(|v|
+		Audio::new(v).unwrap_or_else(|err| {
+			println!("error: cpal: {}", err);
+			exit(4);
+		}));
 
 	loop {
 		let mut target = display.draw();
 		target.clear_color(0.0, 0.0, 0.0, 0.0);
 
-		if video.is_some() {
-			video.as_mut().unwrap().draw(&mut target);
+		if let Some(video) = video.as_mut() {
+			if !video.is_done() {
+				video.sync();
+				video.draw(&mut target);
+			}
 		}
 
-		if audio.is_some() {
-			audio.as_mut().unwrap().play();
+		if let Some(audio) = audio.as_mut() {
+			if !audio.is_done() {
+				audio.sync();
+				audio.play();
+			}
 		}
 
 		target.finish();

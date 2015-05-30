@@ -2,7 +2,7 @@ use std::sync::mpsc::sync_channel;
 use std::thread;
 use log::LogLevel;
 
-use ffmpeg::{format, media, frame, Error};
+use ffmpeg::{format, media, Error};
 
 pub mod video;
 pub use self::video::Video;
@@ -29,8 +29,9 @@ impl Source {
 					context,
 
 				Err(error) => {
-					audio_sender.send(audio::Data::Error(error.clone())).unwrap();
-					video_sender.send(video::Data::Error(error)).unwrap();
+					Audio::error(&audio_sender, error);
+					Video::error(&video_sender, error);
+
 					return;
 				}
 			};
@@ -41,92 +42,40 @@ impl Source {
 			
 			// audio decoder
 			let audio = if let Some(stream) = context.streams().find(|s| s.codec().medium() == media::Type::Audio) {
-				let mut codec = match stream.codec().decoder().and_then(|c| c.audio()) {
+				let codec = match stream.codec().decoder().and_then(|c| c.audio()) {
 					Ok(codec) =>
 						codec,
 
 					Err(error) => {
-						audio_sender.send(audio::Data::Error(error)).unwrap();
+						Audio::error(&audio_sender, error);
 						return;
 					}
 				};
 
-				audio_sender.send(audio::Data::Start(Some(audio::Details {
-					format: codec.format(),
-				}))).unwrap();
-
-				let (sender, receiver) = sync_channel(BOUND * 2);
-
-				Some((stream, sender, thread::scoped(move || {
-					let     sender = audio_sender;
-					let mut frame  = frame::Audio::new();
-
-					loop {
-						match receiver.recv().unwrap() {
-							Some(packet) =>
-								match codec.decode(&packet, &mut frame) {
-									Ok(true)   => sender.send(audio::Data::Frame(frame.clone())).unwrap(),
-									Ok(false)  => (),
-									Err(error) => sender.send(audio::Data::Error(error)).unwrap(),
-								},
-
-							None =>
-								break
-						}
-					}
-
-					sender.send(audio::Data::End).unwrap();
-				})))
+				Some((Audio::spawn(codec, &stream, audio_sender), stream))
 			}
 			else {
-				audio_sender.send(audio::Data::Start(None)).unwrap();
+				Audio::none(&audio_sender);
 
 				None
 			};
 
 			// video decoder
 			let video = if let Some(stream) = context.streams().find(|s| s.codec().medium() == media::Type::Video) {
-				let mut codec = match stream.codec().decoder().and_then(|c| c.video()) {
+				let codec = match stream.codec().decoder().and_then(|c| c.video()) {
 					Ok(codec) =>
 						codec,
 
 					Err(error) => {
-						video_sender.send(video::Data::Error(error)).unwrap();
+						Video::error(&video_sender, error);
 						return;
 					}
 				};
 
-				video_sender.send(video::Data::Start(Some(video::Details {
-					format: codec.format(),
-					width:  codec.width(),
-					height: codec.height(),
-				}))).unwrap();
-
-				let (sender, receiver) = sync_channel(BOUND * 2);
-
-				Some((stream, sender, thread::scoped(move || {
-					let     sender = video_sender;
-					let mut frame  = frame::Video::new();
-
-					loop {
-						match receiver.recv().unwrap() {
-							Some(packet) =>
-								match codec.decode(&packet, &mut frame) {
-									Ok(true)   => sender.send(video::Data::Frame(frame.clone())).unwrap(),
-									Ok(false)  => (),
-									Err(error) => sender.send(video::Data::Error(error)).unwrap(),
-								},
-
-							None =>
-								break
-						}
-					}
-
-					sender.send(video::Data::End).unwrap();
-				})))
+				Some((Video::spawn(codec, &stream, video_sender), stream))
 			}
 			else {
-				video_sender.send(video::Data::Start(None)).unwrap();
+				Video::none(&video_sender);
 
 				None
 			};
@@ -134,25 +83,31 @@ impl Source {
 			let mut packet = context.packet();
 
 			while packet.read().is_ok() {
-				if let Some((ref stream, ref channel, _)) = video {
+				if let Some((ref channel, ref stream)) = video {
 					if packet.stream() == *stream {
 						channel.send(Some(packet.clone())).unwrap();
 					}
 				}
 
-				if let Some((ref stream, ref channel, _)) = audio {
+				if let Some((ref channel, ref stream)) = audio {
 					if packet.stream() == *stream {
 						channel.send(Some(packet.clone())).unwrap();
 					}
 				}
 			}
 
-			if let Some((_, ref channel, _)) = video {
+			if let Some((ref channel, _)) = video {
 				channel.send(None).unwrap();
+
+				// XXX: hack
+				::std::mem::forget(channel);
 			}
 
-			if let Some((_, ref channel, _)) = audio {
+			if let Some((ref channel, _)) = audio {
 				channel.send(None).unwrap();
+
+				// XXX: hack
+				::std::mem::forget(channel);
 			}
 		});
 
@@ -164,7 +119,7 @@ impl Source {
 				return Err(error),
 
 			_ =>
-				return Err(Error::bug()),
+				return Err(Error::Bug),
 		};
 
 		let audio = match audio_receiver.recv().unwrap() {
@@ -175,7 +130,7 @@ impl Source {
 				return Err(error),
 
 			_ =>
-				return Err(Error::bug()),
+				return Err(Error::Bug),
 		};
 
 		Ok(Source { audio: audio, video: video })

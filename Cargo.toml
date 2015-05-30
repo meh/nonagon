@@ -5,7 +5,6 @@ authors = ["meh. <meh@schizofreni.co>"]
 
 [dependencies]
 cpal = "*"
-clock_ticks = "*"
 image = "*"
 docopt = "*"
 docopt_macros = "*"
@@ -17,7 +16,7 @@ env_logger = "*"
 path = "../ffmpeg"
 
 default-features = false
-features         = ["codec", "format", "software-conversion"]
+features         = ["codec", "format", "software-scaling"]
 
 [dependencies.glium]
 version  = "*"
