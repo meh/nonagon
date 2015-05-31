@@ -68,7 +68,6 @@ fn main() {
 	let mut renderer = Renderer::new(&display);
 	let mut state    = State::new();
 
-	let mut next     = None;
 	let mut previous = time::relative() as f64 / 1_000_000.0;
 	let mut lag      = 0.0;
 
@@ -87,7 +86,7 @@ fn main() {
 		}
 
 		while lag >= GRANULARITY {
-			next = source.sync();
+			source.sync();
 			state.update();
 			lag -= GRANULARITY;
 		}
