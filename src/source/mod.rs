@@ -1,8 +1,11 @@
-use std::sync::mpsc::sync_channel;
+use std::sync::mpsc::{SyncSender, sync_channel};
 use std::thread;
 use log::LogLevel;
 
-use ffmpeg::{format, media, Error};
+use ffmpeg::{format, media, Error, Packet};
+
+mod data;
+pub use self::data::Data;
 
 pub mod video;
 pub use self::video::Video;
@@ -16,6 +19,11 @@ pub const BOUND: usize = 50;
 pub struct Source {
 	pub audio: Option<Audio>,
 	pub video: Option<Video>,
+}
+
+pub enum Reader {
+	Packet(Packet),
+	End(SyncSender<Reader>),
 }
 
 impl Source {
@@ -85,37 +93,31 @@ impl Source {
 			while packet.read().is_ok() {
 				if let Some((ref channel, ref stream)) = video {
 					if packet.stream() == *stream {
-						channel.send(Some(packet.clone())).unwrap();
+						channel.send(Reader::Packet(packet.clone())).unwrap();
 					}
 				}
 
 				if let Some((ref channel, ref stream)) = audio {
 					if packet.stream() == *stream {
-						channel.send(Some(packet.clone())).unwrap();
+						channel.send(Reader::Packet(packet.clone())).unwrap();
 					}
 				}
 			}
 
 			if let Some((ref channel, _)) = video {
-				channel.send(None).unwrap();
-
-				// XXX: hack
-				::std::mem::forget(channel);
+				channel.send(Reader::End(channel.clone())).unwrap();
 			}
 
 			if let Some((ref channel, _)) = audio {
-				channel.send(None).unwrap();
-
-				// XXX: hack
-				::std::mem::forget(channel);
+				channel.send(Reader::End(channel.clone())).unwrap();
 			}
 		});
 
 		let video = match video_receiver.recv().unwrap() {
-			video::Data::Start(details) =>
+			Data::Start(details) =>
 				details.map(|d| Video::new(video_receiver, d)),
 
-			video::Data::Error(error) =>
+			Data::Error(error) =>
 				return Err(error),
 
 			_ =>
@@ -123,10 +125,10 @@ impl Source {
 		};
 
 		let audio = match audio_receiver.recv().unwrap() {
-			audio::Data::Start(details) =>
+			Data::Start(details) =>
 				details.map(|d| Audio::new(audio_receiver, d)),
 
-			audio::Data::Error(error) =>
+			Data::Error(error) =>
 				return Err(error),
 
 			_ =>
@@ -142,5 +144,28 @@ impl Source {
 
 	pub fn video(&self) -> Option<&Video> {
 		self.video.as_ref()
+	}
+
+	pub fn sync(&mut self) -> Option<f64> {
+		let mut next: f64 = 42.0;
+
+		if let Some(video) = self.video.as_mut() {
+			if !video.is_done() {
+				next = next.min(video.sync());
+			}
+		}
+
+		if let Some(audio) = self.audio.as_mut() {
+			if !audio.is_done() {
+				next = next.min(audio.sync());
+			}
+		}
+
+		if next == 42.0 {
+			None
+		}
+		else {
+			Some(next)
+		}
 	}
 }

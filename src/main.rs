@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 
 extern crate ffmpeg;
+use ffmpeg::time;
 
 #[macro_use]
 extern crate glium;
@@ -25,11 +26,11 @@ use std::process::exit;
 mod source;
 use source::Source;
 
-mod video;
-use video::Video;
+mod state;
+use state::State;
 
-mod audio;
-use audio::Audio;
+mod renderer;
+use renderer::Renderer;
 
 docopt!(Args derive Debug, "
 Usage: nonagon [options] <source>
@@ -39,13 +40,15 @@ Options:
   -h, --help    Show this message.
 ");
 
+const GRANULARITY: f64 = 0.015;
+
 fn main() {
 	env_logger::init().unwrap();
 	ffmpeg::init().unwrap();
 
 	let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
 
-	let source = Source::new(args.arg_source.clone()).unwrap_or_else(|err| {
+	let mut source = Source::new(args.arg_source.clone()).unwrap_or_else(|err| {
 		println!("error: ffmpeg: {}", err);
 		exit(1);
 	});
@@ -62,37 +65,19 @@ fn main() {
 		.build_glium()
 		.unwrap();
 
-	let mut video = source.video().map(|v|
-		Video::new(&display, v).unwrap_or_else(|err| {
-			println!("error: ffmpeg: {}", err);
-			exit(3);
-		}));
+	let mut renderer = Renderer::new(&display);
+	let mut state    = State::new();
 
-	let mut audio = source.audio().map(|v|
-		Audio::new(v).unwrap_or_else(|err| {
-			println!("error: cpal: {}", err);
-			exit(4);
-		}));
+	let mut next     = None;
+	let mut previous = time::relative() as f64 / 1_000_000.0;
+	let mut lag      = 0.0;
 
 	loop {
-		let mut target = display.draw();
-		target.clear_color(0.0, 0.0, 0.0, 0.0);
+		let current = time::relative() as f64 / 1_000_000.0;
+		let elapsed = current - previous;
 
-		if let Some(video) = video.as_mut() {
-			if !video.is_done() {
-				video.sync();
-				video.draw(&mut target);
-			}
-		}
-
-		if let Some(audio) = audio.as_mut() {
-			if !audio.is_done() {
-				audio.sync();
-				audio.play();
-			}
-		}
-
-		target.finish();
+		previous  = current;
+		lag      += elapsed;
 
 		for event in display.poll_events() {
 			match event {
@@ -100,5 +85,24 @@ fn main() {
 				_ => ()
 			}
 		}
+
+		while lag >= GRANULARITY {
+			next = source.sync();
+			state.update();
+			lag -= GRANULARITY;
+		}
+
+		let mut target = display.draw();
+		target.clear_color(0.0, 0.0, 0.0, 0.0);
+
+		renderer.render(&mut target, &state, source.video().and_then(|v|
+			if v.is_done() {
+				None
+			}
+			else {
+				Some(v.frame())
+			}));
+
+		target.finish();
 	}
 }

@@ -1,16 +1,18 @@
 [package]
-name = "nonagon"
+name    = "nonagon"
 version = "0.1.0"
+
 authors = ["meh. <meh@schizofreni.co>"]
+license = "GPLv3"
 
 [dependencies]
-cpal = "*"
-image = "*"
-docopt = "*"
-docopt_macros = "*"
+cpal            = "*"
+image           = "*"
+docopt          = "*"
+docopt_macros   = "*"
 rustc-serialize = "*"
-log = "*"
-env_logger = "*"
+log             = "*"
+env_logger      = "*"
 
 [dependencies.ffmpeg]
 path = "../ffmpeg"

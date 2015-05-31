@@ -1,24 +1,14 @@
-use std::mem;
 use std::borrow::Cow;
 use std::default::Default;
 
-use ffmpeg::{Error, frame, time};
+use ffmpeg::frame;
 
 use glium::texture::{Texture2dDataSource, RawImage2d, SrgbTexture2d};
 use glium::texture::ClientFormat::U8U8U8;
 use glium::{Program, Display, VertexBuffer, IndexBuffer, Surface};
 use glium::index::TriangleStrip;
 
-use ::source::video as source;
-
 pub struct Video<'a> {
-	source: &'a source::Video,
-	done:   bool,
-
-	time:    i64,
-	current: frame::Video,
-	next:    frame::Video,
-
 	display:  &'a Display,
 	program:  Program,
 	vertices: VertexBuffer<Vertex>,
@@ -26,7 +16,7 @@ pub struct Video<'a> {
 }
 
 impl<'a> Video<'a> {
-	pub fn new<'b>(display: &'b Display, source: &'b source::Video) -> Result<Video<'b>, Error> {
+	pub fn new<'b>(display: &'b Display) -> Video<'b> {
 		let program = program!(display,
 			140 => {
 				vertex: "
@@ -124,63 +114,22 @@ impl<'a> Video<'a> {
 
 		let indices = IndexBuffer::new(display, TriangleStrip(vec![1u16, 2, 0, 3]));
 
-		Ok(Video {
-			time:    time::relative(),
-			current: try!(frame(&source)),
-			next:    try!(frame(&source)),
+		Video {
+			display: display,
 
-			source: source,
-			done:   false,
-
-			display:  display,
 			program:  program,
 			vertices: vertices,
 			indices:  indices,
-		})
-	}
-
-	pub fn is_done(&self) -> bool {
-		self.done
-	}
-
-	pub fn frame(&self) -> &frame::Video {
-		&self.current
-	}
-
-	pub fn sync(&mut self) {
-		let base: f64 = self.source.time_base().into();
-		let time: f64 = (time::relative() - self.time) as f64 / 1_000_000.0;
-		let pts:  f64 = self.next.timestamp().unwrap_or(0) as f64 * base;
-
-		if time > pts {
-			match try_frame(&self.source) {
-				Some(Ok(frame)) => {
-					mem::swap(&mut self.current, &mut self.next);
-					self.next = frame;
-				},
-
-				Some(Err(Error::Eof)) =>
-					self.done = true,
-
-				Some(Err(error)) =>
-					debug!("{:?}", error),
-
-				_ => ()
-			}
 		}
 	}
 
-	pub fn texture(&self) -> SrgbTexture2d {
-		SrgbTexture2d::new(self.display, Texture {
-			data: self.frame().picture().data()[0],
+	pub fn draw<T: Surface>(&self, target: &mut T, frame: &frame::Video) {
+		let texture = SrgbTexture2d::new(self.display, Texture {
+			data: frame.picture().data()[0],
 
-			width:  self.frame().picture().width(),
-			height: self.frame().picture().height(),
-		})
-	}
-
-	pub fn draw<T: Surface>(&self, target: &mut T) {
-		let texture = self.texture();
+			width:  frame.picture().width(),
+			height: frame.picture().height(),
+		});
 
 		let uniforms = uniform! {
 			matrix: [
@@ -196,6 +145,14 @@ impl<'a> Video<'a> {
 		target.draw(&self.vertices, &self.indices, &self.program, &uniforms, &Default::default()).unwrap();
 	}
 }
+
+#[derive(Copy, Clone)]
+pub struct Vertex {
+	position:   [f32; 2],
+	tex_coords: [f32; 2],
+}
+
+implement_vertex!(Vertex, position, tex_coords);
 
 pub struct Texture<'a> {
 	data: &'a [u8],
@@ -214,49 +171,5 @@ impl<'a> Texture2dDataSource<'a> for Texture<'a> {
 			height: self.height,
 			format: U8U8U8,
 		}
-	}
-}
-
-#[derive(Copy, Clone)]
-pub struct Vertex {
-	position:   [f32; 2],
-	tex_coords: [f32; 2],
-}
-
-implement_vertex!(Vertex, position, tex_coords);
-
-fn frame(source: &source::Video) -> Result<frame::Video, Error> {
-	loop {
-		match source.recv() {
-			Ok(source::Data::Frame(frame)) =>
-				return Ok(frame),
-
-			Ok(source::Data::Error(error)) => {
-				debug!("{:?}", error);
-				continue;
-			},
-
-			Ok(source::Data::End) =>
-				return Err(Error::Eof),
-
-			_ =>
-				return Err(Error::Bug)
-		}
-	}
-}
-
-fn try_frame(source: &source::Video) -> Option<Result<frame::Video, Error>> {
-	match source.try_recv() {
-		Ok(source::Data::Frame(frame)) =>
-			Some(Ok(frame)),
-
-		Ok(source::Data::Error(error)) =>
-			Some(Err(error)),
-
-		Ok(source::Data::End) =>
-			Some(Err(Error::Eof)),
-
-		_ =>
-			None
 	}
 }

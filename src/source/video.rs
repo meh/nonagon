@@ -1,17 +1,21 @@
 use std::sync::mpsc::{SyncSender, Receiver, sync_channel};
-use std::ops::Deref;
 use std::thread;
+use std::mem;
 
-use ffmpeg::{Error, Rational, Stream, Packet, format, frame, decoder};
+use ffmpeg::{Error, Stream, format, frame, decoder, time};
 
-#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+use super::{Data, Reader};
+
+pub type D = Data<Details, frame::Video>;
+
+#[derive(Copy, Clone, Debug)]
 pub struct Details {
 	pub format: format::Pixel,
 
 	pub width:  u32,
 	pub height: u32,
 
-	pub time_base: Rational,
+	pub time_base: f64,
 }
 
 impl Details {
@@ -22,33 +26,31 @@ impl Details {
 			width:  codec.width(),
 			height: codec.height(),
 
-			time_base: stream.time_base(),
+			time_base: stream.time_base().into(),
 		}
 	}
 }
 
-pub enum Data {
-	Start(Option<Details>),
-	Error(Error),
-	Frame(frame::Video),
-	End,
-}
-
 pub struct Video {
-	channel: Receiver<Data>,
+	channel: Receiver<D>,
 	details: Details,
+
+	done:    bool,
+	time:    i64,
+	current: frame::Video,
+	next:    frame::Video,
 }
 
 impl Video {
-	pub fn error(channel: &SyncSender<Data>, error: Error) {
+	pub fn error(channel: &SyncSender<D>, error: Error) {
 		channel.send(Data::Error(error)).unwrap();
 	}
 
-	pub fn none(channel: &SyncSender<Data>) {
+	pub fn none(channel: &SyncSender<D>) {
 		channel.send(Data::Start(None)).unwrap();
 	}
 
-	pub fn spawn(mut codec: decoder::Video, stream: &Stream, channel: SyncSender<Data>) -> SyncSender<Option<Packet>> {
+	pub fn spawn(mut codec: decoder::Video, stream: &Stream, channel: SyncSender<D>) -> SyncSender<Reader> {
 		channel.send(Data::Start(Some(Details::from(&codec, stream)))).unwrap();
 
 		let (sender, receiver) = sync_channel(super::BOUND * 2);
@@ -59,7 +61,7 @@ impl Video {
 
 			loop {
 				match receiver.recv().unwrap() {
-					Some(packet) =>
+					Reader::Packet(packet) =>
 						match codec.decode(&packet, &mut decoded) {
 							Ok(true) => {
 								let mut frame = frame::Video::new(format::Pixel::RGB24, decoded.width(), decoded.height());
@@ -73,48 +75,63 @@ impl Video {
 							Err(error) => channel.send(Data::Error(error)).unwrap(),
 						},
 
-					None =>
+					Reader::End(..) =>
 						break
 				}
 			}
 
-			channel.send(Data::End).unwrap();
-
-			// XXX: hack
-			::std::mem::forget(channel);
+			channel.send(Data::End(channel.clone())).unwrap();
 		});
 
 		sender
 	}
 
-	pub fn new(channel: Receiver<Data>, details: Details) -> Self {
+	pub fn new(channel: Receiver<D>, details: Details) -> Self {
 		Video {
+			done:    false,
+			time:    time::relative(),
+			current: super::data::get(&channel).unwrap(),
+			next:    super::data::get(&channel).unwrap(),
+
 			channel: channel,
 			details: details,
 		}
 	}
 
-	pub fn format(&self) -> format::Pixel {
-		self.details.format
+	pub fn is_done(&self) -> bool {
+		self.done
 	}
 
-	pub fn width(&self) -> u32 {
-		self.details.width
-	}
-	
-	pub fn height(&self) -> u32 {
-		self.details.height
+	pub fn frame(&self) -> &frame::Video {
+		&self.current
 	}
 
-	pub fn time_base(&self) -> Rational {
-		self.details.time_base
-	}
-}
+	pub fn sync(&mut self) -> f64 {
+		loop {
+			if self.done {
+				return 0.0;
+			}
 
-impl Deref for Video {
-	type Target = Receiver<Data>;
+			let time: f64 = (time::relative() - self.time) as f64 / 1_000_000.0;
+			let pts:  f64 = self.next.timestamp().unwrap_or(0) as f64 * self.details.time_base;
 
-	fn deref(&self) -> &<Self as Deref>::Target {
-		&self.channel
+			if time > pts {
+				match super::data::try(&self.channel) {
+					Some(Ok(frame)) => {
+						mem::swap(&mut self.current, &mut self.next);
+						self.next = frame;
+					},
+
+					Some(Err(Error::Eof)) =>
+						self.done = true,
+
+					_ =>
+						return 0.0
+				}
+			}
+			else {
+				return pts - time;
+			}
+		}
 	}
 }
