@@ -6,13 +6,13 @@ use ffmpeg::frame;
 use glium::texture::{Texture2dDataSource, RawImage2d, SrgbTexture2d};
 use glium::texture::ClientFormat::U8U8U8;
 use glium::{Program, Display, VertexBuffer, IndexBuffer, Surface};
-use glium::index::TriangleStrip;
+use glium::index::PrimitiveType;
 
 pub struct Video<'a> {
 	display:  &'a Display,
 	program:  Program,
 	vertices: VertexBuffer<Vertex>,
-	indices:  IndexBuffer,
+	indices:  IndexBuffer<u16>,
 }
 
 impl<'a> Video<'a> {
@@ -112,7 +112,7 @@ impl<'a> Video<'a> {
 				Vertex { position: [ 1.0, -1.0], tex_coords: [1.0, 1.0] }
 			]);
 
-		let indices = IndexBuffer::new(display, TriangleStrip(vec![1u16, 2, 0, 3]));
+		let indices = IndexBuffer::new(display, PrimitiveType::TriangleStrip, vec![1u16, 2, 0, 3]);
 
 		Video {
 			display: display,
@@ -125,10 +125,10 @@ impl<'a> Video<'a> {
 
 	pub fn draw<T: Surface>(&self, target: &mut T, frame: &frame::Video) {
 		let texture = SrgbTexture2d::new(self.display, Texture {
-			data: frame.picture().data()[0],
+			data: frame.data()[0],
 
-			width:  frame.picture().width(),
-			height: frame.picture().height(),
+			width:  frame.width(),
+			height: frame.height(),
 		});
 
 		let uniforms = uniform! {
