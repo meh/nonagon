@@ -3,6 +3,8 @@ use std::thread;
 use std::mem;
 
 use ffmpeg::{Error, Stream, format, frame, decoder, time};
+use ffmpeg::channel_layout as layout;
+use ffmpeg::format::sample;
 
 use super::{Data, Reader};
 
@@ -10,7 +12,9 @@ pub type D = super::Data<Details, frame::Audio>;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Details {
-	pub format: format::Sample,
+	pub format:   format::Sample,
+	pub rate:     u32,
+	pub channels: u16,
 
 	pub time_base: f64,
 }
@@ -18,7 +22,9 @@ pub struct Details {
 impl Details {
 	pub fn from(codec: &decoder::Audio, stream: &Stream) -> Details {
 		Details {
-			format: codec.format(),
+			format:   codec.format(),
+			rate:     codec.rate(),
+			channels: codec.channels(),
 
 			time_base: stream.time_base().into(),
 		}
@@ -50,13 +56,21 @@ impl Audio {
 		let (sender, receiver) = sync_channel(super::BOUND * 2);
 
 		thread::spawn(move || {
-			let mut frame = frame::Audio::empty();
+			let mut decoded   = frame::Audio::empty();
+			let mut resampler = codec.resampler(format::Sample::I16(sample::Type::Packed), layout::STEREO, 44100).unwrap();
 
 			loop {
 				match receiver.recv().unwrap() {
 					Reader::Packet(packet) =>
-						match codec.decode(&packet, &mut frame) {
-							Ok(true)   => channel.send(Data::Frame(frame.clone())).unwrap(),
+						match codec.decode(&packet, &mut decoded) {
+							Ok(true) => {
+								let mut frame = frame::Audio::empty();
+								frame.clone_from(&decoded);
+								resampler.run(&decoded, &mut frame).unwrap();
+
+								channel.send(Data::Frame(frame)).unwrap();
+							},
+
 							Ok(false)  => (),
 							Err(error) => channel.send(Data::Error(error)).unwrap(),
 						},
@@ -82,6 +96,10 @@ impl Audio {
 			channel: channel,
 			details: details,
 		}
+	}
+
+	pub fn details(&self) -> &Details {
+		&self.details
 	}
 
 	pub fn is_done(&self) -> bool {
