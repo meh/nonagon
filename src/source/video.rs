@@ -57,16 +57,16 @@ impl Video {
 
 		thread::spawn(move || {
 			let mut decoded   = frame::Video::empty();
-			let     converter = codec.converter(format::Pixel::RGB24).unwrap();
+			let mut converter = codec.converter(format::Pixel::RGB24).unwrap();
 
 			loop {
 				match receiver.recv().unwrap() {
 					Reader::Packet(packet) =>
 						match codec.decode(&packet, &mut decoded) {
 							Ok(true) => {
-								let mut frame = frame::Video::new(format::Pixel::RGB24, decoded.width(), decoded.height());
-								frame.copy(&decoded);
-								converter.run(&decoded.picture(), &mut frame.picture()).unwrap();
+								let mut frame = frame::Video::empty();
+								frame.clone_from(&decoded);
+								converter.run(&decoded, &mut frame).unwrap();
 
 								channel.send(Data::Frame(frame)).unwrap();
 							},
@@ -96,6 +96,10 @@ impl Video {
 			channel: channel,
 			details: details,
 		}
+	}
+
+	pub fn details(&self) -> &Details {
+		&self.details
 	}
 
 	pub fn is_done(&self) -> bool {
