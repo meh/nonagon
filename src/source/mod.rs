@@ -32,7 +32,7 @@ impl Source {
 		let (audio_sender, audio_receiver) = sync_channel(BOUND);
 
 		thread::spawn(move || {
-			let context = match format::open(path.as_ref()) {
+			let mut context = match format::open(path.as_ref()) {
 				Ok(context) =>
 					context,
 
@@ -60,7 +60,7 @@ impl Source {
 					}
 				};
 
-				Some((Audio::spawn(codec, &stream, audio_sender), stream))
+				Some((Audio::spawn(codec, &stream, audio_sender), stream.index()))
 			}
 			else {
 				Audio::none(&audio_sender);
@@ -80,7 +80,7 @@ impl Source {
 					}
 				};
 
-				Some((Video::spawn(codec, &stream, video_sender), stream))
+				Some((Video::spawn(codec, &stream, video_sender), stream.index()))
 			}
 			else {
 				Video::none(&video_sender);
@@ -88,17 +88,15 @@ impl Source {
 				None
 			};
 
-			let mut packet = context.packet();
-
-			while packet.read().is_ok() {
-				if let Some((ref channel, ref stream)) = video {
-					if packet.stream() == *stream {
+			for (stream, packet) in context.packets() {
+				if let Some((ref channel, index)) = video {
+					if stream.index() == index {
 						channel.send(Reader::Packet(packet.clone())).unwrap();
 					}
 				}
 
-				if let Some((ref channel, ref stream)) = audio {
-					if packet.stream() == *stream {
+				if let Some((ref channel, index)) = audio {
+					if stream.index() == index {
 						channel.send(Reader::Packet(packet.clone())).unwrap();
 					}
 				}
