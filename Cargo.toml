@@ -6,7 +6,6 @@ authors = ["meh. <meh@schizofreni.co>"]
 license = "GPLv3"
 
 [dependencies]
-cpal            = "*"
 image           = "*"
 docopt          = "*"
 docopt_macros   = "*"
@@ -15,10 +14,13 @@ log             = "*"
 env_logger      = "*"
 
 [dependencies.ffmpeg]
-path = "../ffmpeg"
+version = "0.1"
 
 default-features = false
-features         = ["codec", "format", "software-scaling"]
+features         = ["codec", "format", "software-scaling", "software-resampling"]
+
+[dependencies.openal]
+version = "0.1"
 
 [dependencies.glium]
 version  = "*"
