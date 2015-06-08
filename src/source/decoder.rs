@@ -2,25 +2,25 @@ use std::sync::mpsc::{SyncSender, Receiver};
 
 use ffmpeg::Error;
 
-pub enum Data<T, U> {
+pub enum Decoder<T, U> {
 	Start(Option<T>),
 	Error(Error),
 	Frame(U),
-	End(SyncSender<Data<T, U>>),
+	End(SyncSender<Decoder<T, U>>),
 }
 
-pub fn get<T, U>(channel: &Receiver<Data<T, U>>) -> Result<U, Error> {
+pub fn get<T, U>(channel: &Receiver<Decoder<T, U>>) -> Result<U, Error> {
 	loop {
 		match channel.recv() {
-			Ok(Data::Frame(frame)) =>
+			Ok(Decoder::Frame(frame)) =>
 				return Ok(frame),
 
-			Ok(Data::Error(error)) => {
+			Ok(Decoder::Error(error)) => {
 				debug!("{:?}", error);
 				continue;
 			},
 
-			Ok(Data::End(..)) =>
+			Ok(Decoder::End(..)) =>
 				return Err(Error::Eof),
 
 			_ =>
@@ -29,15 +29,15 @@ pub fn get<T, U>(channel: &Receiver<Data<T, U>>) -> Result<U, Error> {
 	}
 }
 
-pub fn try<T, U>(channel: &Receiver<Data<T, U>>) -> Option<Result<U, Error>> {
+pub fn try<T, U>(channel: &Receiver<Decoder<T, U>>) -> Option<Result<U, Error>> {
 	match channel.try_recv() {
-		Ok(Data::Frame(frame)) =>
+		Ok(Decoder::Frame(frame)) =>
 			Some(Ok(frame)),
 
-		Ok(Data::Error(error)) =>
+		Ok(Decoder::Error(error)) =>
 			Some(Err(error)),
 
-		Ok(Data::End(..)) =>
+		Ok(Decoder::End(..)) =>
 			Some(Err(Error::Eof)),
 
 		_ =>
