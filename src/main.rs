@@ -1,6 +1,10 @@
-#![feature(plugin)]
+#![feature(plugin, core)]
 #![plugin(docopt_macros)]
 #![allow(dead_code)]
+
+use std::process::exit;
+use std::thread;
+use std::sync::{Arc, Mutex};
 
 extern crate ffmpeg;
 use ffmpeg::time;
@@ -10,7 +14,7 @@ extern crate glium;
 use glium::{DisplayBuild, Surface};
 use glium::glutin;
 
-extern crate cpal;
+extern crate openal;
 
 extern crate image;
 
@@ -21,13 +25,13 @@ extern crate env_logger;
 extern crate docopt;
 extern crate rustc_serialize;
 
-use std::process::exit;
-
 mod source;
-use source::Source;
 
 mod state;
 use state::State;
+
+mod sound;
+use sound::Sound;
 
 mod renderer;
 use renderer::Renderer;
@@ -48,15 +52,32 @@ fn main() {
 
 	let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
 
-	let mut source = Source::new(args.arg_source.clone()).unwrap_or_else(|err| {
-		println!("error: ffmpeg: {}", err);
-		exit(1);
-	});
+	let (a, v) = source::spawn(args.arg_source.clone());
 
-	if source.audio().is_none() {
-		println!("error: the file has no audio");
-		exit(2);
-	}
+	let mut audio = match a {
+		Err(error) => {
+			println!("error: ffmpeg: {}", error);
+			exit(1);
+		},
+
+		Ok(None) => {
+			println!("error: the file has no audio");
+			exit(2);
+		},
+
+		Ok(Some(a)) =>
+			a
+	};
+
+	let mut video = match v {
+		Err(error) => {
+			println!("error: ffmpeg: {}", error);
+			exit(3);
+		},
+
+		Ok(v) =>
+			v
+	};
 
 	let display = glutin::WindowBuilder::new()
 		.with_vsync()
@@ -65,13 +86,34 @@ fn main() {
 		.build_glium()
 		.unwrap();
 
-	let mut renderer = Renderer::new(&display);
-	let mut state    = State::new();
+	let mut sound = Sound::new().unwrap_or_else(|err| {
+		println!("error: sound: {}", err);
+		exit(3);
+	});
 
+	let state = Arc::new(Mutex::new(State::new()));
+
+	{
+		let     state = state.clone();
+		let mut music = sound.music();
+
+		thread::spawn(move || {
+			loop {
+				let next = audio.sync();
+
+				music.play(audio.frame());
+				state.lock().unwrap().feed(audio.frame());
+
+				time::sleep((next * 1_000_000.0) as u32).unwrap();
+			}
+		});
+	}
+
+	let mut renderer = Renderer::new(&display);
 	let mut previous = time::relative() as f64 / 1_000_000.0;
 	let mut lag      = 0.0;
 
-	loop {
+	'game: loop {
 		let current = time::relative() as f64 / 1_000_000.0;
 		let elapsed = current - previous;
 
@@ -80,21 +122,28 @@ fn main() {
 
 		for event in display.poll_events() {
 			match event {
-				glutin::Event::Closed => exit(0),
+				glutin::Event::Closed => break 'game,
+
 				_ => ()
 			}
 		}
 
 		while lag >= GRANULARITY {
-			source.sync();
-			state.update();
+			if let Some(video) = video.as_mut() {
+				video.sync();
+			}
+
+			state.lock().unwrap().update();
+
 			lag -= GRANULARITY;
 		}
+
+		sound.render(&state.lock().unwrap());
 
 		let mut target = display.draw();
 		target.clear_color(0.0, 0.0, 0.0, 0.0);
 
-		renderer.render(&mut target, &state, source.video().and_then(|v|
+		renderer.render(&mut target, &state.lock().unwrap(), video.as_ref().and_then(|v|
 			if v.is_done() {
 				None
 			}
