@@ -5,7 +5,9 @@ use ffmpeg::frame;
 
 use glium::texture::{Texture2dDataSource, RawImage2d, SrgbTexture2d};
 use glium::texture::ClientFormat::U8U8U8;
-use glium::{Program, Display, VertexBuffer, IndexBuffer, Surface};
+use glium::{Program, Display, VertexBuffer, IndexBuffer, Surface, DrawParameters};
+use glium::BlendingFunction::Addition;
+use glium::LinearBlendingFactor::{SourceAlpha, OneMinusSourceAlpha};
 use glium::index::PrimitiveType;
 
 pub struct Video<'a> {
@@ -18,87 +20,32 @@ pub struct Video<'a> {
 impl<'a> Video<'a> {
 	pub fn new<'b>(display: &'b Display) -> Video<'b> {
 		let program = program!(display,
-			140 => {
-				vertex: "
-					#version 140
-
-					uniform mat4 matrix;
-
-					in vec2 position;
-					in vec2 tex_coords;
-
-					out vec2 v_tex_coords;
-
-					void main() {
-						gl_Position = matrix * vec4(position, 0.0, 1.0);
-						v_tex_coords = tex_coords;
-					}
-				",
-
-				fragment: "
-					#version 140
-					uniform sampler2D tex;
-					in vec2 v_tex_coords;
-					out vec4 f_color;
-
-					void main() {
-						f_color = texture(tex, v_tex_coords);
-					}
-				"
-			},
-
 			110 => {
 				vertex: "
 					#version 110
 
-					uniform mat4 matrix;
-
 					attribute vec2 position;
-					attribute vec2 tex_coords;
+					attribute vec2 texture;
 
-					varying vec2 v_tex_coords;
+					varying vec2 v_texture;
 
 					void main() {
-						gl_Position = matrix * vec4(position, 0.0, 1.0);
-						v_tex_coords = tex_coords;
+						gl_Position  = vec4(position, 0.0, 1.0);
+						v_texture = texture;
 					}
 				",
 
 				fragment: "
 					#version 110
 					uniform sampler2D tex;
-					varying vec2 v_tex_coords;
+					uniform float alpha;
+					varying vec2 v_texture;
 
 					void main() {
-						gl_FragColor = texture2D(tex, v_tex_coords);
-					}
-				",
-			},
+						vec4 color = texture2D(tex, v_texture);
+						color.a = alpha;
 
-			100 => {
-				vertex: "
-					#version 100
-
-					uniform lowp mat4 matrix;
-
-					attribute lowp vec2 position;
-					attribute lowp vec2 tex_coords;
-
-					varying lowp vec2 v_tex_coords;
-
-					void main() {
-						gl_Position = matrix * vec4(position, 0.0, 1.0);
-						v_tex_coords = tex_coords;
-					}
-				",
-
-				fragment: "
-					#version 100
-					uniform lowp sampler2D tex;
-					varying lowp vec2 v_tex_coords;
-
-					void main() {
-						gl_FragColor = texture2D(tex, v_tex_coords);
+						gl_FragColor = color;
 					}
 				",
 			},
@@ -106,13 +53,13 @@ impl<'a> Video<'a> {
 
 		let vertices = VertexBuffer::new(display,
 			vec![
-				Vertex { position: [-1.0, -1.0], tex_coords: [0.0, 1.0] },
-				Vertex { position: [-1.0,  1.0], tex_coords: [0.0, 0.0] },
-				Vertex { position: [ 1.0,  1.0], tex_coords: [1.0, 0.0] },
-				Vertex { position: [ 1.0, -1.0], tex_coords: [1.0, 1.0] }
+				Vertex { position: [-1.0, -1.0], texture: [0.0, 1.0] },
+				Vertex { position: [-1.0,  1.0], texture: [0.0, 0.0] },
+				Vertex { position: [ 1.0,  1.0], texture: [1.0, 0.0] },
+				Vertex { position: [ 1.0, -1.0], texture: [1.0, 1.0] }
 			]);
 
-		let indices = IndexBuffer::new(display, PrimitiveType::TriangleStrip, vec![1u16, 2, 0, 3]);
+		let indices = IndexBuffer::new(display, PrimitiveType::TriangleStrip, vec![1, 2, 0, 3]);
 
 		Video {
 			display: display,
@@ -123,7 +70,7 @@ impl<'a> Video<'a> {
 		}
 	}
 
-	pub fn draw<T: Surface>(&self, target: &mut T, frame: &frame::Video) {
+	pub fn render<T: Surface>(&self, target: &mut T, frame: &frame::Video) {
 		let texture = SrgbTexture2d::new(self.display, Texture {
 			data: frame.data()[0],
 
@@ -132,27 +79,27 @@ impl<'a> Video<'a> {
 		});
 
 		let uniforms = uniform! {
-			matrix: [
-				[1.0, 0.0, 0.0, 0.0],
-				[0.0, 1.0, 0.0, 0.0],
-				[0.0, 0.0, 1.0, 0.0],
-				[0.0, 0.0, 0.0, 1.0]
-			],
-
-			tex: &texture
+			alpha: 0.8,
+			tex:   &texture
 		};
 
-		target.draw(&self.vertices, &self.indices, &self.program, &uniforms, &Default::default()).unwrap();
+		target.draw(&self.vertices, &self.indices, &self.program, &uniforms, &DrawParameters {
+			blending_function: Some(Addition {
+				source:      SourceAlpha,
+				destination: OneMinusSourceAlpha
+			}),
+
+			.. Default::default() }).unwrap();
 	}
 }
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
-	position:   [f32; 2],
-	tex_coords: [f32; 2],
+	position: [f32; 2],
+	texture:  [f32; 2],
 }
 
-implement_vertex!(Vertex, position, tex_coords);
+implement_vertex!(Vertex, position, texture);
 
 pub struct Texture<'a> {
 	data: &'a [u8],

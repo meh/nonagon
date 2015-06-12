@@ -4,21 +4,19 @@ pub use self::buffered::Buffered;
 mod music;
 pub use self::music::Music;
 
-use openal::{Error, Device, Context};
+use openal::{Error, Device, Context, context};
 
-use state::State;
+use game::State;
 
 pub struct Sound<'a> {
 	device:  Device<'a>,
-	context: Context<'a>,
+	context: context::Current<'a>,
 }
 
 impl<'a> Sound<'a> {
 	pub fn new() -> Result<Self, Error> {
-		let     device  = try!(Device::open(None));
-		let mut context = try!(Context::new(&device));
-
-		try!(context.make_current());
+		let device  = try!(Device::default());
+		let context = try!(try!(Context::new(&device)).into_current());
 
 		Ok(Sound {
 			device:  device,

@@ -1,8 +1,7 @@
 use std::collections::VecDeque;
 use std::ops::Deref;
-use std::marker::Reflect;
 
-use openal::{Error, Source, Buffer, source};
+use openal::{Error, Sample, Source, Buffer, source};
 
 pub struct Buffered {
 	source:  Source,
@@ -23,14 +22,14 @@ impl Buffered {
 		}
 	}
 
-	pub fn queue<T: Reflect + 'static>(&mut self, channels: u16, data: &[T], rate: u32) -> Result<(), Error> {
+	pub fn queue<T: Sample>(&mut self, channels: u16, data: &[T], rate: u32) -> Result<usize, Error> {
 		for _ in 0 .. self.source.processed() {
 			self.buffers.pop_front();
 		}
 
 		self.buffers.push_back(self.source.queue(try!(Buffer::new(channels, data, rate))));
 
-		Ok(())
+		Ok(self.buffers.len())
 	}
 }
 

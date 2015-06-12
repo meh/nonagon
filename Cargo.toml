@@ -6,22 +6,27 @@ authors = ["meh. <meh@schizofreni.co>"]
 license = "GPLv3"
 
 [dependencies]
-image           = "*"
-docopt          = "*"
-docopt_macros   = "*"
-rustc-serialize = "*"
-log             = "*"
-env_logger      = "*"
+image = "*"
+
+log        = "*"
+env_logger = "*"
+
+nalgebra = "*"
+ncollide = "*"
+
+docopt = "*"
 
 [dependencies.ffmpeg]
-version = "0.1"
+#version = "0.1"
+path = "../ffmpeg"
 
 default-features = false
 features         = ["codec", "format", "software-scaling", "software-resampling"]
 
 [dependencies.openal]
-version = "0.1"
+#version = "0.1"
+path = "../openal"
 
 [dependencies.glium]
 version  = "*"
-features = ["image"]
+features = ["image", "nalgebra"]

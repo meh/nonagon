@@ -54,7 +54,7 @@ impl Audio {
 	pub fn spawn(mut codec: decoder::Audio, stream: &Stream, channel: SyncSender<D>) -> SyncSender<Reader> {
 		channel.send(Decoder::Start(Some(Details::from(&codec, stream)))).unwrap();
 
-		let (sender, receiver) = sync_channel(super::BOUND * 2);
+		let (sender, receiver) = sync_channel(super::PACKETS);
 
 		thread::spawn(move || {
 			let mut decoded   = frame::Audio::empty();

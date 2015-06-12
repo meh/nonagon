@@ -13,20 +13,22 @@ pub use self::video::Video;
 pub mod audio;
 pub use self::audio::Audio;
 
-// TODO: find a proper number
-pub const BOUND: usize = 50;
+pub const FRAMES:  usize = 8;
+pub const PACKETS: usize = 64;
 
 pub enum Reader {
 	Packet(Packet),
 	End(SyncSender<Reader>),
 }
 
-pub fn spawn(path: String) -> (Result<Option<Audio>, Error>, Result<Option<Video>, Error>) {
-	let (video_sender, video_receiver) = sync_channel(BOUND);
-	let (audio_sender, audio_receiver) = sync_channel(BOUND);
+pub fn spawn(path: &str) -> (Result<Option<Audio>, Error>, Result<Option<Video>, Error>) {
+	let path = path.to_string();
+
+	let (video_sender, video_receiver) = sync_channel(FRAMES);
+	let (audio_sender, audio_receiver) = sync_channel(FRAMES);
 
 	thread::spawn(move || {
-		let mut context = match format::open(path.as_ref()) {
+		let mut context = match format::open(&path) {
 			Ok(context) =>
 				context,
 

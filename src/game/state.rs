@@ -1,8 +1,12 @@
+use glium::glutin::Event;
+
 use ffmpeg::frame;
 
 pub struct State {
 	x: i32,
 }
+
+unsafe impl Sync for State { }
 
 impl State {
 	pub fn new() -> Self {
@@ -12,6 +16,10 @@ impl State {
 	}
 
 	pub fn feed(&mut self, frame: &frame::Audio) {
+
+	}
+
+	pub fn handle(&mut self, event: &Event) {
 
 	}
 

@@ -1,5 +1,3 @@
-#![feature(plugin, core)]
-#![plugin(docopt_macros)]
 #![allow(dead_code)]
 
 use std::process::exit;
@@ -12,23 +10,25 @@ use ffmpeg::time;
 #[macro_use]
 extern crate glium;
 use glium::{DisplayBuild, Surface};
-use glium::glutin;
+use glium::glutin::{self, Event};
 
 extern crate openal;
 
 extern crate image;
 
+extern crate nalgebra as na;
+
+extern crate docopt;
+use docopt::Docopt;
+
 #[macro_use]
 extern crate log;
 extern crate env_logger;
 
-extern crate docopt;
-extern crate rustc_serialize;
-
 mod source;
 
-mod state;
-use state::State;
+mod game;
+use game::State;
 
 mod sound;
 use sound::Sound;
@@ -36,23 +36,28 @@ use sound::Sound;
 mod renderer;
 use renderer::Renderer;
 
-docopt!(Args derive Debug, "
-Usage: nonagon [options] <source>
-       nonagon --help
+const GRANULARITY: f64 = 0.015;
+
+static USAGE: &'static str = "
+Usage: nonagon [options] <input>
+       nonagon (-h | --help)
+       nonagon --version
 
 Options:
-  -h, --help    Show this message.
-");
-
-const GRANULARITY: f64 = 0.015;
+	-h --help        Show this message.
+	--version        Show version.
+	-n --no-video    Ignore the video part.
+";
 
 fn main() {
 	env_logger::init().unwrap();
 	ffmpeg::init().unwrap();
 
-	let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
+	let args = Docopt::new(USAGE).
+		and_then(|d| d.parse()).
+		unwrap_or_else(|e| e.exit());
 
-	let (a, v) = source::spawn(args.arg_source.clone());
+	let (a, v) = source::spawn(args.get_str("<input>"));
 
 	let mut audio = match a {
 		Err(error) => {
@@ -114,17 +119,39 @@ fn main() {
 	let mut lag      = 0.0;
 
 	'game: loop {
-		let current = time::relative() as f64 / 1_000_000.0;
-		let elapsed = current - previous;
+		let mut state   = state.lock().unwrap();
+		let     current = time::relative() as f64 / 1_000_000.0;
+		let     elapsed = current - previous;
 
 		previous  = current;
 		lag      += elapsed;
 
 		for event in display.poll_events() {
 			match event {
-				glutin::Event::Closed => break 'game,
+				Event::Awakened => (),
+				Event::Refresh  => (),
 
-				_ => ()
+				Event::Closed => {
+					break 'game;
+				},
+
+				Event::Resized(width, height) => {
+					debug!("resized: {}x{}", width, height);
+				},
+
+				Event::Moved(x, y) => {
+					debug!("moved: {}:{}", x, y);
+				},
+
+				Event::Focused(true) => {
+					debug!("focused");
+				},
+
+				Event::Focused(false) => {
+					debug!("defocused");
+				},
+
+				event => state.handle(&event)
 			}
 		}
 
@@ -133,18 +160,18 @@ fn main() {
 				video.sync();
 			}
 
-			state.lock().unwrap().update();
+			state.update();
 
 			lag -= GRANULARITY;
 		}
 
-		sound.render(&state.lock().unwrap());
+		sound.render(&state);
 
 		let mut target = display.draw();
-		target.clear_color(0.0, 0.0, 0.0, 0.0);
+		target.clear_color(1.0, 1.0, 1.0, 1.0);
 
-		renderer.render(&mut target, &state.lock().unwrap(), video.as_ref().and_then(|v|
-			if v.is_done() {
+		renderer.render(&mut target, &state, video.as_ref().and_then(|v|
+			if args.get_bool("--no-video") || v.is_done() {
 				None
 			}
 			else {
