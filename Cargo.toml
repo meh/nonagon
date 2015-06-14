@@ -9,10 +9,12 @@ license = "GPLv3"
 log        = "*"
 env_logger = "*"
 
+docopt = "*"
+
+image = "*"
+
 nalgebra = "*"
 ncollide = "*"
-
-docopt = "*"
 
 [dependencies.ffmpeg]
 #version = "0.1"
@@ -29,4 +31,4 @@ path = "../openal"
 version  = "*"
 
 default-features = false
-features         = ["glutin", "nalgebra"]
+features         = ["glutin", "image", "nalgebra"]

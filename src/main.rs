@@ -18,6 +18,8 @@ extern crate openal;
 
 extern crate nalgebra as na;
 
+extern crate image;
+
 extern crate docopt;
 use docopt::Docopt;
 
