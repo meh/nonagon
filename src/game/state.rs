@@ -20,7 +20,7 @@ impl State {
 	}
 
 	pub fn handle(&mut self, event: &Event) {
-
+		debug!("event:{:?}", event);
 	}
 
 	pub fn update(&mut self) {

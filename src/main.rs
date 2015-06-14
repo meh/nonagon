@@ -11,6 +11,8 @@ use ffmpeg::time;
 extern crate glium;
 use glium::{DisplayBuild, Surface};
 use glium::glutin::{self, Event};
+use glium::glutin::ElementState::Released;
+use glium::glutin::VirtualKeyCode::Escape;
 
 extern crate openal;
 
@@ -34,17 +36,21 @@ use sound::Sound;
 mod renderer;
 use renderer::Renderer;
 
+mod util;
+
 const GRANULARITY: f64 = 0.015;
 
 static USAGE: &'static str = "
 Usage: nonagon [options] <input>
        nonagon (-h | --help)
-       nonagon --version
+       nonagon (-v | --version)
 
 Options:
-	-h --help        Show this message.
-	--version        Show version.
-	-n --no-video    Ignore the video part.
+	-h --help       Show this message.
+	-v --version    Show version.
+
+	--no-video      Do not show the video.
+	--no-audio      Do not play the sound.
 ";
 
 fn main() {
@@ -54,6 +60,9 @@ fn main() {
 	let args = Docopt::new(USAGE).
 		and_then(|d| d.parse()).
 		unwrap_or_else(|e| e.exit());
+
+	let no_audio = args.get_bool("--no-audio");
+	let no_video = args.get_bool("--no-video");
 
 	let (a, v) = source::spawn(args.get_str("<input>"));
 
@@ -104,7 +113,10 @@ fn main() {
 			loop {
 				let next = audio.sync();
 
-				music.play(audio.frame());
+				if !no_audio {
+					music.play(audio.frame());
+				}
+
 				state.lock().unwrap().feed(audio.frame());
 
 				time::sleep((next * 1_000_000.0) as u32).unwrap();
@@ -113,43 +125,51 @@ fn main() {
 	}
 
 	let mut renderer = Renderer::new(&display);
+	renderer.resize(640, 360);
+
 	let mut previous = time::relative() as f64 / 1_000_000.0;
 	let mut lag      = 0.0;
 
 	'game: loop {
-		let mut state   = state.lock().unwrap();
-		let     current = time::relative() as f64 / 1_000_000.0;
-		let     elapsed = current - previous;
+		let mut current = time::relative() as f64 / 1_000_000.0;
+		let mut elapsed = current - previous;
+
+		// if the lag is smaller than granularity we wouldn't be doing anything, so
+		// sleep for about the left-over time
+		if lag + elapsed < GRANULARITY {
+			time::sleep(((GRANULARITY - lag + elapsed) * 1_000_000.0) as u32 - 1_000).unwrap();
+
+			current = time::relative() as f64 / 1_000_000.0;
+			elapsed = current - previous;
+		}
 
 		previous  = current;
 		lag      += elapsed;
+
+		let mut state = state.lock().unwrap();
 
 		for event in display.poll_events() {
 			match event {
 				Event::Awakened => (),
 				Event::Refresh  => (),
 
-				Event::Closed => {
-					break 'game;
-				},
+				Event::Closed | Event::KeyboardInput(Released, _, Some(Escape)) =>
+					break 'game,
 
-				Event::Resized(width, height) => {
-					debug!("resized: {}x{}", width, height);
-				},
+				Event::Resized(width, height) =>
+					renderer.resize(width, height),
 
-				Event::Moved(x, y) => {
-					debug!("moved: {}:{}", x, y);
-				},
+				Event::Moved(x, y) =>
+					debug!("moved: {}:{}", x, y),
 
-				Event::Focused(true) => {
-					debug!("focused");
-				},
+				Event::Focused(true) =>
+					debug!("focused"),
 
-				Event::Focused(false) => {
-					debug!("defocused");
-				},
+				Event::Focused(false) =>
+					debug!("defocused"),
 
-				event => state.handle(&event)
+				event =>
+					state.handle(&event)
 			}
 		}
 
@@ -166,10 +186,10 @@ fn main() {
 		sound.render(&state);
 
 		let mut target = display.draw();
-		target.clear_color(1.0, 1.0, 1.0, 1.0);
+		target.clear_all((1.0, 1.0, 1.0, 1.0), 1.0, 0);
 
 		renderer.render(&mut target, &state, video.as_ref().and_then(|v|
-			if args.get_bool("--no-video") || v.is_done() {
+			if no_video || v.is_done() {
 				None
 			}
 			else {
