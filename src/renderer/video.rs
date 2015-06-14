@@ -8,10 +8,11 @@ use glium::texture::ClientFormat::U8U8U8;
 use glium::{Program, Display, VertexBuffer, IndexBuffer, Surface, DrawParameters};
 use glium::BlendingFunction::Addition;
 use glium::LinearBlendingFactor::{SourceAlpha, OneMinusSourceAlpha};
-use glium::index::PrimitiveType;
+use glium::index::PrimitiveType::TriangleStrip;
 
 pub struct Video<'a> {
-	display:  &'a Display,
+	display: &'a Display,
+
 	program:  Program,
 	vertices: VertexBuffer<Vertex>,
 	indices:  IndexBuffer<u16>,
@@ -51,15 +52,14 @@ impl<'a> Video<'a> {
 			},
 		).unwrap();
 
-		let vertices = VertexBuffer::new(display,
-			vec![
-				Vertex { position: [-1.0, -1.0], texture: [0.0, 1.0] },
-				Vertex { position: [-1.0,  1.0], texture: [0.0, 0.0] },
-				Vertex { position: [ 1.0,  1.0], texture: [1.0, 0.0] },
-				Vertex { position: [ 1.0, -1.0], texture: [1.0, 1.0] }
-			]);
+		let vertices = VertexBuffer::new(display, vec![
+			Vertex { position: [-1.0, -1.0], texture: [0.0, 1.0] },
+			Vertex { position: [-1.0,  1.0], texture: [0.0, 0.0] },
+			Vertex { position: [ 1.0,  1.0], texture: [1.0, 0.0] },
+			Vertex { position: [ 1.0, -1.0], texture: [1.0, 1.0] },
+		]);
 
-		let indices = IndexBuffer::new(display, PrimitiveType::TriangleStrip, vec![1, 2, 0, 3]);
+		let indices = IndexBuffer::new(display, TriangleStrip, vec![1, 2, 0, 3]);
 
 		Video {
 			display: display,
