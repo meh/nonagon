@@ -6,8 +6,6 @@ authors = ["meh. <meh@schizofreni.co>"]
 license = "GPLv3"
 
 [dependencies]
-image = "*"
-
 log        = "*"
 env_logger = "*"
 
@@ -29,4 +27,6 @@ path = "../openal"
 
 [dependencies.glium]
 version  = "*"
-features = ["image", "nalgebra"]
+
+default-features = false
+features         = ["glutin", "nalgebra"]

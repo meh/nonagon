@@ -14,8 +14,6 @@ use glium::glutin::{self, Event};
 
 extern crate openal;
 
-extern crate image;
-
 extern crate nalgebra as na;
 
 extern crate docopt;
