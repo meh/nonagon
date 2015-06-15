@@ -2,6 +2,7 @@ pub mod cube;
 pub use self::cube::Cube;
 
 use glium::{Display, Surface};
+use na::Mat4;
 
 use ::game;
 
@@ -16,7 +17,10 @@ impl<'a> Ship<'a>{
 		}
 	}
 
-	pub fn render<T: Surface>(&mut self, target: &mut T, state: &game::Ship) {
-
+	pub fn render<T: Surface>(&mut self, target: &mut T, view: &Mat4<f32>, state: &game::Ship) {
+		match state.shape {
+			game::ship::Shape::Cube =>
+				self.cube.render(target, view, state),
+		}
 	}
 }
