@@ -10,6 +10,34 @@ use glium::BlendingFunction::Addition;
 use glium::LinearBlendingFactor::{SourceAlpha, OneMinusSourceAlpha};
 use glium::index::PrimitiveType::TriangleStrip;
 
+#[derive(Copy, Clone)]
+pub struct Vertex {
+	position: [f32; 2],
+	texture:  [f32; 2],
+}
+
+implement_vertex!(Vertex, position, texture);
+
+pub struct Texture<'a> {
+	data: &'a [u8],
+
+	width:  u32,
+	height: u32,
+}
+
+impl<'a> Texture2dDataSource<'a> for Texture<'a> {
+	type Data = u8;
+
+	fn into_raw(self) -> RawImage2d<'a, u8> {
+		RawImage2d {
+			data:   Cow::Borrowed(self.data),
+			width:  self.width,
+			height: self.height,
+			format: U8U8U8,
+		}
+	}
+}
+
 pub struct Video<'a> {
 	display: &'a Display,
 
@@ -90,33 +118,5 @@ impl<'a> Video<'a> {
 			}),
 
 			.. Default::default() }).unwrap();
-	}
-}
-
-#[derive(Copy, Clone)]
-pub struct Vertex {
-	position: [f32; 2],
-	texture:  [f32; 2],
-}
-
-implement_vertex!(Vertex, position, texture);
-
-pub struct Texture<'a> {
-	data: &'a [u8],
-
-	width:  u32,
-	height: u32,
-}
-
-impl<'a> Texture2dDataSource<'a> for Texture<'a> {
-	type Data = u8;
-
-	fn into_raw(self) -> RawImage2d<'a, u8> {
-		RawImage2d {
-			data:   Cow::Borrowed(self.data),
-			width:  self.width,
-			height: self.height,
-			format: U8U8U8,
-		}
 	}
 }
