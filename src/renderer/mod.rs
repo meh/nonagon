@@ -9,7 +9,7 @@ use self::ship::Ship;
 
 use na::{self, Persp3, Mat4, Vec3, Pnt3, Iso3, ToHomogeneous};
 
-use ::game;
+use game;
 
 pub struct Renderer<'a> {
 	display: &'a Display,
