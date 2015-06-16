@@ -5,10 +5,9 @@ use glium::LinearBlendingFactor::{SourceAlpha, OneMinusSourceAlpha};
 use glium::BackfaceCullingMode::CullClockWise;
 use glium::index::PrimitiveType::{TrianglesList, LinesList};
 
-use na::{self, Mat4, Vec3, Rot3, Iso3};
-
 use util::{deg, rgb};
 use game;
+use renderer::Scene;
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
@@ -38,7 +37,6 @@ impl<'a> Cube<'a> {
 						attribute vec3 position;
 
 						uniform mat4 mvp;
-						uniform vec4 color;
 
 						void main() {
 							gl_Position = mvp * vec4(position, 1.0);
@@ -120,14 +118,16 @@ impl<'a> Cube<'a> {
 		}
 	}
 
-	pub fn render<T: Surface>(&self, target: &mut T, view: &Mat4<f32>, state: &game::Ship) {
-		let model = Iso3::new_with_rotmat(Vec3::new(0.0, 0.0, -8.0),
-			Rot3::new_with_euler_angles(deg(50.0), deg(110.0), deg(120.0)));
+	pub fn render<T: Surface>(&self, target: &mut T, scene: &Scene, state: &game::Ship) {
+		let mvp = scene.to_mat() *
+			scene.position(state.position.x, state.position.y) *
+			scene.rotation(deg(50.0), deg(110.0), deg(120.0)) *
+			scene.scale(30.0);
 
 		// draw the faces
 		{
 			let uniforms = uniform! {
-				mvp:   *view * na::to_homogeneous(&model),
+				mvp:   mvp,
 				color: state.color,
 			};
 
@@ -148,7 +148,7 @@ impl<'a> Cube<'a> {
 		// draw the borders
 		{
 			let uniforms = uniform! {
-				mvp:   *view * na::to_homogeneous(&model),
+				mvp:   mvp,
 				color: rgb(0, 0, 0),
 			};
 
