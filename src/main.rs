@@ -93,10 +93,17 @@ fn main() {
 			v
 	};
 
+	let (width, height) = if video.is_some() && !no_video {
+		(640, 480)
+	}
+	else {
+		(480, 640)
+	};
+
 	let display = glutin::WindowBuilder::new()
 		.with_vsync()
 		.with_title(String::from("nonagon"))
-		.with_dimensions(640, 360)
+		.with_dimensions(width, height)
 		.build_glium()
 		.unwrap();
 
@@ -127,7 +134,7 @@ fn main() {
 	}
 
 	let mut renderer = Renderer::new(&display);
-	renderer.resize(640, 360);
+	renderer.resize(width, height);
 
 	let mut previous = time::relative() as f64 / 1_000_000.0;
 	let mut lag      = 0.0;
