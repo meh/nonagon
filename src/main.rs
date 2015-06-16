@@ -128,7 +128,9 @@ fn main() {
 
 				state.lock().unwrap().feed(audio.frame());
 
-				time::sleep((next * 1_000_000.0) as u32).unwrap();
+				if next > 0.0 {
+					time::sleep((next * 1_000_000.0) as u32).unwrap();
+				}
 			}
 		});
 	}
