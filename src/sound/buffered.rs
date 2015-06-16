@@ -1,11 +1,9 @@
-use std::collections::VecDeque;
 use std::ops::Deref;
 
 use openal::{Error, Sample, Source, Buffer, source};
 
 pub struct Buffered {
-	source:  Source,
-	buffers: VecDeque<source::Buffer>,
+	source: Source,
 }
 
 impl Buffered {
@@ -13,7 +11,7 @@ impl Buffered {
 		let mut source = Source::new();
 		source.disable_looping();
 
-		Buffered { source: source, buffers: VecDeque::new() }
+		Buffered { source: source }
 	}
 
 	pub fn play(&mut self) {
@@ -23,13 +21,10 @@ impl Buffered {
 	}
 
 	pub fn queue<T: Sample>(&mut self, channels: u16, data: &[T], rate: u32) -> Result<usize, Error> {
-		for _ in 0 .. self.source.processed() {
-			self.buffers.pop_front();
-		}
+		self.source.clear();
+		self.source.push(channels, data, rate).unwrap();
 
-		self.buffers.push_back(self.source.queue(try!(Buffer::new(channels, data, rate))));
-
-		Ok(self.buffers.len())
+		Ok(self.source.queued())
 	}
 }
 
