@@ -10,6 +10,8 @@ use glium::BlendingFunction::Addition;
 use glium::LinearBlendingFactor::{SourceAlpha, OneMinusSourceAlpha};
 use glium::index::PrimitiveType::TriangleStrip;
 
+use renderer::Scene;
+
 #[derive(Copy, Clone)]
 pub struct Vertex {
 	position: [f32; 2],
@@ -98,7 +100,7 @@ impl<'a> Video<'a> {
 		}
 	}
 
-	pub fn render<T: Surface>(&self, target: &mut T, frame: &frame::Video) {
+	pub fn render<T: Surface>(&self, target: &mut T, scene: &Scene, frame: &frame::Video) {
 		let texture = SrgbTexture2d::new(self.display, Texture {
 			data: frame.data()[0],
 
