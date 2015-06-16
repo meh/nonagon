@@ -17,18 +17,16 @@ nalgebra = "*"
 ncollide = "*"
 
 [dependencies.ffmpeg]
-#version = "0.1"
-path = "../ffmpeg"
+git = "https://github.com/meh/rust-ffmpeg"
 
 default-features = false
 features         = ["codec", "format", "software-scaling", "software-resampling"]
 
 [dependencies.openal]
-#version = "0.1"
-path = "../openal"
+git = "https://github.com/meh/rust-openal"
 
 [dependencies.glium]
-version  = "*"
+git = "https://github.com/tomaka/glium"
 
 default-features = false
 features         = ["glutin", "image", "nalgebra"]
