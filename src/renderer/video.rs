@@ -12,34 +12,6 @@ use glium::index::PrimitiveType::TriangleStrip;
 
 use renderer::Scene;
 
-#[derive(Copy, Clone)]
-pub struct Vertex {
-	position: [f32; 2],
-	texture:  [f32; 2],
-}
-
-implement_vertex!(Vertex, position, texture);
-
-pub struct Texture<'a> {
-	data: &'a [u8],
-
-	width:  u32,
-	height: u32,
-}
-
-impl<'a> Texture2dDataSource<'a> for Texture<'a> {
-	type Data = u8;
-
-	fn into_raw(self) -> RawImage2d<'a, u8> {
-		RawImage2d {
-			data:   Cow::Borrowed(self.data),
-			width:  self.width,
-			height: self.height,
-			format: U8U8U8,
-		}
-	}
-}
-
 pub struct Video<'a> {
 	display: &'a Display,
 
@@ -101,12 +73,7 @@ impl<'a> Video<'a> {
 	}
 
 	pub fn render<T: Surface>(&self, target: &mut T, scene: &Scene, frame: &frame::Video) {
-		let texture = SrgbTexture2d::new(self.display, Texture {
-			data: frame.data()[0],
-
-			width:  frame.width(),
-			height: frame.height(),
-		});
+		let texture = Texture::new(self.display, frame);
 
 		let uniforms = uniform! {
 			alpha: 0.8,
@@ -120,5 +87,44 @@ impl<'a> Video<'a> {
 			}),
 
 			.. Default::default() }).unwrap();
+	}
+}
+
+#[derive(Copy, Clone)]
+pub struct Vertex {
+	position: [f32; 2],
+	texture:  [f32; 2],
+}
+
+implement_vertex!(Vertex, position, texture);
+
+pub struct Texture<'a> {
+	data: &'a [u8],
+
+	width:  u32,
+	height: u32,
+}
+
+impl<'a> Texture<'a> {
+	pub fn new(display: &Display, frame: &frame::Video) -> SrgbTexture2d {
+		SrgbTexture2d::new(display, Texture {
+			data: frame.data()[0],
+
+			width:  frame.width(),
+			height: frame.height(),
+		})
+	}
+}
+
+impl<'a> Texture2dDataSource<'a> for Texture<'a> {
+	type Data = u8;
+
+	fn into_raw(self) -> RawImage2d<'a, u8> {
+		RawImage2d {
+			data:   Cow::Borrowed(self.data),
+			width:  self.width,
+			height: self.height,
+			format: U8U8U8,
+		}
 	}
 }
