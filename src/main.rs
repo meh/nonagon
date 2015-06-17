@@ -157,8 +157,6 @@ fn main() {
 		previous  = current;
 		lag      += elapsed;
 
-		let mut state = state.lock().unwrap();
-
 		for event in display.poll_events() {
 			match event {
 				Event::Awakened => (),
@@ -180,7 +178,7 @@ fn main() {
 					debug!("defocused"),
 
 				event =>
-					state.handle(&event)
+					state.lock().unwrap().handle(&event)
 			}
 		}
 
@@ -189,17 +187,17 @@ fn main() {
 				video.sync();
 			}
 
-			state.update();
+			state.lock().unwrap().update();
 
 			lag -= GRANULARITY;
 		}
 
-		sound.render(&state);
+		sound.render(&state.lock().unwrap());
 
 		let mut target = display.draw();
 		target.clear_all((1.0, 1.0, 1.0, 1.0), 1.0, 0);
 
-		renderer.render(&mut target, &state, video.as_ref().and_then(|v|
+		renderer.render(&mut target, &state.lock().unwrap(), video.as_ref().and_then(|v|
 			if no_video || v.is_done() {
 				None
 			}
