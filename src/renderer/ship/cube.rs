@@ -9,13 +9,6 @@ use util::{deg, rgb};
 use game;
 use renderer::Scene;
 
-#[derive(Copy, Clone)]
-pub struct Vertex {
-	position: [f32; 3],
-}
-
-implement_vertex!(Vertex, position);
-
 pub struct Cube<'a> {
 	display: &'a Display,
 
@@ -162,3 +155,10 @@ impl<'a> Cube<'a> {
 		}
 	}
 }
+
+#[derive(Copy, Clone)]
+pub struct Vertex {
+	position: [f32; 3],
+}
+
+implement_vertex!(Vertex, position);
