@@ -99,8 +99,16 @@ impl Video {
 		}
 	}
 
-	pub fn details(&self) -> &Details {
-		&self.details
+	pub fn format(&self) -> format::Pixel {
+		self.details.format
+	}
+
+	pub fn width(&self) -> u32 {
+		self.details.width
+	}
+
+	pub fn height(&self) -> u32 {
+		self.details.height
 	}
 
 	pub fn is_done(&self) -> bool {
