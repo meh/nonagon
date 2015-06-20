@@ -1,6 +1,5 @@
 use ffmpeg::frame;
-
-use super::Buffered;
+use openal::source::{self, Source, Buffered};
 
 pub struct Music {
 	source:    Buffered,
@@ -9,8 +8,11 @@ pub struct Music {
 
 impl Music {
 	pub fn new() -> Self {
+		let mut source = Source::new().buffered();
+		source.disable_looping();
+
 		Music {
-			source:    Buffered::new(),
+			source:    source,
 			timestamp: -1,
 		}
 	}
@@ -22,7 +24,10 @@ impl Music {
 
 		self.timestamp = frame.timestamp().unwrap();
 
-		self.source.queue(frame.channels(), frame.plane::<i16>(0), frame.rate()).unwrap();
-		self.source.play();
+		self.source.push(frame.channels(), frame.plane::<i16>(0), frame.rate()).unwrap();
+
+		if self.source.state() != source::State::Playing {
+			self.source.play();
+		}
 	}
 }
