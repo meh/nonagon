@@ -1,4 +1,4 @@
-use na::{self, Ortho3, Mat4, Vec3, Pnt3, Iso3, Rot3};
+use na::{self, Ortho3, Mat4, Vec3, Iso3, Rot3};
 
 pub struct Scene {
 	width:  u32,
