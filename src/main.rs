@@ -10,6 +10,7 @@ use ffmpeg::time;
 #[macro_use]
 extern crate glium;
 use glium::{DisplayBuild, Surface};
+use glium::SwapBuffersError::ContextLost;
 use glium::glutin::{self, Event};
 use glium::glutin::ElementState::Released;
 use glium::glutin::VirtualKeyCode::Escape;
@@ -94,7 +95,7 @@ fn main() {
 			v
 	};
 
-	let (width, height) = {
+	let (mut width, mut height) = {
 		let (width, height) = get_primary_monitor().get_dimensions();
 
 		match video.as_ref() {
@@ -180,8 +181,12 @@ fn main() {
 				Event::Closed | Event::KeyboardInput(Released, _, Some(Escape)) =>
 					break 'game,
 
-				Event::Resized(width, height) =>
-					renderer.resize(width, height),
+				Event::Resized(w, h) => {
+					width  = w;
+					height = h;
+
+					renderer.resize(width, height);
+				},
 
 				Event::Moved(x, y) =>
 					debug!("moved: {}:{}", x, y),
@@ -220,6 +225,13 @@ fn main() {
 				Some(v.frame())
 			}));
 
-		target.finish();
+		match target.finish() {
+			Err(ContextLost) => {
+				renderer = Renderer::new(&display);
+				renderer.resize(width, height);
+			},
+
+			Ok(..) => ()
+		}
 	}
 }
