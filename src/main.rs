@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_variables)]
 
 use std::process::exit;
 use std::thread;
@@ -13,6 +13,7 @@ use glium::{DisplayBuild, Surface};
 use glium::glutin::{self, Event};
 use glium::glutin::ElementState::Released;
 use glium::glutin::VirtualKeyCode::Escape;
+use glium::glutin::get_primary_monitor;
 
 extern crate openal;
 
@@ -93,11 +94,24 @@ fn main() {
 			v
 	};
 
-	let (width, height) = if video.is_some() && !no_video {
-		(640, 480)
-	}
-	else {
-		(480, 640)
+	let (width, height) = {
+		let (width, height) = get_primary_monitor().get_dimensions();
+
+		match video.as_ref() {
+			Some(video) if !no_video => {
+				let w: u32 = width - 300;
+				let h: u32 = w * video.height() / video.width();
+
+				(w, h)
+			},
+
+			_ => {
+				let h: u32 = height - 100;
+				let w: u32 = h * 480 / 640;
+
+				(w, h)
+			}
+		}
 	};
 
 	let display = glutin::WindowBuilder::new()
