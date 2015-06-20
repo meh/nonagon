@@ -13,7 +13,8 @@ pub type D = super::Decoder<Details, frame::Audio>;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Details {
-	pub format:   format::Sample,
+	pub format: format::Sample,
+
 	pub rate:     u32,
 	pub channels: u16,
 
@@ -99,8 +100,16 @@ impl Audio {
 		}
 	}
 
-	pub fn details(&self) -> &Details {
-		&self.details
+	pub fn format(&self) -> format::Sample {
+		self.details.format
+	}
+
+	pub fn rate(&self) -> u32 {
+		self.details.rate
+	}
+
+	pub fn channels(&self) -> u16 {
+		self.details.channels
 	}
 
 	pub fn is_done(&self) -> bool {
