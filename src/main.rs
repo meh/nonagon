@@ -118,6 +118,7 @@ fn main() {
 	let display = glutin::WindowBuilder::new()
 		.with_title(String::from("nonagon"))
 		.with_dimensions(width, height)
+		.with_srgb(Some(true))
 		.with_depth_buffer(24)
 		.with_vsync()
 		.build_glium()
