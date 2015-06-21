@@ -5,9 +5,8 @@ use ffmpeg::frame;
 
 use glium::texture::{Texture2dDataSource, RawImage2d, SrgbTexture2d};
 use glium::texture::ClientFormat::U8U8U8;
-use glium::{Program, Display, VertexBuffer, IndexBuffer, Surface, DrawParameters};
-use glium::BlendingFunction::Addition;
-use glium::LinearBlendingFactor::{SourceAlpha, OneMinusSourceAlpha};
+use glium::texture::MipmapsOption::NoMipmap;
+use glium::{Program, Display, VertexBuffer, IndexBuffer, Surface};
 use glium::index::PrimitiveType::TriangleStrip;
 
 use renderer::Scene;
@@ -41,14 +40,10 @@ impl<'a> Video<'a> {
 				fragment: "
 					#version 110
 					uniform sampler2D tex;
-					uniform float alpha;
 					varying vec2 v_texture;
 
 					void main() {
-						vec4 color = texture2D(tex, v_texture);
-						color.a = alpha;
-
-						gl_FragColor = color;
+						gl_FragColor = texture2D(tex, v_texture);
 					}
 				",
 			},
@@ -76,17 +71,10 @@ impl<'a> Video<'a> {
 		let texture = Texture::new(self.display, frame);
 
 		let uniforms = uniform! {
-			alpha: 0.8,
-			tex:   &texture
+			tex: &texture
 		};
 
-		target.draw(&self.vertices, &self.indices, &self.program, &uniforms, &DrawParameters {
-			blending_function: Some(Addition {
-				source:      SourceAlpha,
-				destination: OneMinusSourceAlpha
-			}),
-
-			.. Default::default() }).unwrap();
+		target.draw(&self.vertices, &self.indices, &self.program, &uniforms, &Default::default()).unwrap();
 	}
 }
 
@@ -107,12 +95,12 @@ pub struct Texture<'a> {
 
 impl<'a> Texture<'a> {
 	pub fn new(display: &Display, frame: &frame::Video) -> SrgbTexture2d {
-		SrgbTexture2d::new(display, Texture {
+		SrgbTexture2d::with_mipmaps(display, Texture {
 			data: frame.data()[0],
 
 			width:  frame.width(),
 			height: frame.height(),
-		})
+		}, NoMipmap)
 	}
 }
 
