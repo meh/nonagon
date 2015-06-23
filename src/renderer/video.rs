@@ -67,7 +67,7 @@ impl<'a> Video<'a> {
 		}
 	}
 
-	pub fn render<T: Surface>(&self, target: &mut T, scene: &Scene, frame: &frame::Video) {
+	pub fn render<T: Surface>(&mut self, target: &mut T, scene: &Scene, frame: &frame::Video) {
 		let texture = Texture::new(self.display, frame);
 
 		let uniforms = uniform! {

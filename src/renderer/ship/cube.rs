@@ -111,7 +111,7 @@ impl<'a> Cube<'a> {
 		}
 	}
 
-	pub fn render<T: Surface>(&self, target: &mut T, scene: &Scene, state: &game::Ship) {
+	pub fn render<T: Surface>(&mut self, target: &mut T, scene: &Scene, state: &game::Ship) {
 		let mvp = scene.to_mat() *
 			scene.position(state.position.x, state.position.y) *
 			scene.rotation(deg(50.0), deg(110.0), deg(120.0)) *
