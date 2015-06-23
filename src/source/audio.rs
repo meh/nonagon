@@ -73,8 +73,14 @@ impl Audio {
 								channel.send(Decoder::Frame(frame)).unwrap();
 							},
 
-							Ok(false)  => (),
-							Err(error) => channel.send(Decoder::Error(error)).unwrap(),
+							Ok(false) =>
+								(),
+
+							Err(Error::Eof) =>
+								break,
+
+							Err(error) =>
+								channel.send(Decoder::Error(error)).unwrap(),
 						},
 
 					Reader::End(..) =>
@@ -92,8 +98,8 @@ impl Audio {
 		Audio {
 			done:    false,
 			time:    time::relative(),
-			current: get(&channel).unwrap(),
-			next:    get(&channel).unwrap(),
+			current: get(&channel).unwrap().unwrap(),
+			next:    get(&channel).unwrap().unwrap(),
 
 			channel: channel,
 			details: details,
@@ -125,16 +131,14 @@ impl Audio {
 		let pts:  f64 = self.next.timestamp().unwrap_or(0) as f64 * self.details.time_base;
 
 		if time > pts {
-			match try(&self.channel) {
-				Some(Ok(frame)) => {
+			if let Some(result) = try(&self.channel) {
+				if let Some(frame) = result.unwrap() {
 					mem::swap(&mut self.current, &mut self.next);
 					self.next = frame;
-				},
-
-				Some(Err(Error::Eof)) =>
-					self.done = true,
-
-				_ => ()
+				}
+				else {
+					self.done = true;
+				}
 			}
 
 			0.0

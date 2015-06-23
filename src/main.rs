@@ -53,8 +53,8 @@ Options:
 	-h --help       Show this message.
 	-v --version    Show version.
 
-	--no-video      Do not show the video.
-	--no-audio      Do not play the sound.
+	-a --audio-only    Do not show the video.
+	-m --mute          Do not play the sound.
 ";
 
 fn main() {
@@ -65,10 +65,7 @@ fn main() {
 		and_then(|d| d.parse()).
 		unwrap_or_else(|e| e.exit());
 
-	let no_audio = args.get_bool("--no-audio");
-	let no_video = args.get_bool("--no-video");
-
-	let (a, v) = source::spawn(args.get_str("<input>"));
+	let (a, v) = source::spawn(args.get_str("<input>"), args.get_bool("--audio-only"));
 
 	let mut audio = match a {
 		Err(error) => {
@@ -98,20 +95,17 @@ fn main() {
 	let (mut width, mut height) = {
 		let (width, height) = get_primary_monitor().get_dimensions();
 
-		match video.as_ref() {
-			Some(video) if !no_video => {
-				let w: u32 = width - 300;
-				let h: u32 = w * video.height() / video.width();
+		if let Some(video) = video.as_ref() {
+			let w: u32 = width - 300;
+			let h: u32 = w * video.height() / video.width();
 
-				(w, h)
-			},
+			(w, h)
+		}
+		else {
+			let h: u32 = height - 100;
+			let w: u32 = h * 480 / 640;
 
-			_ => {
-				let h: u32 = height - 100;
-				let w: u32 = h * 480 / 640;
-
-				(w, h)
-			}
+			(w, h)
 		}
 	};
 
@@ -139,7 +133,7 @@ fn main() {
 			loop {
 				let next = audio.sync();
 
-				if !no_audio {
+				if args.get_bool("--mute") {
 					music.play(audio.frame());
 				}
 
@@ -219,7 +213,7 @@ fn main() {
 		target.clear_all((1.0, 1.0, 1.0, 1.0), 1.0, 0);
 
 		renderer.render(&mut target, &state.lock().unwrap(), video.as_ref().and_then(|v|
-			if no_video || v.is_done() {
+			if v.is_done() {
 				None
 			}
 			else {

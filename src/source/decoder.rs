@@ -1,4 +1,5 @@
 use std::sync::mpsc::{SyncSender, Receiver};
+use std::sync::mpsc::TryRecvError::Empty;
 
 use ffmpeg::Error;
 
@@ -9,38 +10,43 @@ pub enum Decoder<T, U> {
 	End(SyncSender<Decoder<T, U>>),
 }
 
-pub fn get<T, U>(channel: &Receiver<Decoder<T, U>>) -> Result<U, Error> {
-	loop {
-		match channel.recv() {
-			Ok(Decoder::Frame(frame)) =>
-				return Ok(frame),
+pub fn get<T, U>(channel: &Receiver<Decoder<T, U>>) -> Result<Option<U>, Error> {
+	match channel.recv() {
+		Ok(Decoder::Frame(frame)) =>
+			Ok(Some(frame)),
 
-			Ok(Decoder::Error(error)) => {
-				debug!("{:?}", error);
-				continue;
-			},
+		Ok(Decoder::End(..)) =>
+			Ok(None),
 
-			Ok(Decoder::End(..)) =>
-				return Err(Error::Eof),
+		Ok(Decoder::Error(error)) =>
+			Err(error),
 
-			_ =>
-				return Err(Error::Bug)
-		}
+		Ok(Decoder::Start(..)) =>
+			Err(Error::Bug),
+
+		Err(..) =>
+			Err(Error::Bug)
 	}
 }
 
-pub fn try<T, U>(channel: &Receiver<Decoder<T, U>>) -> Option<Result<U, Error>> {
+pub fn try<T, U>(channel: &Receiver<Decoder<T, U>>) -> Option<Result<Option<U>, Error>> {
 	match channel.try_recv() {
 		Ok(Decoder::Frame(frame)) =>
-			Some(Ok(frame)),
+			Some(Ok(Some(frame))),
+
+		Ok(Decoder::End(..)) =>
+			Some(Ok(None)),
+
+		Err(Empty) =>
+			None,
+
+		Ok(Decoder::Start(..)) =>
+			Some(Err(Error::Bug)),
 
 		Ok(Decoder::Error(error)) =>
 			Some(Err(error)),
 
-		Ok(Decoder::End(..)) =>
-			Some(Err(Error::Eof)),
-
-		_ =>
-			None
+		Err(..) =>
+			Some(Err(Error::Bug))
 	}
 }

@@ -1,7 +1,7 @@
 use std::sync::mpsc::{SyncSender, sync_channel};
 use std::thread;
-use log::LogLevel;
 
+use log::LogLevel;
 use ffmpeg::{format, media, Error, Packet};
 
 pub mod decoder;
@@ -21,7 +21,7 @@ pub enum Reader {
 	End(SyncSender<Reader>),
 }
 
-pub fn spawn(path: &str) -> (Result<Option<Audio>, Error>, Result<Option<Video>, Error>) {
+pub fn spawn(path: &str, no_video: bool) -> (Result<Option<Audio>, Error>, Result<Option<Video>, Error>) {
 	let path = path.to_string();
 
 	let (video_sender, video_receiver) = sync_channel(FRAMES);
@@ -45,43 +45,49 @@ pub fn spawn(path: &str) -> (Result<Option<Audio>, Error>, Result<Option<Video>,
 		}
 		
 		// audio decoder
-		let audio = if let Some(stream) = context.streams().find(|s| s.codec().medium() == media::Type::Audio) {
-			let codec = match stream.codec().decoder().and_then(|c| c.audio()) {
-				Ok(codec) =>
-					codec,
+		let audio = match context.streams().find(|s| s.codec().medium() == media::Type::Audio) {
+			Some(ref stream) => {
+				let codec = match stream.codec().decoder().and_then(|c| c.audio()) {
+					Ok(codec) =>
+						codec,
 
-				Err(error) => {
-					Audio::error(&audio_sender, error);
-					return;
-				}
-			};
+					Err(error) => {
+						Audio::error(&audio_sender, error);
+						return;
+					}
+				};
 
-			Some((Audio::spawn(codec, &stream, audio_sender), stream.index()))
-		}
-		else {
-			Audio::none(&audio_sender);
+				Some((Audio::spawn(codec, &stream, audio_sender), stream.index()))
+			},
 
-			None
+			_ => {
+				Audio::none(&audio_sender);
+
+				None
+			}
 		};
 
 		// video decoder
-		let video = if let Some(stream) = context.streams().find(|s| s.codec().medium() == media::Type::Video) {
-			let codec = match stream.codec().decoder().and_then(|c| c.video()) {
-				Ok(codec) =>
-					codec,
+		let video = match context.streams().find(|s| s.codec().medium() == media::Type::Video) {
+			Some(ref stream) if !no_video => {
+				let codec = match stream.codec().decoder().and_then(|c| c.video()) {
+					Ok(codec) =>
+						codec,
 
-				Err(error) => {
-					Video::error(&video_sender, error);
-					return;
-				}
-			};
+					Err(error) => {
+						Video::error(&video_sender, error);
+						return;
+					}
+				};
 
-			Some((Video::spawn(codec, &stream, video_sender), stream.index()))
-		}
-		else {
-			Video::none(&video_sender);
+				Some((Video::spawn(codec, &stream, video_sender), stream.index()))
+			},
 
-			None
+			_ => {
+				Video::none(&video_sender);
+
+				None
+			}
 		};
 
 		for (stream, packet) in context.packets() {
