@@ -159,10 +159,14 @@ fn main() {
 		// if the lag is smaller than granularity we wouldn't be doing anything, so
 		// sleep for about the left-over time
 		if lag + elapsed < GRANULARITY {
-			time::sleep(((GRANULARITY - lag + elapsed) * 1_000_000.0) as u32 - 1_000).unwrap();
+			let time = ((GRANULARITY - lag + elapsed) * 1_000_000.0) as u32;
 
-			current = time::relative() as f64 / 1_000_000.0;
-			elapsed = current - previous;
+			if time > 5_000 {
+				time::sleep(time - 5_000).unwrap();
+
+				current = time::relative() as f64 / 1_000_000.0;
+				elapsed = current - previous;
+			}
 		}
 
 		previous  = current;
