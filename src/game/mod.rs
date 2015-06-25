@@ -1,8 +1,17 @@
 pub mod position;
 pub use self::position::Position;
 
+pub mod direction;
+pub use self::direction::Direction;
+
+pub mod velocity;
+pub use self::velocity::Velocity;
+
 pub mod state;
 pub use self::state::State;
 
 pub mod ship;
 pub use self::ship::Ship;
+
+pub mod bullet;
+pub use self::bullet::Bullet;

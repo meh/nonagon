@@ -115,7 +115,7 @@ impl<'a> Cube<'a> {
 		let mvp = scene.to_mat() *
 			scene.position(state.position.x, state.position.y) *
 			scene.rotation(deg(50.0), deg(110.0), deg(120.0)) *
-			scene.scale(30.0);
+			scene.scale(12.5);
 
 		// draw the faces
 		{

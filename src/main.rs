@@ -5,7 +5,7 @@ use std::thread;
 use std::sync::{Arc, Mutex};
 
 extern crate ffmpeg;
-use ffmpeg::time;
+use ffmpeg::{time, Rational};
 
 #[macro_use]
 extern crate glium;
@@ -92,20 +92,20 @@ fn main() {
 			v
 	};
 
-	let (mut width, mut height) = {
+	let (mut width, mut height, aspect) = {
 		let (width, height) = get_primary_monitor().get_dimensions();
 
 		if let Some(video) = video.as_ref() {
 			let w: u32 = width - 300;
 			let h: u32 = w * video.height() / video.width();
 
-			(w, h)
+			(w, h, Rational::new(video.width() as i32, video.height() as i32).reduce())
 		}
 		else {
 			let h: u32 = height - 100;
 			let w: u32 = h * 480 / 640;
 
-			(w, h)
+			(w, h, Rational::new(480, 640).reduce())
 		}
 	};
 
@@ -123,7 +123,7 @@ fn main() {
 		exit(3);
 	});
 
-	let state = Arc::new(Mutex::new(State::new()));
+	let state = Arc::new(Mutex::new(State::new(aspect)));
 
 	{
 		let     state = state.clone();
@@ -146,7 +146,7 @@ fn main() {
 		});
 	}
 
-	let mut renderer = Renderer::new(&display);
+	let mut renderer = Renderer::new(&display, aspect);
 	renderer.resize(width, height);
 
 	let mut previous = time::relative() as f64 / 1_000_000.0;
@@ -222,7 +222,7 @@ fn main() {
 
 		match target.finish() {
 			Err(ContextLost) => {
-				renderer = Renderer::new(&display);
+				renderer = Renderer::new(&display, aspect);
 				renderer.resize(width, height);
 			},
 
