@@ -1,14 +1,12 @@
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
-pub struct Position {
-	pub x: u16,
-	pub y: u16,
-}
+pub struct Position(pub u16, pub u16);
 
 impl Position {
-	pub fn new(x: u16, y: u16) -> Position {
-		Position {
-			x: x,
-			y: y,
-		}
+	pub fn x(&self) -> u16 {
+		self.0
+	}
+
+	pub fn y(&self) -> u16 {
+		self.1
 	}
 }

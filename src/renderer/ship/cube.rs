@@ -5,7 +5,7 @@ use glium::LinearBlendingFactor::{SourceAlpha, OneMinusSourceAlpha};
 use glium::BackfaceCullingMode::CullClockWise;
 use glium::index::PrimitiveType::{TrianglesList, LinesList};
 
-use util::{deg, rgb};
+use util::rgb;
 use game;
 use renderer::Scene;
 
@@ -113,8 +113,8 @@ impl<'a> Cube<'a> {
 
 	pub fn render<T: Surface>(&mut self, target: &mut T, scene: &Scene, state: &game::Ship) {
 		let mvp = scene.to_mat() *
-			scene.position(state.position.x, state.position.y) *
-			scene.rotation(deg(50.0), deg(110.0), deg(120.0)) *
+			scene.position(state.position) *
+			scene.orientation(state.orientation) *
 			scene.scale(12.5);
 
 		// draw the faces

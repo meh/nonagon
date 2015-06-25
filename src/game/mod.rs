@@ -4,6 +4,9 @@ pub use self::position::Position;
 pub mod direction;
 pub use self::direction::Direction;
 
+pub mod orientation;
+pub use self::orientation::Orientation;
+
 pub mod velocity;
 pub use self::velocity::Velocity;
 
