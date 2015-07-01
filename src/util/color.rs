@@ -16,6 +16,12 @@ impl Color {
 	}
 }
 
+impl Default for Color {
+	fn default() -> Color {
+		Color(Rgba { data: [0, 0, 0, 255] })
+	}
+}
+
 impl Deref for Color {
 	type Target = Rgba<u8>;
 
