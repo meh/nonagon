@@ -3,6 +3,7 @@
 use std::process::exit;
 use std::thread;
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc::channel;
 
 extern crate ffmpeg;
 use ffmpeg::{time, Rational};
@@ -29,6 +30,9 @@ use docopt::Docopt;
 extern crate log;
 extern crate env_logger;
 
+#[macro_use]
+mod util;
+
 mod source;
 
 mod game;
@@ -39,8 +43,6 @@ use sound::Sound;
 
 mod renderer;
 use renderer::Renderer;
-
-mod util;
 
 const GRANULARITY: f64 = 0.015;
 
@@ -118,23 +120,25 @@ fn main() {
 		.build_glium()
 		.unwrap();
 
-	let mut sound = Sound::new().unwrap_or_else(|err| {
+	let sound = Arc::new(Mutex::new(Sound::new().unwrap_or_else(|err| {
 		println!("error: sound: {}", err);
 		exit(3);
-	});
+	})));
 
 	let state = Arc::new(Mutex::new(State::new(aspect)));
 
-	{
-		let     state = state.clone();
-		let mut music = sound.music();
+	let music = {
+		let state = state.clone();
+		let sound = sound.clone();
 
-		thread::spawn(move || {
+		let (sender, receiver) = channel();
+
+		(sender, thread::spawn(move || {
 			loop {
 				let next = audio.sync();
 
-				if args.get_bool("--mute") {
-					music.play(audio.frame());
+				if !args.get_bool("--mute") {
+					sound.lock().unwrap().play(audio.frame());
 				}
 
 				state.lock().unwrap().feed(audio.frame());
@@ -142,9 +146,13 @@ fn main() {
 				if next > 0.0 {
 					time::sleep((next * 1_000_000.0) as u32).unwrap();
 				}
+
+				if audio.is_done() || receiver.try_recv().is_ok() {
+					break;
+				}
 			}
-		});
-	}
+		}))
+	};
 
 	let mut renderer = Renderer::new(&display, aspect);
 	renderer.resize(width, height);
@@ -211,7 +219,7 @@ fn main() {
 			lag -= GRANULARITY;
 		}
 
-		sound.render(&state.lock().unwrap());
+		sound.lock().unwrap().render(&state.lock().unwrap());
 
 		let mut target = display.draw();
 		target.clear_all((1.0, 1.0, 1.0, 1.0), 1.0, 0);
@@ -233,4 +241,7 @@ fn main() {
 			Ok(..) => ()
 		}
 	}
+
+	music.0.send(()).unwrap();
+	music.1.join().unwrap();
 }
