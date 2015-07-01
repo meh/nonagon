@@ -69,7 +69,7 @@ impl Video {
 								frame.clone_from(&decoded);
 								converter.run(&decoded, &mut frame).unwrap();
 
-								channel.send(Decoder::Frame(frame)).unwrap();
+								ret!(channel.send(Decoder::Frame(frame)));
 							},
 
 							Ok(false) =>
@@ -79,7 +79,7 @@ impl Video {
 								break,
 
 							Err(error) =>
-								channel.send(Decoder::Error(error)).unwrap(),
+								ret!(channel.send(Decoder::Error(error))),
 						},
 
 					Reader::End(..) =>
@@ -87,7 +87,7 @@ impl Video {
 				}
 			}
 
-			channel.send(Decoder::End(channel.clone())).unwrap();
+			ret!(channel.send(Decoder::End(channel.clone())));
 		});
 
 		sender

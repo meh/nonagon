@@ -70,7 +70,7 @@ impl Audio {
 								frame.clone_from(&decoded);
 								resampler.run(&decoded, &mut frame).unwrap();
 
-								channel.send(Decoder::Frame(frame)).unwrap();
+								ret!(channel.send(Decoder::Frame(frame)));
 							},
 
 							Ok(false) =>
@@ -80,7 +80,7 @@ impl Audio {
 								break,
 
 							Err(error) =>
-								channel.send(Decoder::Error(error)).unwrap(),
+								ret!(channel.send(Decoder::Error(error))),
 						},
 
 					Reader::End(..) =>
@@ -88,7 +88,7 @@ impl Audio {
 				}
 			}
 
-			channel.send(Decoder::End(channel.clone())).unwrap();
+			ret!(channel.send(Decoder::End(channel.clone())));
 		});
 
 		sender

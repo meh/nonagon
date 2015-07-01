@@ -93,23 +93,23 @@ pub fn spawn(path: &str, no_video: bool) -> (Result<Option<Audio>, Error>, Resul
 		for (stream, packet) in context.packets() {
 			if let Some((ref channel, index)) = video {
 				if stream.index() == index {
-					channel.send(Reader::Packet(packet.clone())).unwrap();
+					ret!(channel.send(Reader::Packet(packet.clone())));
 				}
 			}
 
 			if let Some((ref channel, index)) = audio {
 				if stream.index() == index {
-					channel.send(Reader::Packet(packet.clone())).unwrap();
+					ret!(channel.send(Reader::Packet(packet.clone())));
 				}
 			}
 		}
 
 		if let Some((ref channel, _)) = video {
-			channel.send(Reader::End(channel.clone())).unwrap();
+			ret!(channel.send(Reader::End(channel.clone())));
 		}
 
 		if let Some((ref channel, _)) = audio {
-			channel.send(Reader::End(channel.clone())).unwrap();
+			ret!(channel.send(Reader::End(channel.clone())));
 		}
 	});
 
