@@ -1,7 +1,7 @@
 use na::{self, Ortho3, Mat4, Vec3, Iso3, Rot3};
 use ffmpeg::Rational;
 
-use game::{Orientation, Position};
+use game::{Orientation, Position, Aspect};
 use util::deg;
 
 pub struct Scene {
@@ -37,64 +37,39 @@ impl Scene {
 		self.aspect
 	}
 
-	pub fn is_vertical(&self) -> bool {
-		self.width < self.height
-	}
-
-	pub fn is_horizontal(&self) -> bool {
-		self.height < self.width
-	}
-
 	pub fn to_mat(&self) -> Mat4<f32> {
 		self.projection
 	}
 
 	pub fn position(&self, Position(x, y): Position) -> Mat4<f32> {
-		if self.is_horizontal() {
-			unimplemented!();
-		}
-		else {
-			// adapt the values to the standard 3:4 viewport
-			let x = x as f32 * self.width as f32 / 480.0;
-			let y = y as f32 * self.height as f32 / 640.0;
+		let x = x as f32 * self.width as f32 / self.aspect.width().unwrap() as f32;
+		let y = y as f32 * self.height as f32 / self.aspect.height().unwrap() as f32;
 
-			na::to_homogeneous(&Iso3::new(Vec3::new(
-				// if x is beyond half screen
-				if x > self.width as f32 / 2.0 {
-					// make it go from 0 to 240
-					-((self.width as f32 / 2.0) - x)
-				}
-				else {
-					// make it go from -240 to 0
-					x - self.width as f32 / 2.0
-				},
+		na::to_homogeneous(&Iso3::new(Vec3::new(
+			if x > self.width as f32 / 2.0 {
+				-((self.width as f32 / 2.0) - x)
+			}
+			else {
+				x - self.width as f32 / 2.0
+			},
 
-				// if y is beyond half screen
-				-if y > self.height as f32 / 2.0 {
-					// make it go from 0 to to 320
-					-((self.height as f32 / 2.0) - y)
-				}
-				else {
-					// make it go from -320 to 0
-					y - self.height as f32 / 2.0
-				},
+			-if y > self.height as f32 / 2.0 {
+				-((self.height as f32 / 2.0) - y)
+			}
+			else {
+				y - self.height as f32 / 2.0
+			},
 
-				// middle z because we're orthogonally projecting anyway
-				-50.0), na::zero()))
-		}
+			-50.0), na::zero()))
 	}
 
 	pub fn orientation(&self, orientation: Orientation) -> Mat4<f32> {
 		self.rotation(deg(orientation.roll), deg(orientation.pitch), deg(orientation.yaw))
 	}
 
-	pub fn scale(&self, mut factor: f32) -> Mat4<f32> {
-		if self.is_horizontal() {
-			unimplemented!();
-		}
-		else {
-			factor = (factor * self.width as f32 * self.height as f32) / (640.0 * 480.0);
-		}
+	pub fn scale(&self, factor: f32) -> Mat4<f32> {
+		let factor = (factor * self.width as f32 * self.height as f32) /
+			(self.aspect.width().unwrap() as f32 * self.aspect.height().unwrap() as f32);
 
 		Mat4::new(factor,    0.0,    0.0, 0.0,
 		             0.0, factor,    0.0, 0.0,
