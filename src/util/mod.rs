@@ -11,11 +11,3 @@ pub fn deg(v: f32) -> f32 {
 pub fn color<T: Into<Color>>(value: T) -> Color {
 	value.into()
 }
-
-pub fn rgb(r: u8, g: u8, b: u8) -> Color {
-	Color::rgb(r, g, b)
-}
-
-pub fn rgba(r: u8, g: u8, b: u8, a: u8) -> Color {
-	Color::rgba(r, g, b, a)
-}

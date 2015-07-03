@@ -61,6 +61,30 @@ impl From<(u8, u8, u8, u8)> for Color {
 	}
 }
 
+impl From<(u8, u8, u8, f32)> for Color {
+	fn from((r, g, b, a): (u8, u8, u8, f32)) -> Color {
+		Color::rgba(r, g, b, (a * 255) as u8)
+	}
+}
+
+impl From<(f32, f32, f32)> for Color {
+	fn from((r, g, b): (f32, f32, f32)) -> Color {
+		Color::rgb((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8)
+	}
+}
+
+impl From<(f32, f32, f32, u8)> for Color {
+	fn from((r, g, b, a): (f32, f32, f32, u8)) -> Color {
+		Color::rgba((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8, a)
+	}
+}
+
+impl From<(f32, f32, f32, f32)> for Color {
+	fn from((r, g, b, a): (u8, u8, u8, f32)) -> Color {
+		Color::rgba((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8, (a * 255.0) as u8)
+	}
+}
+
 impl<'a> From<&'a str> for Color {
 	fn from(hex: &'a str) -> Color {
 		let c = ::regex::Regex::new(r"^#([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})?$").unwrap().captures(hex).unwrap();
@@ -81,5 +105,16 @@ impl<'a> From<(&'a str, u8)> for Color {
 		let b = u8::from_str_radix(c.at(3).unwrap(), 16).unwrap();
 
 		Color::rgba(r, g, b, alpha)
+	}
+}
+
+impl<'a> From<(&'a str, f32)> for Color {
+	fn from((hex, alpha): (&'a str, u8)) -> Color {
+		let c = ::regex::Regex::new(r"^#([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})?$").unwrap().captures(hex).unwrap();
+		let r = u8::from_str_radix(c.at(1).unwrap(), 16).unwrap();
+		let g = u8::from_str_radix(c.at(2).unwrap(), 16).unwrap();
+		let b = u8::from_str_radix(c.at(3).unwrap(), 16).unwrap();
+
+		Color::rgba(r, g, b, (alpha * 255.0) as u8)
 	}
 }
