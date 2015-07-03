@@ -19,12 +19,15 @@ use glium::glutin::get_primary_monitor;
 
 extern crate openal;
 
-extern crate nalgebra as na;
-
 extern crate image;
+
+extern crate regex;
 
 extern crate docopt;
 use docopt::Docopt;
+
+extern crate nalgebra as na;
+extern crate ncollide as nc;
 
 #[macro_use]
 extern crate log;

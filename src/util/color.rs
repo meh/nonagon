@@ -48,3 +48,38 @@ impl AsUniformValue for Color {
 		ty == &UniformType::FloatVec4
 	}
 }
+
+impl From<(u8, u8, u8)> for Color {
+	fn from((r, g, b): (u8, u8, u8)) -> Color {
+		Color::rgb(r, g, b)
+	}
+}
+
+impl From<(u8, u8, u8, u8)> for Color {
+	fn from((r, g, b, a): (u8, u8, u8, u8)) -> Color {
+		Color::rgba(r, g, b, a)
+	}
+}
+
+impl<'a> From<&'a str> for Color {
+	fn from(hex: &'a str) -> Color {
+		let c = ::regex::Regex::new(r"^#([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})?$").unwrap().captures(hex).unwrap();
+		let r = u8::from_str_radix(c.at(1).unwrap(), 16).unwrap();
+		let g = u8::from_str_radix(c.at(2).unwrap(), 16).unwrap();
+		let b = u8::from_str_radix(c.at(3).unwrap(), 16).unwrap();
+		let a = c.at(4).map(|a| u8::from_str_radix(a, 16).unwrap()).unwrap_or(255);
+
+		Color::rgba(r, g, b, a)
+	}
+}
+
+impl<'a> From<(&'a str, u8)> for Color {
+	fn from((hex, alpha): (&'a str, u8)) -> Color {
+		let c = ::regex::Regex::new(r"^#([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})?$").unwrap().captures(hex).unwrap();
+		let r = u8::from_str_radix(c.at(1).unwrap(), 16).unwrap();
+		let g = u8::from_str_radix(c.at(2).unwrap(), 16).unwrap();
+		let b = u8::from_str_radix(c.at(3).unwrap(), 16).unwrap();
+
+		Color::rgba(r, g, b, alpha)
+	}
+}
