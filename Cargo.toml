@@ -13,6 +13,8 @@ docopt = "*"
 
 image = "*"
 
+regex = "*"
+
 nalgebra = "*"
 ncollide = "*"
 
@@ -23,10 +25,10 @@ default-features = false
 features         = ["codec", "format", "software-scaling", "software-resampling"]
 
 [dependencies.openal]
-git = "https://github.com/meh/rust-openal"
+version = "0.2"
 
 [dependencies.glium]
-git = "https://github.com/tomaka/glium"
+version = "0.6"
 
 default-features = false
 features         = ["glutin", "image", "nalgebra"]
