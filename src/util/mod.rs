@@ -1,10 +1,13 @@
 use std::path::{PathBuf};
 
 #[macro_use]
-pub mod macros;
+mod macros;
 
-pub mod color;
+mod color;
 pub use self::color::{Color, Parse};
+
+pub mod aspect;
+pub use self::aspect::Aspect;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Fill {
