@@ -1,4 +1,4 @@
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Default, Debug)]
 pub struct Direction(pub i16, pub i16);
 
 impl Direction {
