@@ -6,8 +6,9 @@ use glium::glutin::VirtualKeyCode as Key;
 
 use ffmpeg::{frame, Rational};
 
-use util::rgba;
-use super::{Position, Direction, Orientation};
+use util::{color, Fill};
+use config::Config;
+use super::{Position, Orientation, Aspect};
 use super::ship::{self, Ship};
 use super::bullet::{self, Bullet};
 
@@ -16,6 +17,7 @@ pub struct State {
 	pub enemies: Vec<Ship>,
 	pub bullets: Vec<Bullet>,
 
+	config: Config,
 	aspect: Rational,
 	keys:   HashSet<Key>,
 }
@@ -23,19 +25,34 @@ pub struct State {
 unsafe impl Sync for State { }
 
 impl State {
-	pub fn new(aspect: Rational) -> Self {
+	pub fn new(config: &Config, aspect: Rational) -> Self {
+		let position = match aspect {
+			Rational(3, 4) =>
+				Position(240, 610),
+
+			Rational(16, 9) =>
+				Position(180, 610),
+
+			_ =>
+				unreachable!()
+		};
+
 		State {
 			player: Ship {
-				shape:       ship::Shape::Cube,
-				position:    Position(0, 0),
-				direction:   Direction(0, 0),
-				orientation: Orientation{ roll: 50.0, pitch: 110.0, yaw: 120.0 },
-				color:       rgba(255, 0, 0, 220),
+				shape:  config.game().ship().shape(),
+				face:   config.game().ship().face().unwrap_or(Fill::from("#fff")),
+				border: config.game().ship().border().unwrap_or(Fill::from("#000")),
+
+				position:    position,
+				orientation: Orientation { roll: 45.0, pitch: 45.0, yaw: 0.0 },
+
+				.. Default::default()
 			},
 
 			enemies: Vec::new(),
 			bullets: Vec::new(),
 
+			config: config.clone(),
 			aspect: aspect.reduce(),
 			keys:   HashSet::new(),
 		}

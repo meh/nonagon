@@ -18,6 +18,8 @@ regex = "*"
 nalgebra = "*"
 ncollide = "*"
 
+toml = "*"
+
 [dependencies.ffmpeg]
 git = "https://github.com/meh/rust-ffmpeg"
 

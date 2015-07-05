@@ -49,72 +49,115 @@ impl AsUniformValue for Color {
 	}
 }
 
-impl From<(u8, u8, u8)> for Color {
-	fn from((r, g, b): (u8, u8, u8)) -> Color {
-		Color::rgb(r, g, b)
+pub trait Parse {
+	fn parse(value: Self) -> Result<Color, &'static str>;
+}
+
+impl Parse for (u8, u8, u8) {
+	fn parse((r, g, b): (u8, u8, u8)) -> Result<Color, &'static str> {
+		Ok(Color::rgb(r, g, b))
 	}
 }
 
-impl From<(u8, u8, u8, u8)> for Color {
-	fn from((r, g, b, a): (u8, u8, u8, u8)) -> Color {
-		Color::rgba(r, g, b, a)
+impl Parse for (u8, u8, u8, u8) {
+	fn parse((r, g, b, a): (u8, u8, u8, u8)) -> Result<Color, &'static str> {
+		Ok(Color::rgba(r, g, b, a))
 	}
 }
 
-impl From<(u8, u8, u8, f32)> for Color {
-	fn from((r, g, b, a): (u8, u8, u8, f32)) -> Color {
-		Color::rgba(r, g, b, (a * 255) as u8)
+impl Parse for (u8, u8, u8, f32) {
+	fn parse((r, g, b, a): (u8, u8, u8, f32)) -> Result<Color, &'static str> {
+		if a < 0.0 || a > 1.0 {
+			Err("value out of range")
+		}
+		else {
+			Ok(Color::rgba(r, g, b, (a * 255.0) as u8))
+		}
 	}
 }
 
-impl From<(f32, f32, f32)> for Color {
-	fn from((r, g, b): (f32, f32, f32)) -> Color {
-		Color::rgb((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8)
+impl Parse for (f32, f32, f32) {
+	fn parse((r, g, b): (f32, f32, f32)) -> Result<Color, &'static str> {
+		if r < 0.0 || r > 1.0 || g < 0.0 || g > 1.0 || b < 0.0 || b > 1.0 {
+			Err("value out of range")
+		}
+		else {
+			Ok(Color::rgb((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8))
+		}
 	}
 }
 
-impl From<(f32, f32, f32, u8)> for Color {
-	fn from((r, g, b, a): (f32, f32, f32, u8)) -> Color {
-		Color::rgba((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8, a)
+impl Parse for (f32, f32, f32, u8) {
+	fn parse((r, g, b, a): (f32, f32, f32, u8)) -> Result<Color, &'static str> {
+		if r < 0.0 || r > 1.0 || g < 0.0 || g > 1.0 || b < 0.0 || b > 1.0 {
+			Err("value out of range")
+		}
+		else {
+			Ok(Color::rgba((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8, a))
+		}
 	}
 }
 
-impl From<(f32, f32, f32, f32)> for Color {
-	fn from((r, g, b, a): (u8, u8, u8, f32)) -> Color {
-		Color::rgba((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8, (a * 255.0) as u8)
+impl Parse for (f32, f32, f32, f32) {
+	fn parse((r, g, b, a): (f32, f32, f32, f32)) -> Result<Color, &'static str> {
+		if r < 0.0 || r > 1.0 || g < 0.0 || g > 1.0 || b < 0.0 || b > 1.0 || a < 0.0 || a > 1.0 {
+			Err("value out of range")
+		}
+		else {
+			Ok(Color::rgba((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8, (a * 255.0) as u8))
+		}
 	}
 }
 
-impl<'a> From<&'a str> for Color {
-	fn from(hex: &'a str) -> Color {
-		let c = ::regex::Regex::new(r"^#([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})?$").unwrap().captures(hex).unwrap();
+impl<'a> Parse for &'a str {
+	fn parse(string: &'a str) -> Result<Color, &'static str> {
+		let (r, g, b, a) = try!(rgba(string));
+
+		Ok(Color::rgba(r, g, b, a))
+	}
+}
+
+impl<'a> Parse for (&'a str, u8) {
+	fn parse((string, alpha): (&'a str, u8)) -> Result<Color, &'static str> {
+		let (r, g, b, _) = try!(rgba(string));
+
+		Ok(Color::rgba(r, g, b, alpha))
+	}
+}
+
+impl<'a> Parse for (&'a str, f32) {
+	fn parse((string, alpha): (&'a str, f32)) -> Result<Color, &'static str> {
+		if alpha < 0.0 || alpha > 1.0 {
+			Err("value out of range")
+		}
+		else {
+			let (r, g, b, _) = try!(rgba(string));
+
+			Ok(Color::rgba(r, g, b, (alpha * 255.0) as u8))
+		}
+	}
+}
+
+pub fn rgba(string: &str) -> Result<(u8, u8, u8, u8), &'static str> {
+	use std::iter;
+
+	if let Some(c) = ::regex::Regex::new(r"^#([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})?$").unwrap().captures(string) {
 		let r = u8::from_str_radix(c.at(1).unwrap(), 16).unwrap();
 		let g = u8::from_str_radix(c.at(2).unwrap(), 16).unwrap();
 		let b = u8::from_str_radix(c.at(3).unwrap(), 16).unwrap();
 		let a = c.at(4).map(|a| u8::from_str_radix(a, 16).unwrap()).unwrap_or(255);
 
-		Color::rgba(r, g, b, a)
+		Ok((r, g, b, a))
 	}
-}
+	else if let Some(c) = ::regex::Regex::new(r"^#([:xdigit:])([:xdigit:])([:xdigit:])([:xdigit:])?$").unwrap().captures(string) {
+		let r = u8::from_str_radix(&iter::repeat(c.at(1).unwrap()).take(2).collect::<String>(), 16).unwrap();
+		let g = u8::from_str_radix(&iter::repeat(c.at(2).unwrap()).take(2).collect::<String>(), 16).unwrap();
+		let b = u8::from_str_radix(&iter::repeat(c.at(3).unwrap()).take(2).collect::<String>(), 16).unwrap();
+		let a = c.at(4).map(|a| u8::from_str_radix(&iter::repeat(a).take(2).collect::<String>(), 16).unwrap()).unwrap_or(255);
 
-impl<'a> From<(&'a str, u8)> for Color {
-	fn from((hex, alpha): (&'a str, u8)) -> Color {
-		let c = ::regex::Regex::new(r"^#([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})?$").unwrap().captures(hex).unwrap();
-		let r = u8::from_str_radix(c.at(1).unwrap(), 16).unwrap();
-		let g = u8::from_str_radix(c.at(2).unwrap(), 16).unwrap();
-		let b = u8::from_str_radix(c.at(3).unwrap(), 16).unwrap();
-
-		Color::rgba(r, g, b, alpha)
+		Ok((r, g, b, a))
 	}
-}
-
-impl<'a> From<(&'a str, f32)> for Color {
-	fn from((hex, alpha): (&'a str, u8)) -> Color {
-		let c = ::regex::Regex::new(r"^#([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})?$").unwrap().captures(hex).unwrap();
-		let r = u8::from_str_radix(c.at(1).unwrap(), 16).unwrap();
-		let g = u8::from_str_radix(c.at(2).unwrap(), 16).unwrap();
-		let b = u8::from_str_radix(c.at(3).unwrap(), 16).unwrap();
-
-		Color::rgba(r, g, b, (alpha * 255.0) as u8)
+	else {
+		Err("string is not a parsable color value")
 	}
 }

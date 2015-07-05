@@ -1,0 +1,15 @@
+[game.ship]
+shape  = "cube"
+face   = "#fff"
+border = "#000"
+
+[audio]
+only = false
+mute = false
+
+[video]
+vsync         = true
+multisampling = false
+
+[video.effects.bullet]
+glow = true

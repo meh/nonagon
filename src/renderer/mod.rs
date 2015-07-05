@@ -11,8 +11,10 @@ mod ship;
 pub use self::ship::Ship;
 
 use game;
+use config;
 
 pub struct Renderer<'a> {
+	config:  config::Video,
 	display: &'a Display,
 
 	width:  u32,
@@ -24,8 +26,9 @@ pub struct Renderer<'a> {
 }
 
 impl<'a> Renderer<'a> {
-	pub fn new<'b>(display: &'b Display, aspect: Rational) -> Renderer<'b> {
+	pub fn new<'b>(display: &'b Display, config: &config::Video, aspect: Rational) -> Renderer<'b> {
 		Renderer {
+			config:  config.clone(),
 			display: display,
 
 			width:  0,

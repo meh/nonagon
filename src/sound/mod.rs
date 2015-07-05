@@ -3,8 +3,11 @@ use openal::{Error, Listener};
 use openal::source::{self, Stream};
 
 use game::State;
+use config;
 
 pub struct Sound<'a> {
+	config: config::Audio,
+
 	music:     Option<Stream<'a>>,
 	timestamp: i64,
 
@@ -12,12 +15,14 @@ pub struct Sound<'a> {
 }
 
 impl<'a> Sound<'a> {
-	pub fn new() -> Result<Self, Error> {
+	pub fn new(config: &config::Audio) -> Result<Self, Error> {
 		Ok(Sound {
-			listener: try!(Listener::default(&Default::default())),
+			config: config.clone(),
 
 			music:     None,
 			timestamp: -1,
+
+			listener: try!(Listener::default(&Default::default())),
 		})
 	}
 

@@ -19,6 +19,8 @@ use glium::glutin::get_primary_monitor;
 
 extern crate openal;
 
+extern crate toml;
+
 extern crate image;
 
 extern crate regex;
@@ -35,6 +37,9 @@ extern crate env_logger;
 
 #[macro_use]
 mod util;
+
+mod config;
+use config::Config;
 
 mod source;
 
@@ -58,19 +63,20 @@ Options:
 	-h --help       Show this message.
 	-v --version    Show version.
 
-	-a --audio-only    Do not show the video.
-	-m --mute          Do not play the sound.
+	-c --config PATH    The TOML configuration file.
+	-a --audio-only     Do not show the video.
+	-m --mute           Do not play the sound.
 ";
 
 fn main() {
 	env_logger::init().unwrap();
 	ffmpeg::init().unwrap();
 
-	let args = Docopt::new(USAGE).
+	let config = Config::load(&Docopt::new(USAGE).
 		and_then(|d| d.parse()).
-		unwrap_or_else(|e| e.exit());
+		unwrap_or_else(|e| e.exit())).unwrap();
 
-	let (a, v) = source::spawn(args.get_str("<input>"), args.get_bool("--audio-only"));
+	let (a, v) = source::spawn(config.input(), config.audio().only());
 
 	let mut audio = match a {
 		Err(error) => {
@@ -114,25 +120,37 @@ fn main() {
 		}
 	};
 
-	let display = glutin::WindowBuilder::new()
+	let mut display = glutin::WindowBuilder::new()
 		.with_title(String::from("nonagon"))
 		.with_dimensions(width, height)
 		.with_srgb(Some(true))
-		.with_depth_buffer(24)
-		.with_vsync()
-		.build_glium()
-		.unwrap();
+		.with_depth_buffer(24);
 
-	let sound = Arc::new(Mutex::new(Sound::new().unwrap_or_else(|err| {
+	if config.video().vsync() {
+		display = display.with_vsync();
+	}
+
+	if let Some(value) = config.video().multisampling() {
+		display = display.with_multisampling(value);
+	}
+
+	let display = display.build_glium().unwrap_or_else(|err| {
+		println!("error: opengl: configuration not supported");
+		println!("{}", err);
+		exit(4);
+	});
+
+	let sound = Arc::new(Mutex::new(Sound::new(config.audio()).unwrap_or_else(|err| {
 		println!("error: sound: {}", err);
-		exit(3);
+		exit(5);
 	})));
 
-	let state = Arc::new(Mutex::new(State::new(aspect)));
+	let state = Arc::new(Mutex::new(State::new(&config, aspect)));
 
 	let music = {
 		let state = state.clone();
 		let sound = sound.clone();
+		let play  = !config.audio().mute();
 
 		let (sender, receiver) = channel();
 
@@ -140,7 +158,7 @@ fn main() {
 			loop {
 				let next = audio.sync();
 
-				if !args.get_bool("--mute") {
+				if play {
 					sound.lock().unwrap().play(audio.frame());
 				}
 
@@ -157,7 +175,7 @@ fn main() {
 		}))
 	};
 
-	let mut renderer = Renderer::new(&display, aspect);
+	let mut renderer = Renderer::new(&display, config.video(), aspect);
 	renderer.resize(width, height);
 
 	let mut previous = time::relative() as f64 / 1_000_000.0;
@@ -237,7 +255,7 @@ fn main() {
 
 		match target.finish() {
 			Err(ContextLost) => {
-				renderer = Renderer::new(&display, aspect);
+				renderer = Renderer::new(&display, config.video(), aspect);
 				renderer.resize(width, height);
 			},
 
