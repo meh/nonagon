@@ -6,9 +6,9 @@ use glium::glutin::VirtualKeyCode as Key;
 
 use ffmpeg::{frame, Rational};
 
-use util::{color, Fill};
+use util::{color, Fill, Aspect};
 use config::Config;
-use super::{Position, Orientation, Aspect};
+use super::{Position, Orientation};
 use super::ship::{self, Ship};
 use super::bullet::{self, Bullet};
 
@@ -84,48 +84,91 @@ impl State {
 	}
 
 	pub fn update(&mut self) {
-		if self.keys.contains(&Key::Left) {
-			match self.player.position {
-				Position(        0, _) => (),
-				Position(ref mut x, _) => *x -= 1,
+		// position
+		if self.aspect.is_vertical() {
+			if self.keys.contains(&Key::Left) {
+				match self.player.position {
+					Position(0, _) =>
+						(),
+
+					Position(ref mut x, _) =>
+						*x -= 1,
+				}
+			}
+
+			if self.keys.contains(&Key::Up) {
+				match self.player.position {
+					Position(_, 0) =>
+						(),
+
+					Position(_, ref mut y) =>
+						*y -= 1,
+				}
+			}
+
+			if self.keys.contains(&Key::Right) {
+				match self.player.position {
+					Position(x, _) if x == self.aspect.width().unwrap() as u16 =>
+						(),
+
+					Position(ref mut x, _) =>
+						*x += 1,
+				}
+			}
+
+			if self.keys.contains(&Key::Down) {
+				match self.player.position {
+					Position(_, y) if y == self.aspect.height().unwrap() as u16 =>
+						(),
+
+					Position(_, ref mut y) =>
+						*y += 1,
+				}
+			}
+		}
+		else {
+			if self.keys.contains(&Key::Up) {
+				match self.player.position {
+					Position(0, _) =>
+						(),
+
+					Position(ref mut x, _) =>
+						*x -= 1,
+				}
+			}
+
+			if self.keys.contains(&Key::Right) {
+				match self.player.position {
+					Position(_, 0) =>
+						(),
+
+					Position(_, ref mut y) =>
+						*y -= 1,
+				}
+			}
+
+			if self.keys.contains(&Key::Down) {
+				match self.player.position {
+					Position(x, _) if x == self.aspect.height().unwrap() as u16 =>
+						(),
+
+					Position(ref mut x, _) =>
+						*x += 1,
+				}
+			}
+
+			if self.keys.contains(&Key::Left) {
+				match self.player.position {
+					Position(_, y) if y == self.aspect.width().unwrap() as u16 =>
+						(),
+
+					Position(_, ref mut y) =>
+						*y += 1,
+				}
 			}
 		}
 
-		if self.keys.contains(&Key::Up) {
-			match self.player.position {
-				Position(_,         0) => (),
-				Position(_, ref mut y) => *y -= 1,
-			}
-		}
-
-		if self.keys.contains(&Key::Right) {
-			let max = if self.aspect == Rational(3, 4) {
-				480
-			}
-			else {
-				unimplemented!();
-			};
-
-			match self.player.position {
-				Position(        x, _) if x == max => (),
-				Position(ref mut x, _)             => *x += 1,
-			}
-		}
-
-		if self.keys.contains(&Key::Down) {
-			let max = if self.aspect == Rational(3, 4) {
-				640
-			}
-			else {
-				unimplemented!();
-			};
-
-			match self.player.position {
-				Position(_,         y) if y == max => (),
-				Position(_, ref mut y)             => *y += 1,
-			}
-		}
-
+		// rotation
 		if self.keys.contains(&Key::A) {
 			match self.player.orientation {
 				Orientation { ref mut pitch, .. } if *pitch == 0.0 =>
