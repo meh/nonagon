@@ -111,11 +111,11 @@ impl<'a> Cube<'a> {
 		}
 	}
 
-	pub fn render<T: Surface>(&mut self, target: &mut T, scene: &Scene, state: &game::Ship) {
-		let mvp = scene.to_mat() *
-			scene.position(state.position) *
-			scene.orientation(state.orientation) *
-			scene.scale(12.5);
+	pub fn render<T: Surface>(&mut self, target: &mut T, support: &Support, state: &game::Ship) {
+		let mvp = support.scene().to_mat() *
+			support.scene().position(state.position) *
+			support.scene().orientation(state.orientation) *
+			support.scene().scale(12.5 * state.scale);
 
 		// draw the faces
 		{

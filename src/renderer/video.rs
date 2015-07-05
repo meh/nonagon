@@ -9,7 +9,7 @@ use glium::texture::MipmapsOption::NoMipmap;
 use glium::{Program, Display, VertexBuffer, IndexBuffer, Surface};
 use glium::index::PrimitiveType::TriangleStrip;
 
-use renderer::Scene;
+use renderer::Support;
 
 pub struct Video<'a> {
 	display: &'a Display,
@@ -67,7 +67,7 @@ impl<'a> Video<'a> {
 		}
 	}
 
-	pub fn render<T: Surface>(&mut self, target: &mut T, scene: &Scene, frame: &frame::Video) {
+	pub fn render<T: Surface>(&mut self, target: &mut T, support: &Support, frame: &frame::Video) {
 		let texture = Texture::new(self.display, frame);
 
 		let uniforms = uniform! {
