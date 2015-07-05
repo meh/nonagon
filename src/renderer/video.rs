@@ -6,8 +6,9 @@ use ffmpeg::frame;
 use glium::texture::{Texture2dDataSource, RawImage2d, SrgbTexture2d};
 use glium::texture::ClientFormat::U8U8U8;
 use glium::texture::MipmapsOption::NoMipmap;
-use glium::{Program, Display, VertexBuffer, IndexBuffer, Surface};
+use glium::{Program, Display, VertexBuffer, Surface};
 use glium::index::PrimitiveType::TriangleStrip;
+use glium::index::NoIndices;
 
 use renderer::Support;
 
@@ -16,7 +17,6 @@ pub struct Video<'a> {
 
 	program:  Program,
 	vertices: VertexBuffer<Vertex>,
-	indices:  IndexBuffer<u16>,
 }
 
 impl<'a> Video<'a> {
@@ -33,13 +33,15 @@ impl<'a> Video<'a> {
 
 					void main() {
 						gl_Position = vec4(position, 0.0, 1.0);
-						v_texture = texture;
+						v_texture   = texture;
 					}
 				",
 
 				fragment: "
 					#version 110
+
 					uniform sampler2D tex;
+
 					varying vec2 v_texture;
 
 					void main() {
@@ -50,20 +52,17 @@ impl<'a> Video<'a> {
 		).unwrap();
 
 		let vertices = VertexBuffer::new(display, vec![
-			Vertex { position: [-1.0, -1.0], texture: [0.0, 1.0] },
 			Vertex { position: [-1.0,  1.0], texture: [0.0, 0.0] },
 			Vertex { position: [ 1.0,  1.0], texture: [1.0, 0.0] },
+			Vertex { position: [-1.0, -1.0], texture: [0.0, 1.0] },
 			Vertex { position: [ 1.0, -1.0], texture: [1.0, 1.0] },
 		]);
-
-		let indices = IndexBuffer::new(display, TriangleStrip, vec![1, 2, 0, 3]);
 
 		Video {
 			display: display,
 
 			program:  program,
 			vertices: vertices,
-			indices:  indices,
 		}
 	}
 
@@ -74,7 +73,7 @@ impl<'a> Video<'a> {
 			tex: &texture
 		};
 
-		target.draw(&self.vertices, &self.indices, &self.program, &uniforms, &Default::default()).unwrap();
+		target.draw(&self.vertices, &NoIndices(TriangleStrip), &self.program, &uniforms, &Default::default()).unwrap();
 	}
 }
 
