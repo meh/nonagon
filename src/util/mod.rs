@@ -15,13 +15,13 @@ pub enum Fill {
 	Texture(PathBuf),
 }
 
-impl<'a> From<&'a str> for Fill {
-	fn from(string: &'a str) -> Fill {
-		if let Ok(color) = color(string) {
+impl<T: AsRef<str>> From<T> for Fill {
+	fn from(string: T) -> Fill {
+		if let Ok(color) = color(string.as_ref()) {
 			Fill::Color(color)
 		}
 		else {
-			Fill::Texture(PathBuf::from(string))
+			Fill::Texture(PathBuf::from(string.as_ref()))
 		}
 	}
 }
