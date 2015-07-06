@@ -18,13 +18,15 @@ impl Default for Audio {
 
 impl Audio {
 	pub fn load(&mut self, args: &ArgvMap, toml: &Table) -> Result<(), ParserError> {
-		if let Some(toml) = toml.get("audio").and_then(|c| c.as_table()) {
-			if let Some(value) = toml.get("only").and_then(|c| c.as_bool()) {
-				self.only = value;
+		if let Some(toml) = toml.get("audio") {
+			let toml = expect!(toml.as_table(), "`audio` must be a table");
+
+			if let Some(value) = toml.get("only") {
+				self.only = expect!(value.as_bool(), "`audio.only` must be a boolean");
 			}
 
-			if let Some(value) = toml.get("mute").and_then(|c| c.as_bool()) {
-				self.mute = value;
+			if let Some(value) = toml.get("mute") {
+				self.mute = expect!(value.as_bool(), "`audio.mute` must be a boolean");
 			}
 		}
 

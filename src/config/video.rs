@@ -1,8 +1,6 @@
 use docopt::ArgvMap;
 use toml::{Table, Value, ParserError};
 
-use super::error;
-
 #[derive(Clone, Debug)]
 pub struct Video {
 	vsync:         bool,
@@ -50,32 +48,37 @@ impl Default for Bullet {
 
 impl Video {
 	pub fn load(&mut self, args: &ArgvMap, toml: &Table) -> Result<(), ParserError> {
-		if let Some(toml) = toml.get("video").and_then(|c| c.as_table()) {
-			if let Some(value) = toml.get("vsync").and_then(|c| c.as_bool()) {
-				self.vsync = value;
+		if let Some(toml) = toml.get("video") {
+			let toml = expect!(toml.as_table(), "`video` must be a table");
+
+			if let Some(value) = toml.get("vsync") {
+				self.vsync = expect!(value.as_bool(), "`video.vsync` must be boolean");
 			}
 
-			match toml.get("multisampling") {
-				Some(&Value::Boolean(false)) =>
-					self.multisampling = None,
+			if let Some(value) = toml.get("multisampling") {
+				match value {
+					&Value::Boolean(false) =>
+						self.multisampling = None,
 
-				Some(&Value::Boolean(true)) =>
-					self.multisampling = Some(2),
+					&Value::Boolean(true) =>
+						self.multisampling = Some(2),
 
-				Some(&Value::Integer(value)) =>
-					self.multisampling = Some(value as u16),
+					&Value::Integer(value) =>
+						self.multisampling = Some(value as u16),
 
-				Some(_) =>
-					return error("unknown `multisampling` value"),
-
-				None =>
-					()
+					_ =>
+						expect!("`video.multisampling` must be a boolean or integer"),
+				}
 			}
 
-			if let Some(toml) = toml.get("effects").and_then(|c| c.as_table()) {
-				if let Some(toml) = toml.get("bullet").and_then(|c| c.as_table()) {
-					if let Some(value) = toml.get("glow").and_then(|c| c.as_bool()) {
-						self.effects.bullet.glow = value;
+			if let Some(toml) = toml.get("effects") {
+				let toml = expect!(toml.as_table(), "`video.effects` must be a table");
+
+				if let Some(toml) = toml.get("bullet") {
+					let toml = expect!(toml.as_table(), "`video.effects.bullet` must be a table");
+
+					if let Some(value) = toml.get("glow") {
+						self.effects.bullet.glow = expect!(value.as_bool(), "`video.effects.bullet.glow` must be a boolean");
 					}
 				}
 			}

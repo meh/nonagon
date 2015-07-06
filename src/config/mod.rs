@@ -4,6 +4,31 @@ use std::io::Read;
 use docopt::ArgvMap;
 use toml::{Parser, ParserError};
 
+macro_rules! expect {
+	($msg:expr) => (
+		return Err(::toml::ParserError {
+			lo: 0,
+			hi: 0,
+
+			desc: String::from($msg),
+		})
+	);
+
+	($pred:expr, $msg:expr) => ({
+		if let Some(value) = $pred {
+			value
+		}
+		else {
+			return Err(::toml::ParserError {
+				lo: 0,
+				hi: 0,
+
+				desc: String::from($msg),
+			})
+		}
+	});
+}
+
 pub mod game;
 pub use self::game::Game;
 
@@ -45,7 +70,7 @@ impl Config {
 				}
 			}
 			else {
-				return error("file not found");
+				expect!("file not found");
 			}
 		}
 
@@ -67,13 +92,4 @@ impl Config {
 	pub fn video(&self) -> &Video {
 		&self.video
 	}
-}
-
-pub fn error<T>(text: &str) -> Result<T, ParserError> {
-	Err(ParserError {
-		lo: 0,
-		hi: 0,
-
-		desc: String::from(text),
-	})
 }
