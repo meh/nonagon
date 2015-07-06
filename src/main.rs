@@ -76,6 +76,8 @@ fn main() {
 		and_then(|d| d.parse()).
 		unwrap_or_else(|e| e.exit())).unwrap();
 
+	debug!("{:#?}", config);
+
 	let (a, v) = source::spawn(config.input(), config.audio().only());
 
 	let mut audio = match a {
