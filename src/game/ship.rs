@@ -9,7 +9,7 @@ pub enum Shape {
 pub struct Ship {
 	pub shape:  Shape,
 	pub face:   Fill,
-	pub border: Fill,
+	pub border: Option<Fill>,
 
 	pub position:    Position,
 	pub direction:   Direction,
@@ -22,7 +22,7 @@ impl Default for Ship {
 		Ship {
 			shape:  Shape::Cube,
 			face:   Fill::from("#fff"),
-			border: Fill::from("#000"),
+			border: Some(Fill::from("#000")),
 
 			position:    Default::default(),
 			direction:   Default::default(),

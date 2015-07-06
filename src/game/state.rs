@@ -41,7 +41,7 @@ impl State {
 			player: Ship {
 				shape:  config.game().ship().shape(),
 				face:   config.game().ship().face().unwrap_or(Fill::from("#fff")),
-				border: config.game().ship().border().unwrap_or(Fill::from("#000")),
+				border: config.game().ship().border().unwrap_or(Some(Fill::from("#000"))),
 
 				position:    position,
 				orientation: Orientation { roll: 45.0, pitch: 45.0, yaw: 0.0 },
