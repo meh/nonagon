@@ -265,6 +265,7 @@ fn main() {
 		}
 	}
 
-	music.0.send(()).unwrap();
+	// ensure the music thread is closed
+	let _ = music.0.send(());
 	music.1.join().unwrap();
 }
