@@ -3,26 +3,42 @@ use glium::DepthTest::{IfLess, IfLessOrEqual};
 use glium::BlendingFunction::Addition;
 use glium::LinearBlendingFactor::{SourceAlpha, OneMinusSourceAlpha};
 use glium::BackfaceCullingMode::CullClockWise;
+use glium::index::NoIndices;
 use glium::index::PrimitiveType::{TrianglesList, LinesList};
 
-use util::rgb;
+use util::Fill;
 use game;
-use renderer::Scene;
+use renderer::Support;
 
 pub struct Cube<'a> {
 	display: &'a Display,
 
-	program:  Program,
+	with_color:   Program,
+	with_texture: Program,
 
 	vertices: VertexBuffer<Vertex>,
-	faces:    IndexBuffer<u16>,
 	borders:  IndexBuffer<u16>,
 }
 
 impl<'a> Cube<'a> {
 	pub fn new<'b>(display: &'b Display) -> Cube<'b> {
+		#[inline(always)]
+		fn coordinates(face: u8, u: f32, v: f32) -> [f32; 2] {
+			match face {
+				1 => [u / 3.0,                   v / 2.0],
+				2 => [u / 3.0 + 1.0 / 3.0,       v / 2.0],
+				3 => [u / 3.0 + 1.0 / 3.0 * 2.0, v / 2.0],
+
+				4 => [u / 3.0,                   v / 2.0 + 1.0 / 2.0],
+				5 => [u / 3.0 + 1.0 / 3.0,       v / 2.0 + 1.0 / 2.0],
+				6 => [u / 3.0 + 1.0 / 3.0 * 2.0, v / 2.0 + 1.0 / 2.0],
+
+				_ => unreachable!()
+			}
+		}
+
 		Cube { display: display,
-			program: program!(display,
+			with_color: program!(display,
 				110 => {
 					vertex: "
 						#version 110
@@ -47,66 +63,113 @@ impl<'a> Cube<'a> {
 					",
 				}).unwrap(),
 
+			with_texture: program!(display,
+				110 => {
+					vertex: "
+						#version 110
+
+						attribute vec3 position;
+						attribute vec2 texture;
+
+						uniform mat4 mvp;
+
+						varying vec2 v_texture;
+
+						void main() {
+							gl_Position = mvp * vec4(position, 1.0);
+							v_texture   = texture;
+						}
+					",
+
+					fragment: "
+						#version 110
+
+						uniform sampler2D tex;
+
+						varying vec2 v_texture;
+
+						void main() {
+							gl_FragColor = texture2D(tex, v_texture);
+						}
+					",
+				}).unwrap(),
+
 			vertices: VertexBuffer::new(display, vec![
 				// front
-				Vertex { position: [-1.0, -1.0,  1.0] },
-				Vertex { position: [ 1.0, -1.0,  1.0] },
-				Vertex { position: [ 1.0,  1.0,  1.0] },
-				Vertex { position: [-1.0,  1.0,  1.0] },
+				Vertex { position: [-1.0, -1.0,  1.0], texture: coordinates(1, 0.0, 0.0) },
+				Vertex { position: [ 1.0, -1.0,  1.0], texture: coordinates(1, 1.0, 0.0) },
+				Vertex { position: [ 1.0,  1.0,  1.0], texture: coordinates(1, 1.0, 1.0) },
 
-				// back
-				Vertex { position: [-1.0, -1.0, -1.0] },
-				Vertex { position: [ 1.0, -1.0, -1.0] },
-				Vertex { position: [ 1.0,  1.0, -1.0] },
-				Vertex { position: [-1.0,  1.0, -1.0] },
-			]),
-
-			faces: IndexBuffer::new(display, TrianglesList, vec![
-				// front
-				0, 1, 2,
-				2, 3, 0,
-
-				// back
-				6, 5, 4,
-				4, 7, 6,
-
-				// bottom
-				0, 4, 5,
-				5, 1, 0,
-
-				// top
-				3, 2, 7,
-				7, 2, 6,
+				Vertex { position: [ 1.0,  1.0,  1.0], texture: coordinates(1, 1.0, 1.0) },
+				Vertex { position: [-1.0,  1.0,  1.0], texture: coordinates(1, 0.0, 1.0) },
+				Vertex { position: [-1.0, -1.0,  1.0], texture: coordinates(1, 0.0, 0.0) },
 
 				// right
-				5, 2, 1,
-				6, 2, 5,
+				Vertex { position: [ 1.0,  1.0, -1.0], texture: coordinates(2, 1.0, 1.0) },
+				Vertex { position: [ 1.0,  1.0,  1.0], texture: coordinates(2, 0.0, 1.0) },
+				Vertex { position: [ 1.0, -1.0,  1.0], texture: coordinates(2, 0.0, 0.0) },
+
+				Vertex { position: [ 1.0, -1.0,  1.0], texture: coordinates(2, 0.0, 0.0) },
+				Vertex { position: [ 1.0, -1.0, -1.0], texture: coordinates(2, 1.0, 0.0) },
+				Vertex { position: [ 1.0,  1.0, -1.0], texture: coordinates(2, 1.0, 1.0) },
+
+				// back
+				Vertex { position: [-1.0, -1.0, -1.0], texture: coordinates(3, 1.0, 0.0) },
+				Vertex { position: [-1.0,  1.0, -1.0], texture: coordinates(3, 1.0, 1.0) },
+				Vertex { position: [ 1.0, -1.0, -1.0], texture: coordinates(3, 0.0, 0.0) },
+
+				Vertex { position: [ 1.0,  1.0, -1.0], texture: coordinates(3, 0.0, 1.0) },
+				Vertex { position: [ 1.0, -1.0, -1.0], texture: coordinates(3, 0.0, 0.0) },
+				Vertex { position: [-1.0,  1.0, -1.0], texture: coordinates(3, 1.0, 1.0) },
 
 				// left
-				0, 3, 4,
-				4, 3, 7,
+				Vertex { position: [-1.0, -1.0,  1.0], texture: coordinates(4, 1.0, 0.0) },
+				Vertex { position: [-1.0,  1.0,  1.0], texture: coordinates(4, 1.0, 1.0) },
+				Vertex { position: [-1.0, -1.0, -1.0], texture: coordinates(4, 0.0, 0.0) },
+
+				Vertex { position: [-1.0, -1.0, -1.0], texture: coordinates(4, 0.0, 0.0) },
+				Vertex { position: [-1.0,  1.0,  1.0], texture: coordinates(4, 1.0, 1.0) },
+				Vertex { position: [-1.0,  1.0, -1.0], texture: coordinates(4, 0.0, 1.0) },
+
+				// top
+				Vertex { position: [-1.0,  1.0,  1.0], texture: coordinates(5, 0.0, 0.0) },
+				Vertex { position: [ 1.0,  1.0,  1.0], texture: coordinates(5, 1.0, 0.0) },
+				Vertex { position: [ 1.0,  1.0, -1.0], texture: coordinates(5, 1.0, 1.0) },
+
+				Vertex { position: [-1.0,  1.0,  1.0], texture: coordinates(5, 0.0, 0.0) },
+				Vertex { position: [ 1.0,  1.0, -1.0], texture: coordinates(5, 1.0, 1.0) },
+				Vertex { position: [-1.0,  1.0, -1.0], texture: coordinates(5, 0.0, 1.0) },
+
+				// bottom
+				Vertex { position: [-1.0, -1.0,  1.0], texture: coordinates(6, 0.0, 1.0) },
+				Vertex { position: [-1.0, -1.0, -1.0], texture: coordinates(6, 0.0, 0.0) },
+				Vertex { position: [ 1.0, -1.0,  1.0], texture: coordinates(6, 1.0, 1.0) },
+
+				Vertex { position: [ 1.0, -1.0,  1.0], texture: coordinates(6, 1.0, 1.0) },
+				Vertex { position: [-1.0, -1.0, -1.0], texture: coordinates(6, 0.0, 0.0) },
+				Vertex { position: [ 1.0, -1.0, -1.0], texture: coordinates(6, 1.0, 0.0) },
 			]),
 
 			borders: IndexBuffer::new(display, LinesList, vec![
 				// front
 				0, 1,
 				1, 2,
-				2, 3,
-				3, 0,
+				2, 4,
+				4, 0,
 
 				// back
-				4, 5,
-				5, 6,
-				6, 7,
-				7, 4,
+				12, 10,
+				10,  6,
+				 6, 13,
+				13, 12,
 
 				// left
-				0, 4,
-				3, 7,
+				0, 12,
+				4, 13,
 
 				// right
-				1, 5,
-				2, 6,
+				1, 10,
+				2,  6,
 			]),
 		}
 	}
@@ -118,40 +181,83 @@ impl<'a> Cube<'a> {
 			support.scene().scale(12.5 * state.scale);
 
 		// draw the faces
-		{
-			let uniforms = uniform! {
-				mvp:   mvp,
-				color: state.color,
-			};
+		match state.face {
+			Fill::Color(color) => {
+				let uniforms = uniform! {
+					mvp:   mvp,
+					color: color,
+				};
 
-			target.draw(&self.vertices, &self.faces, &self.program, &uniforms, &DrawParameters {
-				backface_culling: CullClockWise,
+				target.draw(&self.vertices, &NoIndices(TrianglesList), &self.with_color, &uniforms, &DrawParameters {
+					backface_culling: CullClockWise,
 
-				blending_function: Some(Addition {
-					source:      SourceAlpha,
-					destination: OneMinusSourceAlpha
-				}),
+					blending_function: Some(Addition {
+						source:      SourceAlpha,
+						destination: OneMinusSourceAlpha
+					}),
 
-				depth_test:  IfLess,
-				depth_write: true,
+					depth_test:  IfLess,
+					depth_write: true,
 
-				.. Default::default() }).unwrap();
+					.. Default::default() }).unwrap();
+			},
+
+			Fill::Texture(ref path) => {
+				let texture  = support.assets().texture(path);
+				let uniforms = uniform! {
+					mvp: mvp,
+					tex: &*texture,
+				};
+
+				target.draw(&self.vertices, &NoIndices(TrianglesList), &self.with_texture, &uniforms, &DrawParameters {
+					backface_culling: CullClockWise,
+
+					blending_function: Some(Addition {
+						source:      SourceAlpha,
+						destination: OneMinusSourceAlpha
+					}),
+
+					depth_test:  IfLess,
+					depth_write: true,
+
+					.. Default::default() }).unwrap();
+			}
 		}
 
 		// draw the borders
-		{
-			let uniforms = uniform! {
-				mvp:   mvp,
-				color: rgb(0, 0, 0),
-			};
+		match state.border {
+			Some(Fill::Color(color)) => {
+				let uniforms = uniform! {
+					mvp:   mvp,
+					color: color,
+				};
 
-			target.draw(&self.vertices, &self.borders, &self.program, &uniforms, &DrawParameters {
-				depth_test:  IfLessOrEqual,
-				depth_write: true,
+				target.draw(&self.vertices, &self.borders, &self.with_color, &uniforms, &DrawParameters {
+					depth_test:  IfLessOrEqual,
+					depth_write: true,
 
-				line_width: Some(2.0),
+					line_width: Some(2.0),
 
-				.. Default::default() }).unwrap();
+					.. Default::default() }).unwrap();
+			},
+
+			Some(Fill::Texture(ref path)) => {
+				let texture  = support.assets().texture(path);
+				let uniforms = uniform! {
+					mvp: mvp,
+					tex: &*texture,
+				};
+
+				target.draw(&self.vertices, &self.borders, &self.with_texture, &uniforms, &DrawParameters {
+					depth_test:  IfLessOrEqual,
+					depth_write: true,
+
+					line_width: Some(2.0),
+
+					.. Default::default() }).unwrap();
+			},
+
+			_ => ()
 		}
 	}
 }
@@ -159,6 +265,7 @@ impl<'a> Cube<'a> {
 #[derive(Copy, Clone)]
 pub struct Vertex {
 	position: [f32; 3],
+	texture:  [f32; 2],
 }
 
-implement_vertex!(Vertex, position);
+implement_vertex!(Vertex, position, texture);
