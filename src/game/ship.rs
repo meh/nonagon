@@ -4,6 +4,7 @@ use super::{Position, Direction, Orientation};
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum Shape {
 	Cube,
+	Tetrahedron,
 }
 
 pub struct Ship {

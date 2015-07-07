@@ -48,9 +48,12 @@ impl Game {
 					self.ship.shape = match value {
 						"cube" =>
 							Shape::Cube,
+						
+						"tetrahedron" =>
+							Shape::Tetrahedron,
 
 						_ =>
-							expect!("`game.ship.shape` must be either 'cube' or ..."),
+							expect!("`game.ship.shape` must be either 'cube' or 'tetrahedron'"),
 					}
 				}
 
