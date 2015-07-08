@@ -26,24 +26,13 @@ unsafe impl Sync for State { }
 
 impl State {
 	pub fn new(config: &Config, aspect: Rational) -> Self {
-		let position = match aspect {
-			Rational(3, 4) =>
-				Position(240, 610),
-
-			Rational(16, 9) =>
-				Position(180, 610),
-
-			_ =>
-				unreachable!()
-		};
-
 		State {
 			player: Ship {
 				shape:  config.game().ship().shape(),
 				face:   config.game().ship().face().unwrap_or(Fill::from("#fff")),
 				border: config.game().ship().border().unwrap_or(Some(Fill::from("#000"))),
 
-				position:    position,
+				position:    Position((aspect.width() / 2) as u16, (aspect.height() - 10) as u16),
 				orientation: Orientation { roll: 45.0, pitch: 45.0, yaw: 0.0 },
 
 				.. Default::default()
@@ -108,7 +97,7 @@ impl State {
 
 			if self.keys.contains(&Key::Right) {
 				match self.player.position {
-					Position(x, _) if x == self.aspect.width().unwrap() as u16 =>
+					Position(x, _) if x == self.aspect.width() as u16 =>
 						(),
 
 					Position(ref mut x, _) =>
@@ -118,7 +107,7 @@ impl State {
 
 			if self.keys.contains(&Key::Down) {
 				match self.player.position {
-					Position(_, y) if y == self.aspect.height().unwrap() as u16 =>
+					Position(_, y) if y == self.aspect.height() as u16 =>
 						(),
 
 					Position(_, ref mut y) =>
@@ -149,7 +138,7 @@ impl State {
 
 			if self.keys.contains(&Key::Down) {
 				match self.player.position {
-					Position(x, _) if x == self.aspect.height().unwrap() as u16 =>
+					Position(x, _) if x == self.aspect.width() as u16 =>
 						(),
 
 					Position(ref mut x, _) =>
@@ -159,7 +148,7 @@ impl State {
 
 			if self.keys.contains(&Key::Left) {
 				match self.player.position {
-					Position(_, y) if y == self.aspect.width().unwrap() as u16 =>
+					Position(_, y) if y == self.aspect.height() as u16 =>
 						(),
 
 					Position(_, ref mut y) =>

@@ -49,12 +49,12 @@ impl Scene {
 
 	pub fn position(&self, Position(x, y): Position) -> Mat4<f32> {
 		let (x, y) = if self.aspect.is_vertical() {
-			(x as f32 * self.width as f32 / self.aspect.width().unwrap() as f32,
-			 y as f32 * self.height as f32 / self.aspect.height().unwrap() as f32)
+			(x as f32 * self.width as f32 / self.aspect.width() as f32,
+			 y as f32 * self.height as f32 / self.aspect.height() as f32)
 		}
 		else {
-			((self.aspect.width().unwrap() as u16 - y) as f32 * self.width as f32 / self.aspect.width().unwrap() as f32,
-			 x as f32 * self.height as f32 / self.aspect.height().unwrap() as f32)
+			((self.aspect.height() as u16 - y) as f32 * self.width as f32 / self.aspect.height() as f32,
+			 x as f32 * self.height as f32 / self.aspect.width() as f32)
 		};
 
 		na::to_homogeneous(&Iso3::new(Vec3::new(
@@ -81,7 +81,7 @@ impl Scene {
 
 	pub fn scale(&self, factor: f32) -> Mat4<f32> {
 		let factor = (factor * cmp::max(self.width, self.height) as f32) /
-			cmp::max(self.aspect.width().unwrap(), self.aspect.height().unwrap()) as f32;
+			cmp::max(self.aspect.width(), self.aspect.height()) as f32;
 
 		Mat4::new(factor,    0.0,    0.0, 0.0,
 		             0.0, factor,    0.0, 0.0,

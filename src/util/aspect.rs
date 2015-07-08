@@ -4,8 +4,8 @@ pub trait Aspect {
 	fn is_vertical(&self) -> bool;
 	fn is_horizontal(&self) -> bool;
 
-	fn height(&self) -> Option<u32>;
-	fn width(&self) -> Option<u32>;
+	fn height(&self) -> u32;
+	fn width(&self) -> u32;
 }
 
 impl Aspect for Rational {
@@ -17,29 +17,21 @@ impl Aspect for Rational {
 		self.0 > self.1
 	}
 
-	fn height(&self) -> Option<u32> {
+	fn height(&self) -> u32 {
 		match self {
-			&Rational(3, 4) =>
-				Some(640),
+			&Rational(3, 4)  => 640,
+			&Rational(16, 9) => 640,
 
-			&Rational(16, 9) =>
-				Some(360),
-
-			_ =>
-				None
+			_ => unreachable!()
 		}
 	}
 
-	fn width(&self) -> Option<u32> {
+	fn width(&self) -> u32 {
 		match self {
-			&Rational(3, 4) =>
-				Some(480),
+			&Rational(3, 4)  => 480,
+			&Rational(16, 9) => 360,
 
-			&Rational(16, 9) =>
-				Some(640),
-
-			_ =>
-				None
+			_ => unreachable!()
 		}
 	}
 }
