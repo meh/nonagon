@@ -1,12 +1,6 @@
-#[derive(PartialEq, Eq, Clone, Copy, Default, Debug)]
-pub struct Position(pub u16, pub u16);
-
-impl Position {
-	pub fn x(&self) -> u16 {
-		self.0
-	}
-
-	pub fn y(&self) -> u16 {
-		self.1
-	}
+#[derive(PartialEq, Clone, Copy, Default, Debug)]
+pub struct Position {
+	pub x: u16,
+	pub y: u16,
+	pub z: f32,
 }

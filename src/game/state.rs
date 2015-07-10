@@ -26,18 +26,28 @@ unsafe impl Sync for State { }
 
 impl State {
 	pub fn new(config: &Config, aspect: Rational) -> Self {
+		let mut player = Ship::default();
+
+		player.shape = config.game().ship().shape();
+
+		player.position = Position {
+			x: (aspect.width() / 2) as u16,
+			y: (aspect.height() - 20) as u16,
+			z: 0.0,
+		};
+
+		if let Some(face) = config.game().ship().face() {
+			player.face = face;
+		}
+
+		if let Some(border) = config.game().ship().border() {
+			player.border = border;
+		}
+
+		println!("{:#?}", player);
+
 		State {
-			player: Ship {
-				shape:  config.game().ship().shape(),
-				face:   config.game().ship().face().unwrap_or(Fill::from("#fff")),
-				border: config.game().ship().border().unwrap_or(Some(Fill::from("#000"))),
-
-				position:    Position((aspect.width() / 2) as u16, (aspect.height() - 10) as u16),
-				orientation: Orientation { roll: 45.0, pitch: 45.0, yaw: 0.0 },
-
-				.. Default::default()
-			},
-
+			player:  player,
 			enemies: Vec::new(),
 			bullets: Vec::new(),
 
@@ -77,40 +87,40 @@ impl State {
 		if self.aspect.is_vertical() {
 			if self.keys.contains(&Key::Left) {
 				match self.player.position {
-					Position(0, _) =>
+					Position { x: 0, .. } =>
 						(),
 
-					Position(ref mut x, _) =>
+					Position { ref mut x, .. } =>
 						*x -= 1,
 				}
 			}
 
 			if self.keys.contains(&Key::Up) {
 				match self.player.position {
-					Position(_, 0) =>
+					Position { y: 0, .. } =>
 						(),
 
-					Position(_, ref mut y) =>
+					Position { ref mut y, .. } =>
 						*y -= 1,
 				}
 			}
 
 			if self.keys.contains(&Key::Right) {
 				match self.player.position {
-					Position(x, _) if x == self.aspect.width() as u16 =>
+					Position { x, .. } if x == self.aspect.width() as u16 =>
 						(),
 
-					Position(ref mut x, _) =>
+					Position { ref mut x, .. } =>
 						*x += 1,
 				}
 			}
 
 			if self.keys.contains(&Key::Down) {
 				match self.player.position {
-					Position(_, y) if y == self.aspect.height() as u16 =>
+					Position { y, .. } if y == self.aspect.height() as u16 =>
 						(),
 
-					Position(_, ref mut y) =>
+					Position { ref mut y, .. } =>
 						*y += 1,
 				}
 			}
@@ -118,40 +128,40 @@ impl State {
 		else {
 			if self.keys.contains(&Key::Up) {
 				match self.player.position {
-					Position(0, _) =>
+					Position { x: 0, .. } =>
 						(),
 
-					Position(ref mut x, _) =>
+					Position { ref mut x, .. } =>
 						*x -= 1,
 				}
 			}
 
 			if self.keys.contains(&Key::Right) {
 				match self.player.position {
-					Position(_, 0) =>
+					Position { y: 0, .. } =>
 						(),
 
-					Position(_, ref mut y) =>
+					Position { ref mut y, .. } =>
 						*y -= 1,
 				}
 			}
 
 			if self.keys.contains(&Key::Down) {
 				match self.player.position {
-					Position(x, _) if x == self.aspect.width() as u16 =>
+					Position { x, .. } if x == self.aspect.width() as u16 =>
 						(),
 
-					Position(ref mut x, _) =>
+					Position { ref mut x, .. } =>
 						*x += 1,
 				}
 			}
 
 			if self.keys.contains(&Key::Left) {
 				match self.player.position {
-					Position(_, y) if y == self.aspect.height() as u16 =>
+					Position { y, .. } if y == self.aspect.height() as u16 =>
 						(),
 
-					Position(_, ref mut y) =>
+					Position { ref mut y, .. } =>
 						*y += 1,
 				}
 			}

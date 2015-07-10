@@ -28,7 +28,7 @@ impl Scene {
 	pub fn resize(&mut self, width: u32, height: u32) {
 		self.width      = width;
 		self.height     = height;
-		self.projection = Ortho3::new(width as f32, height as f32, 0.1, 100.0).to_mat();
+		self.projection = Ortho3::new(width as f32, height as f32, 0.1, 1000.0).to_mat();
 	}
 
 	pub fn width(&self) -> u32 {
@@ -47,7 +47,7 @@ impl Scene {
 		self.projection
 	}
 
-	pub fn position(&self, Position(x, y): Position) -> Mat4<f32> {
+	pub fn position(&self, Position { x, y, .. }: Position) -> Mat4<f32> {
 		let (x, y) = if self.aspect.is_vertical() {
 			(x as f32 * self.width as f32 / self.aspect.width() as f32,
 			 y as f32 * self.height as f32 / self.aspect.height() as f32)
@@ -72,7 +72,7 @@ impl Scene {
 				y - self.height as f32 / 2.0
 			},
 
-			-50.0), na::zero()))
+			-500.0), na::zero()))
 	}
 
 	pub fn orientation(&self, orientation: Orientation) -> Mat4<f32> {
@@ -87,6 +87,18 @@ impl Scene {
 		             0.0, factor,    0.0, 0.0,
 		             0.0,    0.0, factor, 0.0,
 		             0.0,    0.0,    0.0, 1.0)
+	}
+
+	pub fn depth(&self, Position { z, .. }: Position) -> Mat4<f32> {
+		if z > 0.0 {
+			unimplemented!()
+		}
+		else if z < 0.0 {
+			unimplemented!()
+		}
+		else {
+			na::new_identity(4)
+		}
 	}
 
 	pub fn rotation(&self, roll: f32, pitch: f32, yaw: f32) -> Mat4<f32> {
