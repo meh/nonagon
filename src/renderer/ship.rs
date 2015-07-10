@@ -31,6 +31,7 @@ pub struct Ship<'a> {
 
 	cube:        Shape,
 	tetrahedron: Shape,
+	octahedron:  Shape,
 }
 
 impl<'a> Ship<'a>{
@@ -249,6 +250,107 @@ impl<'a> Ship<'a>{
 					7, 8,
 				])
 			},
+
+			octahedron: Shape {
+				faces: {
+					#[inline(always)]
+					fn coordinates(face: u8, u: f32, v: f32) -> [f32; 2] {
+						match face {
+							1 => [u, v],
+							2 => [u, v],
+							3 => [u, v],
+							4 => [u, v],
+
+							5 => [u, v],
+							6 => [u, v],
+							7 => [u, v],
+							8 => [u, v],
+
+							_ => unreachable!()
+						}
+					}
+
+					VertexBuffer::new(display, vec![
+						// top front
+						Vertex { position: [-1.0,  0.0,  1.0], texture: coordinates(1, 0.0, 0.0) },
+						Vertex { position: [ 1.0,  0.0,  1.0], texture: coordinates(1, 0.0, 0.0) },
+						Vertex { position: [ 0.0,  1.0,  0.0], texture: coordinates(1, 0.0, 0.0) },
+
+						// top right
+						Vertex { position: [ 1.0,  0.0,  1.0], texture: coordinates(2, 0.0, 0.0) },
+						Vertex { position: [ 1.0,  0.0, -1.0], texture: coordinates(2, 0.0, 0.0) },
+						Vertex { position: [ 0.0,  1.0,  0.0], texture: coordinates(2, 0.0, 0.0) },
+
+						// top back
+						Vertex { position: [ 1.0,  0.0, -1.0], texture: coordinates(3, 0.0, 0.0) },
+						Vertex { position: [-1.0,  0.0, -1.0], texture: coordinates(3, 0.0, 0.0) },
+						Vertex { position: [ 0.0,  1.0,  0.0], texture: coordinates(3, 0.0, 0.0) },
+
+						// top left
+						Vertex { position: [-1.0,  0.0, -1.0], texture: coordinates(4, 0.0, 0.0) },
+						Vertex { position: [-1.0,  0.0,  1.0], texture: coordinates(4, 0.0, 0.0) },
+						Vertex { position: [ 0.0,  1.0,  0.0], texture: coordinates(4, 0.0, 0.0) },
+
+						// bottom front
+						Vertex { position: [ 1.0,  0.0,  1.0], texture: coordinates(5, 0.0, 0.0) },
+						Vertex { position: [-1.0,  0.0,  1.0], texture: coordinates(5, 0.0, 0.0) },
+						Vertex { position: [ 0.0, -1.0,  0.0], texture: coordinates(5, 0.0, 0.0) },
+
+						// bottom right
+						Vertex { position: [ 1.0,  0.0, -1.0], texture: coordinates(6, 0.0, 0.0) },
+						Vertex { position: [ 1.0,  0.0,  1.0], texture: coordinates(6, 0.0, 0.0) },
+						Vertex { position: [ 0.0, -1.0,  0.0], texture: coordinates(6, 0.0, 0.0) },
+
+						// bottom back
+						Vertex { position: [-1.0,  0.0, -1.0], texture: coordinates(7, 0.0, 0.0) },
+						Vertex { position: [ 1.0,  0.0, -1.0], texture: coordinates(7, 0.0, 0.0) },
+						Vertex { position: [ 0.0, -1.0,  0.0], texture: coordinates(7, 0.0, 0.0) },
+
+						// bottom left
+						Vertex { position: [-1.0,  0.0,  1.0], texture: coordinates(8, 0.0, 0.0) },
+						Vertex { position: [-1.0,  0.0, -1.0], texture: coordinates(8, 0.0, 0.0) },
+						Vertex { position: [ 0.0, -1.0,  0.0], texture: coordinates(8, 0.0, 0.0) },
+					])
+				},
+
+				borders: IndexBuffer::new(display, LinesList, vec![
+					// front middle
+					0, 1,
+
+					// top front right
+					1, 2,
+
+					// top front left
+					0, 2,
+
+					// right middle
+					3, 4,
+
+					// top back left
+					4, 5,
+
+					// back middle
+					6, 7,
+
+					// top back right
+					7, 8,
+
+					// left middle
+					9, 10,
+
+					// bottom front left
+					13, 14,
+
+					// bottom back left
+					14, 15,
+
+					// bottom front right
+					16, 17,
+
+					// bottom back right
+					17, 18,
+				])
+			},
 		}
 	}
 
@@ -259,12 +361,16 @@ impl<'a> Ship<'a>{
 
 			ship::Shape::Tetrahedron =>
 				(&self.tetrahedron.faces, &self.tetrahedron.borders),
+
+			ship::Shape::Octahedron =>
+				(&self.octahedron.faces, &self.octahedron.borders),
 		};
 
 		let mvp = support.scene().to_mat() *
 			support.scene().position(state.position) *
 			support.scene().orientation(state.orientation) *
-			support.scene().scale(12.5 * state.scale);
+			support.scene().scale(12.5 * state.scale) *
+			support.scene().depth(state.position);
 
 		// draw the faces
 		match state.face {

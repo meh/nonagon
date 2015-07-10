@@ -5,8 +5,10 @@ use super::{Position, Direction, Orientation};
 pub enum Shape {
 	Cube,
 	Tetrahedron,
+	Octahedron,
 }
 
+#[derive(Debug)]
 pub struct Ship {
 	pub shape:  Shape,
 	pub face:   Fill,
