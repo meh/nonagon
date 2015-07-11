@@ -49,12 +49,12 @@ impl Scene {
 
 	pub fn position(&self, Position { x, y, .. }: Position) -> Mat4<f32> {
 		let (x, y) = if self.aspect.is_vertical() {
-			(x as f32 * self.width as f32 / self.aspect.width() as f32,
-			 y as f32 * self.height as f32 / self.aspect.height() as f32)
+			(x * self.width as f32 / self.aspect.width() as f32,
+			 y * self.height as f32 / self.aspect.height() as f32)
 		}
 		else {
-			((self.aspect.height() as u16 - y) as f32 * self.width as f32 / self.aspect.height() as f32,
-			 x as f32 * self.height as f32 / self.aspect.width() as f32)
+			((self.aspect.height() as f32 - y) * self.width as f32 / self.aspect.height() as f32,
+			 x * self.height as f32 / self.aspect.width() as f32)
 		};
 
 		na::to_homogeneous(&Iso3::new(Vec3::new(
@@ -89,16 +89,25 @@ impl Scene {
 		             0.0,    0.0,    0.0, 1.0)
 	}
 
+	// FIXME: proportion between - and +
 	pub fn depth(&self, Position { z, .. }: Position) -> Mat4<f32> {
-		if z > 0.0 {
-			unimplemented!()
+		assert!(z >= -100.0 && z <= 100.0);
+
+		if z == 0.0 {
+			return na::new_identity(4);
 		}
-		else if z < 0.0 {
-			unimplemented!()
+
+		let factor = if z > 0.0 {
+			1.0 + z / 100.0
 		}
 		else {
-			na::new_identity(4)
-		}
+			(100.0 - z.abs()) / 100.0
+		};
+
+		Mat4::new(factor,    0.0,    0.0, 0.0,
+		             0.0, factor,    0.0, 0.0,
+		             0.0,    0.0, factor, 0.0,
+		             0.0,    0.0,    0.0, 1.0)
 	}
 
 	pub fn rotation(&self, roll: f32, pitch: f32, yaw: f32) -> Mat4<f32> {

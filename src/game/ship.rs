@@ -1,5 +1,5 @@
-use util::{Fill};
-use super::{Position, Direction, Orientation};
+use util::{Fill, Aspect};
+use super::{Position, Orientation, Velocity};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum Shape {
@@ -15,8 +15,8 @@ pub struct Ship {
 	pub border: Option<Fill>,
 
 	pub position:    Position,
-	pub direction:   Direction,
 	pub orientation: Orientation,
+	pub velocity:    Velocity,
 	pub scale:       f32,
 }
 
@@ -28,8 +28,8 @@ impl Default for Ship {
 			border: Some(Fill::from("#000")),
 
 			position:    Default::default(),
-			direction:   Default::default(),
 			orientation: Default::default(),
+			velocity:    Default::default(),
 			scale:       1.0,
 		}
 	}

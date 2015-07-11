@@ -6,11 +6,11 @@ use glium::glutin::VirtualKeyCode as Key;
 
 use ffmpeg::{frame, Rational};
 
-use util::{color, Fill, Aspect};
+use util::Aspect;
 use config::Config;
-use super::{Position, Orientation};
-use super::ship::{self, Ship};
-use super::bullet::{self, Bullet};
+use super::Position;
+use super::ship::Ship;
+use super::bullet::Bullet;
 
 pub struct State {
 	pub player:  Ship,
@@ -31,8 +31,8 @@ impl State {
 		player.shape = config.game().ship().shape();
 
 		player.position = Position {
-			x: (aspect.width() / 2) as u16,
-			y: (aspect.height() - 20) as u16,
+			x: (aspect.width() as f32 / 2.0),
+			y: (aspect.height() as f32 - 20.0),
 			z: 0.0,
 		};
 
@@ -44,7 +44,7 @@ impl State {
 			player.border = border;
 		}
 
-		println!("{:#?}", player);
+		debug!("{:#?}", player);
 
 		State {
 			player:  player,
@@ -83,149 +83,72 @@ impl State {
 	}
 
 	pub fn update(&mut self) {
+		self.controls();
+	}
+
+	fn controls(&mut self) {
 		// position
-		if self.aspect.is_vertical() {
-			if self.keys.contains(&Key::Left) {
-				match self.player.position {
-					Position { x: 0, .. } =>
-						(),
+		self.player.velocity.clear();
 
-					Position { ref mut x, .. } =>
-						*x -= 1,
-				}
+		if self.keys.contains(&Key::Left) {
+			if self.aspect.is_vertical() {
+				self.player.velocity.x -= 1.0;
 			}
-
-			if self.keys.contains(&Key::Up) {
-				match self.player.position {
-					Position { y: 0, .. } =>
-						(),
-
-					Position { ref mut y, .. } =>
-						*y -= 1,
-				}
-			}
-
-			if self.keys.contains(&Key::Right) {
-				match self.player.position {
-					Position { x, .. } if x == self.aspect.width() as u16 =>
-						(),
-
-					Position { ref mut x, .. } =>
-						*x += 1,
-				}
-			}
-
-			if self.keys.contains(&Key::Down) {
-				match self.player.position {
-					Position { y, .. } if y == self.aspect.height() as u16 =>
-						(),
-
-					Position { ref mut y, .. } =>
-						*y += 1,
-				}
+			else {
+				self.player.velocity.y += 1.0;
 			}
 		}
-		else {
-			if self.keys.contains(&Key::Up) {
-				match self.player.position {
-					Position { x: 0, .. } =>
-						(),
 
-					Position { ref mut x, .. } =>
-						*x -= 1,
-				}
+		if self.keys.contains(&Key::Up) {
+			if self.aspect.is_vertical() {
+				self.player.velocity.y -= 1.0;
 			}
-
-			if self.keys.contains(&Key::Right) {
-				match self.player.position {
-					Position { y: 0, .. } =>
-						(),
-
-					Position { ref mut y, .. } =>
-						*y -= 1,
-				}
+			else {
+				self.player.velocity.x -= 1.0;
 			}
+		}
 
-			if self.keys.contains(&Key::Down) {
-				match self.player.position {
-					Position { x, .. } if x == self.aspect.width() as u16 =>
-						(),
-
-					Position { ref mut x, .. } =>
-						*x += 1,
-				}
+		if self.keys.contains(&Key::Right) {
+			if self.aspect.is_vertical() {
+				self.player.velocity.x += 1.0;
 			}
+			else {
+				self.player.velocity.y -= 1.0;
+			}
+		}
 
-			if self.keys.contains(&Key::Left) {
-				match self.player.position {
-					Position { y, .. } if y == self.aspect.height() as u16 =>
-						(),
-
-					Position { ref mut y, .. } =>
-						*y += 1,
-				}
+		if self.keys.contains(&Key::Down) {
+			if self.aspect.is_vertical() {
+				self.player.velocity.y += 1.0;
+			}
+			else {
+				self.player.velocity.x += 1.0;
 			}
 		}
 
 		// rotation
 		if self.keys.contains(&Key::A) {
-			match self.player.orientation {
-				Orientation { ref mut pitch, .. } if *pitch == 0.0 =>
-					*pitch = 360.0,
-
-				Orientation { ref mut pitch, .. } =>
-					*pitch -= 1.0,
-			}
+			self.player.velocity.pitch -= 1.0;
 		}
 
 		if self.keys.contains(&Key::Q) {
-			match self.player.orientation {
-				Orientation { ref mut yaw, .. } if *yaw == 0.0 =>
-					*yaw = 360.0,
-
-				Orientation { ref mut yaw, .. } =>
-					*yaw -= 1.0,
-			}
+			self.player.velocity.yaw -= 1.0;
 		}
 
 		if self.keys.contains(&Key::W) {
-			match self.player.orientation {
-				Orientation { ref mut roll, .. } if *roll == 0.0 =>
-					*roll = 360.0,
-
-				Orientation { ref mut roll, .. } =>
-					*roll -= 1.0,
-			}
+			self.player.velocity.roll -= 1.0;
 		}
 
 		if self.keys.contains(&Key::E) {
-			match self.player.orientation {
-				Orientation { ref mut yaw, .. } if *yaw == 360.0 =>
-					*yaw = 0.0,
-
-				Orientation { ref mut yaw, .. } =>
-					*yaw += 1.0,
-			}
+			self.player.velocity.yaw += 1.0;
 		}
 
 		if self.keys.contains(&Key::D) {
-			match self.player.orientation {
-				Orientation { ref mut pitch, .. } if *pitch == 360.0 =>
-					*pitch = 0.0,
-
-				Orientation { ref mut pitch, .. } =>
-					*pitch += 1.0,
-			}
+			self.player.velocity.pitch += 1.0;
 		}
 
 		if self.keys.contains(&Key::S) {
-			match self.player.orientation {
-				Orientation { ref mut roll, .. } if *roll == 360.0 =>
-					*roll = 0.0,
-
-				Orientation { ref mut roll, .. } =>
-					*roll += 1.0,
-			}
+			self.player.velocity.roll += 1.0;
 		}
 	}
 }
