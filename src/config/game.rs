@@ -52,8 +52,11 @@ impl Game {
 						"tetrahedron" =>
 							Shape::Tetrahedron,
 
+						"octahedron" =>
+							Shape::Octahedron,
+
 						_ =>
-							expect!("`game.ship.shape` must be either 'cube' or 'tetrahedron'"),
+							expect!("`game.ship.shape` must be 'cube' or 'tetrahedron' or 'octahedron'"),
 					}
 				}
 
