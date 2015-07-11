@@ -3,12 +3,13 @@ use super::{Update, Position, Orientation, Velocity};
 
 #[derive(Debug)]
 pub enum Bullet {
-	Sphere {
+	Plasma {
 		fill: Fill,
 
 		position:    Position,
 		orientation: Orientation,
 		velocity:    Velocity,
+		scale:       f32,
 	},
 
 	Ray {
@@ -18,18 +19,6 @@ pub enum Bullet {
 		position:    Position,
 		orientation: Orientation,
 		velocity:    Velocity,
-	}
-}
-
-impl Default for Bullet {
-	fn default() -> Bullet {
-		Bullet::Sphere {
-			fill: Fill::from("#fff"),
-
-			position:    Default::default(),
-			orientation: Default::default(),
-			velocity:    Default::default(),
-		}
 	}
 }
 
@@ -61,7 +50,7 @@ impl Update for Bullet {
 		}
 
 		match self {
-			&mut Bullet::Sphere { ref mut position, ref mut orientation, ref velocity, .. } => {
+			&mut Bullet::Plasma { ref mut position, ref mut orientation, ref velocity, .. } => {
 				position.x = up(position.x, velocity.x,    0.0, aspect.width() as f32,  false);
 				position.y = up(position.y, velocity.y,    0.0, aspect.height() as f32, false);
 				position.z = up(position.z, velocity.z, -100.0, 100.0,                  false);
