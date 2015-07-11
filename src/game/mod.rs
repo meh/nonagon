@@ -16,5 +16,8 @@ pub use self::ship::Ship;
 pub mod bullet;
 pub use self::bullet::Bullet;
 
+pub mod particle;
+pub use self::particle::Particle;
+
 pub mod traits;
 pub use self::traits::{Update, Geom, CanDamage};
