@@ -237,7 +237,7 @@ fn main() {
 				video.sync();
 			}
 
-			state.lock().unwrap().update();
+			state.lock().unwrap().tick();
 
 			lag -= GRANULARITY;
 		}

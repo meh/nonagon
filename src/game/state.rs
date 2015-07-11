@@ -8,14 +8,13 @@ use ffmpeg::{frame, Rational};
 
 use util::Aspect;
 use config::Config;
-use super::Position;
-use super::ship::Ship;
-use super::bullet::Bullet;
+use super::{Update, Position, Ship, Bullet, Particle};
 
 pub struct State {
-	player:  Ship,
-	enemies: Vec<Ship>,
-	bullets: Vec<Bullet>,
+	player:    Ship,
+	enemies:   Vec<Ship>,
+	bullets:   Vec<Bullet>,
+	particles: Vec<Particle>,
 
 	config: Config,
 	aspect: Rational,
@@ -47,9 +46,10 @@ impl State {
 		debug!("{:#?}", player);
 
 		State {
-			player:  player,
-			enemies: Vec::new(),
-			bullets: Vec::new(),
+			player:    player,
+			enemies:   Vec::new(),
+			bullets:   Vec::new(),
+			particles: Vec::new(),
 
 			config: config.clone(),
 			aspect: aspect.reduce(),
@@ -94,14 +94,18 @@ impl State {
 		&self.bullets
 	}
 
-	pub fn update(&mut self) {
-		self.controls();
-	}
+	pub fn tick(&mut self) {
+		let aspect = self.aspect.clone();
 
-	fn controls(&mut self) {
-		// position
+		self.update(&aspect);
+	}
+}
+
+impl Update for State {
+	fn update(&mut self, aspect: &Aspect) {
 		self.player.velocity.clear();
 
+		// position
 		if self.keys.contains(&Key::Left) {
 			if self.aspect.is_vertical() {
 				self.player.velocity.x -= 1.0;
@@ -161,6 +165,21 @@ impl State {
 
 		if self.keys.contains(&Key::S) {
 			self.player.velocity.roll += 1.0;
+		}
+
+		// state
+		self.player.update(aspect);
+
+		for enemy in &mut self.enemies {
+			enemy.update(aspect);
+		}
+
+		for bullet in &mut self.bullets {
+			bullet.update(aspect);
+		}
+
+		for particle in &mut self.particles {
+			particle.update(aspect);
 		}
 	}
 }
