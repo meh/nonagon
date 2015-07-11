@@ -41,6 +41,6 @@ impl<'a> Renderer<'a> {
 			self.video.render(target, &self.support, frame);
 		}
 
-		self.ship.render(target, &self.support, &state.player);
+		self.ship.render(target, &self.support, state.player());
 	}
 }

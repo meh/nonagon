@@ -13,9 +13,9 @@ use super::ship::Ship;
 use super::bullet::Bullet;
 
 pub struct State {
-	pub player:  Ship,
-	pub enemies: Vec<Ship>,
-	pub bullets: Vec<Bullet>,
+	player:  Ship,
+	enemies: Vec<Ship>,
+	bullets: Vec<Bullet>,
 
 	config: Config,
 	aspect: Rational,
@@ -80,6 +80,18 @@ impl State {
 
 			_ => unreachable!()
 		}
+	}
+
+	pub fn player(&self) -> &Ship {
+		&self.player
+	}
+
+	pub fn enemies(&self) -> &[Ship] {
+		&self.enemies
+	}
+
+	pub fn bullets(&self) -> &[Bullet] {
+		&self.bullets
 	}
 
 	pub fn update(&mut self) {
