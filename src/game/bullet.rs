@@ -22,7 +22,7 @@ pub enum Bullet {
 }
 
 impl Update for Bullet {
-	fn update(&mut self, aspect: &Aspect) {
+	fn update(&mut self, tick: usize, aspect: &Aspect) {
 		#[inline(always)]
 		fn up(value: f32, velocity: f32, min: f32, max: f32, around: bool) -> f32 {
 			let new = value + velocity;

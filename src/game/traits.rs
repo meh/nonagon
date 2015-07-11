@@ -2,7 +2,7 @@ use nc::bounding_volume::{HasAABB, AABB};
 use util::Aspect;
 
 pub trait Update {
-	fn update(&mut self, aspect: &Aspect);
+	fn update(&mut self, tick: usize, aspect: &Aspect);
 }
 
 pub trait Geom<P, M> {

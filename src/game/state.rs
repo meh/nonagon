@@ -23,6 +23,7 @@ pub struct State {
 	config: Config,
 	aspect: Rational,
 	keys:   HashSet<Key>,
+	ticks:  usize,
 }
 
 impl State {
@@ -59,6 +60,7 @@ impl State {
 			config: config.clone(),
 			aspect: aspect.reduce(),
 			keys:   HashSet::new(),
+			ticks:  0,
 		}
 	}
 
@@ -109,14 +111,17 @@ impl State {
 	}
 
 	pub fn tick(&mut self) {
-		let aspect = self.aspect.clone();
+		self.ticks += 1;
 
-		self.update(&aspect);
+		let aspect = self.aspect.clone();
+		let ticks  = self.ticks.clone();
+
+		self.update(ticks, &aspect);
 	}
 }
 
 impl Update for State {
-	fn update(&mut self, aspect: &Aspect) {
+	fn update(&mut self, tick: usize, aspect: &Aspect) {
 		// reset player
 		self.player.velocity.x = 0.0;
 		self.player.velocity.y = 0.0;
@@ -189,18 +194,18 @@ impl Update for State {
 		}
 
 		// state
-		self.player.update(aspect);
+		self.player.update(tick, aspect);
 
 		for enemy in &mut self.enemies {
-			enemy.update(aspect);
+			enemy.update(tick, aspect);
 		}
 
 		for bullet in &mut self.bullets {
-			bullet.update(aspect);
+			bullet.update(tick, aspect);
 		}
 
 		for particle in &mut self.particles {
-			particle.update(aspect);
+			particle.update(tick, aspect);
 		}
 	}
 }
