@@ -10,7 +10,7 @@ use glium::{Program, Display, VertexBuffer, Surface};
 use glium::index::PrimitiveType::TriangleStrip;
 use glium::index::NoIndices;
 
-use renderer::Support;
+use renderer::{Render, Support};
 
 pub struct Video<'a> {
 	display: &'a Display,
@@ -65,8 +65,10 @@ impl<'a> Video<'a> {
 			vertices: vertices,
 		}
 	}
+}
 
-	pub fn render<T: Surface>(&mut self, target: &mut T, support: &Support, frame: &frame::Video) {
+impl<'a> Render<frame::Video> for Video<'a> {
+	fn render<T: Surface>(&mut self, target: &mut T, support: &Support, frame: &frame::Video) {
 		let texture = Texture::new(self.display, frame);
 
 		let uniforms = uniform! {
