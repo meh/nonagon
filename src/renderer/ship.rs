@@ -8,7 +8,7 @@ use glium::index::PrimitiveType::{TrianglesList, LinesList};
 
 use util::Fill;
 use game::{self, ship};
-use renderer::Support;
+use renderer::{Render, Support};
 
 struct Shape {
 	faces:   VertexBuffer<Vertex>,
@@ -353,8 +353,10 @@ impl<'a> Ship<'a>{
 			},
 		}
 	}
+}
 
-	pub fn render<T: Surface>(&mut self, target: &mut T, support: &Support, state: &game::Ship) {
+impl<'a> Render<game::Ship> for Ship<'a> {
+	fn render<T: Surface>(&mut self, target: &mut T, support: &Support, state: &game::Ship) {
 		let (faces, borders) = match state.shape {
 			ship::Shape::Cube =>
 				(&self.cube.faces, &self.cube.borders),
