@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{VecDeque, HashSet};
 
 use glium::glutin::Event;
 use glium::glutin::ElementState::{Pressed, Released};
@@ -10,11 +10,15 @@ use util::Aspect;
 use config::Config;
 use super::{Update, Position, Ship, Bullet, Particle};
 
+#[derive(Debug)]
 pub struct State {
 	player:    Ship,
 	enemies:   Vec<Ship>,
 	bullets:   Vec<Bullet>,
 	particles: Vec<Particle>,
+
+	timestamp: i64,
+	frames:    VecDeque<frame::Audio>,
 
 	config: Config,
 	aspect: Rational,
@@ -51,6 +55,9 @@ impl State {
 			bullets:   Vec::new(),
 			particles: Vec::new(),
 
+			timestamp: -1,
+			frames:    VecDeque::new(),
+
 			config: config.clone(),
 			aspect: aspect.reduce(),
 			keys:   HashSet::new(),
@@ -58,7 +65,12 @@ impl State {
 	}
 
 	pub fn feed(&mut self, frame: &frame::Audio) {
+		if self.timestamp >= frame.timestamp().unwrap() {
+			return;
+		}
 
+		// FIXME: uncomment this when ready
+		//self.frames.push_back(frame.clone());
 	}
 
 	pub fn handle(&mut self, event: &Event) {
