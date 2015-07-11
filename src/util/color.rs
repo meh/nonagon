@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use image::Rgba;
 use glium::uniforms::{UniformType, UniformValue, AsUniformValue};
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct Color(Rgba<u8>);
 
 impl Color {
@@ -46,6 +46,25 @@ impl AsUniformValue for Color {
 
 	fn matches(ty: &UniformType) -> bool {
 		ty == &UniformType::FloatVec4
+	}
+}
+
+impl<T: Parse> From<T> for Color {
+	fn from(value: T) -> Color {
+		Parse::parse(value).unwrap()
+	}
+}
+
+impl ::std::fmt::Display for Color {
+	fn fmt(&self, f: &mut ::std::fmt::Formatter) -> Result<(), ::std::fmt::Error> {
+		f.write_str(&format!("#{:02x}{:02x}{:02x}{:02x}", self.0[0], self.0[1], self.0[2], self.0[3]))
+	}
+}
+
+
+impl ::std::fmt::Debug for Color {
+	fn fmt(&self, f: &mut ::std::fmt::Formatter) -> Result<(), ::std::fmt::Error> {
+		::std::fmt::Display::fmt(self, f)
 	}
 }
 
@@ -138,7 +157,7 @@ impl<'a> Parse for (&'a str, f32) {
 	}
 }
 
-pub fn rgba(string: &str) -> Result<(u8, u8, u8, u8), &'static str> {
+fn rgba(string: &str) -> Result<(u8, u8, u8, u8), &'static str> {
 	use std::iter;
 
 	if let Some(c) = ::regex::Regex::new(r"^#([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})([:xdigit:]{2})?$").unwrap().captures(string) {
