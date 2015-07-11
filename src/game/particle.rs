@@ -4,21 +4,11 @@ use super::{Update, Position, Velocity};
 #[derive(Debug)]
 pub enum Particle {
 	Dot {
-		fill: Fill,
+		fill:  Fill,
 
 		position: Position,
 		velocity: Velocity,
-	}
-}
-
-impl Default for Particle {
-	fn default() -> Particle {
-		Particle::Dot {
-			fill: Fill::from("#fff"),
-
-			position: Default::default(),
-			velocity: Default::default(),
-		}
+		scale:    f32,
 	}
 }
 
