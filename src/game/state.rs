@@ -106,6 +106,10 @@ impl State {
 		&self.bullets
 	}
 
+	pub fn particles(&self) -> &[Particle] {
+		&self.particles
+	}
+
 	pub fn tick(&mut self) {
 		let aspect = self.aspect.clone();
 
