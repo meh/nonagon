@@ -103,7 +103,14 @@ impl State {
 
 impl Update for State {
 	fn update(&mut self, aspect: &Aspect) {
-		self.player.velocity.clear();
+		// reset player
+		self.player.velocity.x = 0.0;
+		self.player.velocity.y = 0.0;
+		self.player.velocity.z = 0.0;
+
+		self.player.velocity.roll  = 0.0;
+		self.player.velocity.pitch = 0.0;
+		self.player.velocity.yaw   = 0.0;
 
 		// position
 		if self.keys.contains(&Key::Left) {
