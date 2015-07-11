@@ -25,8 +25,6 @@ pub struct State {
 	keys:   HashSet<Key>,
 }
 
-unsafe impl Sync for State { }
-
 impl State {
 	pub fn new(config: &Config, aspect: Rational) -> Self {
 		let mut player = Ship::default();
