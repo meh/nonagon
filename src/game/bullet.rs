@@ -6,10 +6,9 @@ pub enum Bullet {
 	Plasma {
 		fill: Fill,
 
-		position:    Position,
-		orientation: Orientation,
-		velocity:    Velocity,
-		scale:       f32,
+		position: Position,
+		velocity: Velocity,
+		scale:    f32,
 	},
 
 	Ray {
@@ -50,14 +49,10 @@ impl Update for Bullet {
 		}
 
 		match self {
-			&mut Bullet::Plasma { ref mut position, ref mut orientation, ref velocity, .. } => {
+			&mut Bullet::Plasma { ref mut position, ref velocity, .. } => {
 				position.x = up(position.x, velocity.x,    0.0, aspect.width() as f32,  false);
 				position.y = up(position.y, velocity.y,    0.0, aspect.height() as f32, false);
 				position.z = up(position.z, velocity.z, -100.0, 100.0,                  false);
-
-				orientation.roll  = up(orientation.roll,  velocity.roll,  0.0, 360.0, true);
-				orientation.pitch = up(orientation.pitch, velocity.pitch, 0.0, 360.0, true);
-				orientation.yaw   = up(orientation.yaw,   velocity.yaw,   0.0, 360.0, true);
 			},
 
 			&mut Bullet::Ray { ref mut position, ref mut orientation, ref velocity, .. } => {
