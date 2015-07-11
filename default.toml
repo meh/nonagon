@@ -11,5 +11,5 @@ mute = false
 vsync         = true
 multisampling = false
 
-[video.effects.bullet]
+[video.effects.bullet.plasma]
 glow = true

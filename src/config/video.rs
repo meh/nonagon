@@ -16,6 +16,11 @@ pub struct Effects {
 
 #[derive(Clone, Debug)]
 pub struct Bullet {
+	plasma: Plasma,
+}
+
+#[derive(Clone, Debug)]
+pub struct Plasma {
 	glow: bool,
 }
 
@@ -41,6 +46,14 @@ impl Default for Effects {
 impl Default for Bullet {
 	fn default() -> Bullet {
 		Bullet {
+			plasma: Plasma::default(),
+		}
+	}
+}
+
+impl Default for Plasma {
+	fn default() -> Plasma {
+		Plasma {
 			glow: true,
 		}
 	}
@@ -77,8 +90,12 @@ impl Video {
 				if let Some(toml) = toml.get("bullet") {
 					let toml = expect!(toml.as_table(), "`video.effects.bullet` must be a table");
 
-					if let Some(value) = toml.get("glow") {
-						self.effects.bullet.glow = expect!(value.as_bool(), "`video.effects.bullet.glow` must be a boolean");
+					if let Some(toml) = toml.get("plasma") {
+						let toml = expect!(toml.as_table(), "`video.effects.bullet.plasma` must be a table");
+
+						if let Some(value) = toml.get("glow") {
+							self.effects.bullet.plasma.glow = expect!(value.as_bool(), "`video.effects.bullet.plasma.glow` must be a boolean");
+						}
 					}
 				}
 			}
@@ -107,6 +124,12 @@ impl Effects {
 }
 
 impl Bullet {
+	pub fn plasma(&self) -> &Plasma {
+		&self.plasma
+	}
+}
+
+impl Plasma {
 	pub fn glow(&self) -> bool {
 		self.glow
 	}
