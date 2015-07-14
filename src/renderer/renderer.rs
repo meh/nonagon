@@ -32,7 +32,8 @@ impl<'a> Renderer<'a> {
 		self.support.resize(width, height);
 	}
 
-	pub fn render<T: Surface>(&mut self, target: &mut T, state: &game::State, frame: Option<&frame::Video>) {
+	pub fn render<T: Surface>(&mut self, target: &mut T, time: f64, state: &game::State, frame: Option<&frame::Video>) {
+		self.support.update(time);
 		self.support.background(state, frame);
 		self.background.render(target, &self.support, self.support.as_ref());
 

@@ -248,7 +248,7 @@ fn main() {
 		let mut target = display.draw();
 		target.clear_all((1.0, 1.0, 1.0, 1.0), 1.0, 0);
 
-		renderer.render(&mut target, &state.lock().unwrap(), video.as_ref().and_then(|v|
+		renderer.render(&mut target, current, &state.lock().unwrap(), video.as_ref().and_then(|v|
 			if v.is_done() {
 				None
 			}

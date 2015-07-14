@@ -22,6 +22,7 @@ use game;
 pub struct Support<'a> {
 	display: &'a Display,
 	config:  config::Video,
+	time:    f64,
 
 	background: Option<SrgbTexture2d>,
 	video:      Video<'a>,
@@ -36,6 +37,7 @@ impl<'a> Support<'a> {
 		Support {
 			display: display,
 			config:  config.clone(),
+			time:    0.0,
 
 			background: None,
 			video:      Video::new(display),
@@ -48,6 +50,10 @@ impl<'a> Support<'a> {
 
 	pub fn resize(&mut self, width: u32, height: u32) {
 		self.scene.resize(width, height);
+	}
+
+	pub fn update(&mut self, time: f64) {
+		self.time = time;
 	}
 
 	pub fn background(&mut self, state: &game::State, frame: Option<&frame::Video>) {
@@ -69,6 +75,10 @@ impl<'a> Support<'a> {
 
 	pub fn config(&self) -> &config::Video {
 		&self.config
+	}
+
+	pub fn time(&self) -> f64 {
+		self.time
 	}
 
 	pub fn scene(&self) -> &Scene {
