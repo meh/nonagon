@@ -1,7 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use super::{Update, Ship};
-use util::Aspect;
+use game::{Update, Support, Ship};
 
 #[derive(Debug)]
 pub struct Player {
@@ -51,7 +50,7 @@ impl DerefMut for Player {
 }
 
 impl Update for Player {
-	fn update(&mut self, tick: usize, aspect: &Aspect) {
-		self.ship.update(tick, aspect);
+	fn update(&mut self, support: &Support) {
+		self.ship.update(support);
 	}
 }

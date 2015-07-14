@@ -1,16 +1,19 @@
-pub mod position;
+mod support;
+pub use self::support::Support;
+
+mod position;
 pub use self::position::Position;
 
-pub mod orientation;
+mod orientation;
 pub use self::orientation::Orientation;
 
-pub mod velocity;
+mod velocity;
 pub use self::velocity::Velocity;
 
-pub mod state;
+mod state;
 pub use self::state::State;
 
-pub mod player;
+mod player;
 pub use self::player::Player;
 
 pub mod ship;
@@ -22,5 +25,5 @@ pub use self::bullet::Bullet;
 pub mod particle;
 pub use self::particle::Particle;
 
-pub mod traits;
+mod traits;
 pub use self::traits::{Update, Geom, CanDamage};

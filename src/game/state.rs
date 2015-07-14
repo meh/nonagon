@@ -7,12 +7,12 @@ use glium::glutin::VirtualKeyCode as Key;
 use ffmpeg::{frame, Rational};
 
 use util::Aspect;
-use config::Config;
-use super::{Update, Position, Ship, Bullet, Particle};
+use config;
+use game::{Update, Support, Position, Player, Ship, Bullet, Particle};
 
 #[derive(Debug)]
 pub struct State {
-	player:    Ship,
+	player:    Player,
 	enemies:   Vec<Ship>,
 	bullets:   Vec<Bullet>,
 	particles: Vec<Particle>,
@@ -20,17 +20,17 @@ pub struct State {
 	timestamp: i64,
 	frames:    VecDeque<frame::Audio>,
 
-	config: Config,
+	config: config::Game,
 	aspect: Rational,
 	keys:   HashSet<Key>,
-	ticks:  usize,
+	tick:   usize,
 }
 
 impl State {
-	pub fn new(config: &Config, aspect: Rational) -> Self {
-		let mut player = Ship::default();
+	pub fn new(config: &config::Game, aspect: Rational) -> Self {
+		let mut player = Player::default();
 
-		player.shape = config.game().ship().shape();
+		player.shape = config.ship().shape();
 
 		player.position = Position {
 			x: (aspect.width() as f32 / 2.0),
@@ -38,11 +38,11 @@ impl State {
 			z: 0.0,
 		};
 
-		if let Some(face) = config.game().ship().face() {
+		if let Some(face) = config.ship().face() {
 			player.face = face;
 		}
 
-		if let Some(border) = config.game().ship().border() {
+		if let Some(border) = config.ship().border() {
 			player.border = border;
 		}
 
@@ -60,7 +60,7 @@ impl State {
 			config: config.clone(),
 			aspect: aspect.reduce(),
 			keys:   HashSet::new(),
-			ticks:  0,
+			tick:   0,
 		}
 	}
 
@@ -110,26 +110,28 @@ impl State {
 		&self.particles
 	}
 
-	pub fn tick(&mut self) {
-		self.ticks += 1;
+	pub fn tick(&mut self, time: f64) {
+		let support = Support::new(self.config.clone(), self.aspect, self.tick, time);
 
-		let aspect = self.aspect.clone();
-		let ticks  = self.ticks.clone();
+		self.update(&support);
 
-		self.update(ticks, &aspect);
+		// --
+		if support.tick() % 32 == 0 {
+			self.bullets.push(Bullet::Plasma {
+				position: Default::default(),
+				velocity: ::game::Velocity { x: 0.56, y: 1.0, .. Default::default() },
+				radius:   2.0,
+			});
+		}
+		// --
+
+		self.tick += 1;
 	}
 }
 
 impl Update for State {
-	fn update(&mut self, tick: usize, aspect: &Aspect) {
-		// reset player
-		self.player.velocity.x = 0.0;
-		self.player.velocity.y = 0.0;
-		self.player.velocity.z = 0.0;
-
-		self.player.velocity.roll  = 0.0;
-		self.player.velocity.pitch = 0.0;
-		self.player.velocity.yaw   = 0.0;
+	fn update(&mut self, support: &Support) {
+		self.player.reset();
 
 		// position
 		if self.keys.contains(&Key::Left) {
@@ -194,18 +196,18 @@ impl Update for State {
 		}
 
 		// state
-		self.player.update(tick, aspect);
+		self.player.update(support);
 
 		for enemy in &mut self.enemies {
-			enemy.update(tick, aspect);
+			enemy.update(support);
 		}
 
 		for bullet in &mut self.bullets {
-			bullet.update(tick, aspect);
+			bullet.update(support);
 		}
 
 		for particle in &mut self.particles {
-			particle.update(tick, aspect);
+			particle.update(support);
 		}
 	}
 }

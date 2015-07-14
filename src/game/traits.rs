@@ -1,8 +1,8 @@
 use nc::bounding_volume::{HasAABB, AABB};
-use util::Aspect;
+use game::Support;
 
 pub trait Update {
-	fn update(&mut self, tick: usize, aspect: &Aspect);
+	fn update(&mut self, support: &Support);
 }
 
 pub trait Geom<P, M> {

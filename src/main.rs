@@ -148,7 +148,7 @@ fn main() {
 		exit(5);
 	})));
 
-	let state = Arc::new(Mutex::new(State::new(&config, aspect)));
+	let state = Arc::new(Mutex::new(State::new(config.game(), aspect)));
 
 	let music = {
 		let state = state.clone();
@@ -238,7 +238,7 @@ fn main() {
 				video.sync();
 			}
 
-			state.lock().unwrap().tick();
+			state.lock().unwrap().tick(current - lag);
 
 			lag -= GRANULARITY;
 		}

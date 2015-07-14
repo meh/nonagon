@@ -1,5 +1,5 @@
 use util::{Fill, Aspect};
-use super::{Update, Position, Velocity};
+use game::{Update, Support, Position, Velocity};
 
 #[derive(Debug)]
 pub enum Particle {
@@ -13,7 +13,7 @@ pub enum Particle {
 }
 
 impl Update for Particle {
-	fn update(&mut self, tick: usize, aspect: &Aspect) {
+	fn update(&mut self, support: &Support) {
 		#[inline(always)]
 		fn up(value: f32, velocity: f32, min: f32, max: f32, around: bool) -> f32 {
 			let new = value + velocity;
@@ -41,8 +41,8 @@ impl Update for Particle {
 
 		match self {
 			&mut Particle::Dot { ref mut position, ref velocity, .. } => {
-				position.x = up(position.x, velocity.x,    0.0, aspect.width() as f32,  false);
-				position.y = up(position.y, velocity.y,    0.0, aspect.height() as f32, false);
+				position.x = up(position.x, velocity.x,    0.0, support.aspect().width() as f32,  false);
+				position.y = up(position.y, velocity.y,    0.0, support.aspect().height() as f32, false);
 				position.z = up(position.z, velocity.z, -100.0, 100.0,                  false);
 			},
 		}

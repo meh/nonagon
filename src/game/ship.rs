@@ -1,5 +1,5 @@
 use util::{Fill, Aspect};
-use super::{Update, Position, Orientation, Velocity};
+use game::{Update, Support, Position, Orientation, Velocity};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum Shape {
@@ -36,7 +36,7 @@ impl Default for Ship {
 }
 
 impl Update for Ship {
-	fn update(&mut self, tick: usize, aspect: &Aspect) {
+	fn update(&mut self, support: &Support) {
 		#[inline(always)]
 		fn up(value: f32, velocity: f32, min: f32, max: f32, around: bool) -> f32 {
 			let new = value + velocity;
@@ -62,8 +62,8 @@ impl Update for Ship {
 			}
 		}
 
-		self.position.x = up(self.position.x, self.velocity.x,    0.0, aspect.width() as f32,  false);
-		self.position.y = up(self.position.y, self.velocity.y,    0.0, aspect.height() as f32, false);
+		self.position.x = up(self.position.x, self.velocity.x,    0.0, support.aspect().width() as f32,  false);
+		self.position.y = up(self.position.y, self.velocity.y,    0.0, support.aspect().height() as f32, false);
 		self.position.z = up(self.position.z, self.velocity.z, -100.0, 100.0,                  false);
 
 		self.orientation.roll  = up(self.orientation.roll,  self.velocity.roll,  0.0, 360.0, true);
