@@ -4,8 +4,6 @@ use super::{Update, Position, Orientation, Velocity};
 #[derive(Debug)]
 pub enum Bullet {
 	Plasma {
-		fill: Fill,
-
 		position: Position,
 		velocity: Velocity,
 		radius:   f32,
