@@ -1,5 +1,5 @@
 use util::Aspect;
-use game::{Update, Support, Position, Velocity};
+use game::{Update, Alive, Support, Position, Velocity};
 
 #[derive(Debug)]
 pub enum Particle {
@@ -43,6 +43,36 @@ impl Update for Particle {
 				position.y = up(position.y, velocity.y,    0.0, support.aspect().height() as f32, false);
 				position.z = up(position.z, velocity.z, -100.0, 100.0,                  false);
 			},
+		}
+	}
+}
+
+impl Alive for Particle {
+	fn alive(&self, support: &Support) -> bool {
+		match self {
+			&Particle::Dot { position, velocity, .. } => {
+				// if going against the right wall
+				if position.x == support.aspect().width() as f32 && velocity.x > 0.0 {
+					return false;
+				}
+
+				// if going against the left wall
+				if position.x == 0.0 && velocity.x < 0.0 {
+					return false;
+				}
+
+				// if going against the bottom wall
+				if position.y == support.aspect().height() as f32 && velocity.y > 0.0 {
+					return false;
+				}
+
+				// if going against the top wall
+				if position.y == 0.0 && velocity.y < 0.0 {
+					return false;
+				}
+
+				true
+			}
 		}
 	}
 }

@@ -1,5 +1,5 @@
 use util::{Fill, Aspect};
-use game::{Update, Support, Position, Orientation, Velocity};
+use game::{Update, Alive, Support, Position, Orientation, Velocity};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum Shape {
@@ -69,5 +69,11 @@ impl Update for Ship {
 		self.orientation.roll  = up(self.orientation.roll,  self.velocity.roll,  0.0, 360.0, true);
 		self.orientation.pitch = up(self.orientation.pitch, self.velocity.pitch, 0.0, 360.0, true);
 		self.orientation.yaw   = up(self.orientation.yaw,   self.velocity.yaw,   0.0, 360.0, true);
+	}
+}
+
+impl Alive for Ship {
+	fn alive(&self, support: &Support) -> bool {
+		true
 	}
 }

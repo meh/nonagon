@@ -1,5 +1,5 @@
 use util::Aspect;
-use game::{Update, Support, Position, Orientation, Velocity};
+use game::{Update, Alive, Support, Position, Orientation, Velocity};
 
 #[derive(Debug)]
 pub enum Bullet {
@@ -10,13 +10,13 @@ pub enum Bullet {
 	},
 
 	Ray {
-		width:    f32,
-		duration: f64,
 		start:    f64,
+		duration: f64,
 
 		position:    Position,
 		orientation: Orientation,
 		velocity:    Velocity,
+		width:       f32,
 	}
 }
 
@@ -63,6 +63,39 @@ impl Update for Bullet {
 				orientation.pitch = up(orientation.pitch, velocity.pitch, 0.0, 360.0, true);
 				orientation.yaw   = up(orientation.yaw,   velocity.yaw,   0.0, 360.0, true);
 			}
+		}
+	}
+}
+
+impl Alive for Bullet {
+	fn alive(&self, support: &Support) -> bool {
+		match self {
+			&Bullet::Plasma { position, velocity, .. } => {
+				// if going against the right wall
+				if position.x == support.aspect().width() as f32 && velocity.x > 0.0 {
+					return false;
+				}
+
+				// if going against the left wall
+				if position.x == 0.0 && velocity.x < 0.0 {
+					return false;
+				}
+
+				// if going against the bottom wall
+				if position.y == support.aspect().height() as f32 && velocity.y > 0.0 {
+					return false;
+				}
+
+				// if going against the top wall
+				if position.y == 0.0 && velocity.y < 0.0 {
+					return false;
+				}
+
+				true
+			},
+
+			&Bullet::Ray { start, duration, .. } =>
+				support.time() - start < duration,
 		}
 	}
 }

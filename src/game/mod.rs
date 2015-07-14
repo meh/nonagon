@@ -26,4 +26,4 @@ pub mod particle;
 pub use self::particle::Particle;
 
 mod traits;
-pub use self::traits::{Update, Geom, CanDamage};
+pub use self::traits::{Update, Alive, CanDamage, Geom};
