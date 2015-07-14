@@ -209,5 +209,66 @@ impl Update for State {
 		for particle in &mut self.particles {
 			particle.update(support);
 		}
+
+		// remove bullets going out of the window
+		self.bullets.retain(|bullet| {
+			match bullet {
+				&Bullet::Plasma { position, velocity, .. } => {
+					// if going against the right wall
+					if position.x == support.aspect().width() as f32 && velocity.x > 0.0 {
+						return false;
+					}
+
+					// if going against the left wall
+					if position.x == 0.0 && velocity.x < 0.0 {
+						return false;
+					}
+
+					// if going against the bottom wall
+					if position.y == support.aspect().height() as f32 && velocity.y > 0.0 {
+						return false;
+					}
+
+					// if going against the top wall
+					if position.y == 0.0 && velocity.y < 0.0 {
+						return false;
+					}
+
+					true
+				},
+
+				&Bullet::Ray { start, duration, .. } =>
+					support.time() - start > duration,
+			}
+		});
+
+		// remove particles going out of the window
+		self.particles.retain(|particle| {
+			match particle {
+				&Particle::Dot { position, velocity, .. } => {
+					// if going against the right wall
+					if position.x == support.aspect().width() as f32 && velocity.x > 0.0 {
+						return false;
+					}
+
+					// if going against the left wall
+					if position.x == 0.0 && velocity.x < 0.0 {
+						return false;
+					}
+
+					// if going against the bottom wall
+					if position.y == support.aspect().height() as f32 && velocity.y > 0.0 {
+						return false;
+					}
+
+					// if going against the top wall
+					if position.y == 0.0 && velocity.y < 0.0 {
+						return false;
+					}
+
+					true
+				}
+			}
+		});
 	}
 }
