@@ -1,7 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
 use image::Rgba;
-use glium::uniforms::{UniformType, UniformValue, AsUniformValue};
+use glium::uniforms::{UniformValue, AsUniformValue};
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct Color(Rgba<u8>);
@@ -42,10 +42,6 @@ impl AsUniformValue for Color {
 		                    self[1] as f32 / 255.0,
 		                    self[2] as f32 / 255.0,
 		                    self[3] as f32 / 255.0])
-	}
-
-	fn matches(ty: &UniformType) -> bool {
-		ty == &UniformType::FloatVec4
 	}
 }
 
