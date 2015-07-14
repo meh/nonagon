@@ -10,6 +10,9 @@ pub use self::velocity::Velocity;
 pub mod state;
 pub use self::state::State;
 
+pub mod player;
+pub use self::player::Player;
+
 pub mod ship;
 pub use self::ship::Ship;
 

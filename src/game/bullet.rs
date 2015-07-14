@@ -8,7 +8,7 @@ pub enum Bullet {
 
 		position: Position,
 		velocity: Velocity,
-		scale:    f32,
+		radius:   f32,
 	},
 
 	Ray {
