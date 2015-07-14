@@ -62,7 +62,8 @@ impl<'a> Ship<'a>{
 							gl_FragColor = color;
 						}
 					",
-				}).unwrap(),
+				}
+			).unwrap(),
 
 			with_texture: program!(display,
 				110 => {
@@ -93,7 +94,8 @@ impl<'a> Ship<'a>{
 							gl_FragColor = texture2D(tex, v_texture);
 						}
 					",
-				}).unwrap(),
+				}
+			).unwrap(),
 
 			cube: Shape {
 				faces: {
@@ -427,6 +429,11 @@ impl<'a> Render<game::Ship> for Ship<'a> {
 				};
 
 				target.draw(faces, borders, &self.with_color, &uniforms, &DrawParameters {
+					blending_function: Some(Addition {
+						source:      SourceAlpha,
+						destination: OneMinusSourceAlpha
+					}),
+
 					depth_test:  IfLessOrEqual,
 					depth_write: true,
 
@@ -443,6 +450,11 @@ impl<'a> Render<game::Ship> for Ship<'a> {
 				};
 
 				target.draw(faces, borders, &self.with_texture, &uniforms, &DrawParameters {
+					blending_function: Some(Addition {
+						source:      SourceAlpha,
+						destination: OneMinusSourceAlpha
+					}),
+
 					depth_test:  IfLessOrEqual,
 					depth_write: true,
 
