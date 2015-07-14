@@ -1,11 +1,9 @@
-use util::{Fill, Aspect};
+use util::Aspect;
 use game::{Update, Support, Position, Velocity};
 
 #[derive(Debug)]
 pub enum Particle {
 	Dot {
-		fill:  Fill,
-
 		position: Position,
 		velocity: Velocity,
 		scale:    f32,
