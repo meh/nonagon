@@ -3,13 +3,13 @@ use glium::{Display, Surface};
 
 use game;
 use config;
-use renderer::{Render, Support, Video, Ship, Bullet, Particle};
+use renderer::{Render, Support, Background, Ship, Bullet, Particle};
 
 pub struct Renderer<'a> {
-	display: &'a Display,
-	support: Support<'a>,
+	display:    &'a Display,
+	support:    Support<'a>,
+	background: Background<'a>,
 
-	video:    Video<'a>,
 	ship:     Ship<'a>,
 	bullet:   Bullet<'a>,
 	particle: Particle<'a>,
@@ -18,10 +18,10 @@ pub struct Renderer<'a> {
 impl<'a> Renderer<'a> {
 	pub fn new<'b>(display: &'b Display, config: &config::Video, aspect: Rational) -> Renderer<'b> {
 		Renderer {
-			display: display,
-			support: Support::new(display, config, aspect),
+			display:    display,
+			support:    Support::new(display, config, aspect),
+			background: Background::new(display),
 
-			video:    Video::new(display),
 			ship:     Ship::new(display),
 			bullet:   Bullet::new(display),
 			particle: Particle::new(display),
@@ -33,9 +33,8 @@ impl<'a> Renderer<'a> {
 	}
 
 	pub fn render<T: Surface>(&mut self, target: &mut T, state: &game::State, frame: Option<&frame::Video>) {
-		if let Some(frame) = frame {
-			self.video.render(target, &self.support, frame);
-		}
+		self.support.background(state, frame);
+		self.background.render(target, &self.support, self.support.as_ref());
 
 		self.ship.render(target, &self.support, state.player());
 

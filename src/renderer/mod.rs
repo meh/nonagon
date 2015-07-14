@@ -7,8 +7,8 @@ pub use self::traits::{Render};
 mod renderer;
 pub use self::renderer::Renderer;
 
-mod video;
-pub use self::video::Video;
+mod background;
+pub use self::background::Background;
 
 mod ship;
 pub use self::ship::Ship;
