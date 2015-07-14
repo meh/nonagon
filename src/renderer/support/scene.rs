@@ -89,6 +89,22 @@ impl Scene {
 		             0.0,    0.0,    0.0, 1.0)
 	}
 
+	pub fn transform(&self, x: f32, y: f32, z: f32) -> Mat4<f32> {
+		let x = (x * cmp::max(self.width, self.height) as f32) /
+			cmp::max(self.aspect.width(), self.aspect.height()) as f32;
+
+		let y = (y * cmp::max(self.width, self.height) as f32) /
+			cmp::max(self.aspect.width(), self.aspect.height()) as f32;
+
+		let z = (z * cmp::max(self.width, self.height) as f32) /
+			cmp::max(self.aspect.width(), self.aspect.height()) as f32;
+
+		Mat4::new(  x, 0.0, 0.0, 0.0,
+		          0.0,   y, 0.0, 0.0,
+		          0.0, 0.0,   z, 0.0,
+		          0.0, 0.0, 0.0, 1.0)
+	}
+
 	// FIXME: proportion between - and +
 	pub fn depth(&self, Position { z, .. }: Position) -> Mat4<f32> {
 		assert!(z >= -100.0 && z <= 100.0);
