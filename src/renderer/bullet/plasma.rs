@@ -7,7 +7,6 @@ use glium::index::PrimitiveType::TriangleStrip;
 
 use game;
 use renderer::{Render, Support};
-use util::Fill;
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
