@@ -50,7 +50,6 @@ impl<'a> Plasma<'a>{
 						uniform sampler2D bg;
 						uniform float width;
 						uniform float height;
-
 						uniform float border;
 
 						varying vec2 v_position;
@@ -60,6 +59,7 @@ impl<'a> Plasma<'a>{
 							color.r = 1.0 - color.r;
 							color.g = 1.0 - color.g;
 							color.b = 1.0 - color.b;
+							color.a = 1.0;
 
 							float dist = 1.0 - sqrt(v_position.x * v_position.x + v_position.y * v_position.y);
 							float t    = 0.0;
@@ -71,12 +71,7 @@ impl<'a> Plasma<'a>{
 								t = dist / border;
 							}
 
-							vec4 mixed = mix(vec4(color.rgb, 0.0), color, t);
-							mixed.r += 0.1;
-							mixed.g += 0.1;
-							mixed.b += 0.1;
-
-							gl_FragColor = mixed;
+							gl_FragColor = mix(vec4(color.rgb, 0.0), color, t);
 						}
 					",
 				}
