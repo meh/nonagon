@@ -11,5 +11,15 @@ mute = false
 vsync         = true
 multisampling = false
 
+[video.texture.filtering.ship]
+minify     = "linear"
+magnify    = "linear"
+anisotropy = 16
+
+[video.texture.filtering.background]
+minify     = "linear"
+magnify    = "linear"
+anisotropy = 16
+
 [video.effects.bullet.plasma]
 glow = true
