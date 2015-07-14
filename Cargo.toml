@@ -30,7 +30,7 @@ features         = ["codec", "format", "software-scaling", "software-resampling"
 version = "0.2"
 
 [dependencies.glium]
-version = "0.6"
+version = "0.7"
 
 default-features = false
 features         = ["glutin", "image", "nalgebra"]
