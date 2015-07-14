@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Read;
 
 use docopt::ArgvMap;
-use toml::{Parser, ParserError};
+use toml::{Parser, ParserError, Value};
 
 macro_rules! expect {
 	($msg:expr) => (
@@ -29,12 +29,19 @@ macro_rules! expect {
 	});
 }
 
+pub trait Load {
+	fn load(&mut self, args: &ArgvMap, table: &Value) -> Result<(), ParserError> {
+		Ok(())
+	}
+}
+
 pub mod game;
 pub use self::game::Game;
 
 pub mod audio;
 pub use self::audio::Audio;
 
+#[macro_use]
 pub mod video;
 pub use self::video::Video;
 
@@ -61,9 +68,9 @@ impl Config {
 				let mut parser = Parser::new(&string);
 
 				if let Some(toml) = parser.parse() {
-					try!(config.game.load(args, &toml));
-					try!(config.audio.load(args, &toml));
-					try!(config.video.load(args, &toml));
+					try!(config.game.load(args, &Value::Table(toml.clone())));
+					try!(config.audio.load(args, &Value::Table(toml.clone())));
+					try!(config.video.load(args, &Value::Table(toml.clone())));
 				}
 				else {
 					return Err(parser.errors.pop().unwrap());

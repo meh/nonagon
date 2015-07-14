@@ -1,5 +1,10 @@
 use docopt::ArgvMap;
-use toml::{Table, Value, ParserError};
+
+use toml::{Value, ParserError};
+
+use glium::uniforms::{SamplerWrapFunction, MagnifySamplerFilter, MinifySamplerFilter};
+
+use config::Load;
 
 #[derive(Clone, Debug)]
 pub struct Video {
@@ -7,21 +12,7 @@ pub struct Video {
 	multisampling: Option<u16>,
 
 	effects: Effects,
-}
-
-#[derive(Clone, Debug)]
-pub struct Effects {
-	bullet: Bullet,
-}
-
-#[derive(Clone, Debug)]
-pub struct Bullet {
-	plasma: Plasma,
-}
-
-#[derive(Clone, Debug)]
-pub struct Plasma {
-	glow: bool,
+	texture: Texture,
 }
 
 impl Default for Video {
@@ -30,37 +21,16 @@ impl Default for Video {
 			vsync:         true,
 			multisampling: None,
 
-			effects: Effects::default(),
+			texture: Default::default(),
+			effects: Default::default(),
 		}
 	}
 }
 
-impl Default for Effects {
-	fn default() -> Effects {
-		Effects {
-			bullet: Bullet::default(),
-		}
-	}
-}
+impl Load for Video {
+	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
+		let toml = toml.as_table().unwrap();
 
-impl Default for Bullet {
-	fn default() -> Bullet {
-		Bullet {
-			plasma: Plasma::default(),
-		}
-	}
-}
-
-impl Default for Plasma {
-	fn default() -> Plasma {
-		Plasma {
-			glow: true,
-		}
-	}
-}
-
-impl Video {
-	pub fn load(&mut self, args: &ArgvMap, toml: &Table) -> Result<(), ParserError> {
 		if let Some(toml) = toml.get("video") {
 			let toml = expect!(toml.as_table(), "`video` must be a table");
 
@@ -85,25 +55,253 @@ impl Video {
 			}
 
 			if let Some(toml) = toml.get("effects") {
-				let toml = expect!(toml.as_table(), "`video.effects` must be a table");
+				try!(self.effects.load(args, toml));
+			}
 
-				if let Some(toml) = toml.get("bullet") {
-					let toml = expect!(toml.as_table(), "`video.effects.bullet` must be a table");
-
-					if let Some(toml) = toml.get("plasma") {
-						let toml = expect!(toml.as_table(), "`video.effects.bullet.plasma` must be a table");
-
-						if let Some(value) = toml.get("glow") {
-							self.effects.bullet.plasma.glow = expect!(value.as_bool(), "`video.effects.bullet.plasma.glow` must be a boolean");
-						}
-					}
-				}
+			if let Some(toml) = toml.get("texture") {
+				try!(self.texture.load(args, toml));
 			}
 		}
 
 		Ok(())
 	}
+}
 
+#[derive(Clone, Default, Debug)]
+pub struct Effects {
+	bullet: Bullet,
+}
+
+impl Load for Effects {
+	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
+		let toml = expect!(toml.as_table(), "`video.effects` must be a table");
+
+		if let Some(toml) = toml.get("bullet") {
+			try!(self.bullet.load(args, toml));
+		}
+
+		Ok(())
+	}
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct Bullet {
+	plasma: Plasma,
+}
+
+impl Load for Bullet {
+	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
+		let toml = expect!(toml.as_table(), "`video.effects.bullet` must be a table");
+
+		if let Some(toml) = toml.get("plasma") {
+			try!(self.plasma.load(args, toml));
+		}
+
+		Ok(())
+	}
+}
+
+#[derive(Clone, Debug)]
+pub struct Plasma {
+	glow: bool,
+}
+
+impl Default for Plasma {
+	fn default() -> Plasma {
+		Plasma {
+			glow: true,
+		}
+	}
+}
+
+impl Load for Plasma {
+	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
+		let toml = expect!(toml.as_table(), "`video.effects.bullet.plasma` must be a table");
+
+		if let Some(value) = toml.get("glow") {
+			self.glow = expect!(value.as_bool(), "`video.effects.bullet.plasma.glow` must be a boolean");
+		}
+
+		Ok(())
+	}
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct Texture {
+	filtering: Filtering,
+}
+
+impl Load for Texture {
+	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
+		let toml = expect!(toml.as_table(), "`video.texture` must be a table");
+
+		if let Some(toml) = toml.get("filtering") {
+			try!(self.filtering.load(args, toml));
+		}
+
+		Ok(())
+	}
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct Filtering {
+	background: Filter,
+	ship:       Filter,
+}
+
+impl Load for Filtering {
+	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
+		let toml = expect!(toml.as_table(), "`video.texture.filtering` must be a table");
+
+		if let Some(toml) = toml.get("background") {
+			try!(self.background.load(args, toml));
+		}
+
+		if let Some(toml) = toml.get("ship") {
+			try!(self.ship.load(args, toml));
+		}
+
+		Ok(())
+	}
+}
+
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub struct Filter {
+	wrap:       Option<SamplerWrapFunction>,
+	magnify:    Option<MagnifySamplerFilter>,
+	minify:     Option<MinifySamplerFilter>,
+	anisotropy: Option<u16>,
+}
+
+impl Default for Filter {
+	fn default() -> Filter {
+		Filter {
+			wrap:       None,
+			magnify:    Some(MagnifySamplerFilter::Linear),
+			minify:     Some(MinifySamplerFilter::Linear),
+			anisotropy: Some(16),
+		}
+	}
+}
+
+impl Load for Filter {
+	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
+		let toml = expect!(toml.as_table(), "`video.texture.filtering.*` must be a table");
+
+		if let Some(value) = toml.get("wrap") {
+			match value {
+				&Value::Boolean(true) =>
+					(),
+
+				&Value::Boolean(false) =>
+					self.wrap = None,
+
+				&Value::String(ref string) =>
+					self.wrap = Some(match string.as_ref() {
+						"repeat" =>
+							SamplerWrapFunction::Repeat,
+
+						"mirror" =>
+							SamplerWrapFunction::Mirror,
+
+						"clamp" =>
+							SamplerWrapFunction::Clamp,
+
+						"mirror-clamp" =>
+							SamplerWrapFunction::MirrorClamp,
+
+						_ =>
+							expect!("`video.texture.filtering.*.wrap` must be 'repeat' or 'mirror' or 'clamp' or 'mirror-clamp'"),
+					}),
+
+				_ =>
+					expect!("`video.texture.filtering.*.wrap` must be a boolean or a string"),
+			}
+		}
+
+		if let Some(value) = toml.get("minify") {
+			match value {
+				&Value::Boolean(true) =>
+					self.minify = Some(MinifySamplerFilter::Linear),
+
+				&Value::Boolean(false) =>
+					self.minify = None,
+
+				&Value::String(ref string) =>
+					self.minify = Some(match string.as_ref() {
+						"nearest" =>
+							MinifySamplerFilter::Nearest,
+
+						"linear" =>
+							MinifySamplerFilter::Linear,
+
+						"nearest-mipmap-nearest" =>
+							MinifySamplerFilter::NearestMipmapNearest,
+
+						"linear-mimpmap-nearest" =>
+							MinifySamplerFilter::LinearMipmapNearest,
+
+						"nearest-mipmap-linear" =>
+							MinifySamplerFilter::NearestMipmapLinear,
+
+						"linear-mipmap-linear" =>
+							MinifySamplerFilter::LinearMipmapLinear,
+
+						_ =>
+							expect!("`video.texture.filtering.*.minify` must be 'nearest' or 'linear' or 'nearest-mipmap-nearest' or 'linear-mipmap-nearest' or 'nearest-mipmap-linear' or 'linear-mipmap-linear'"),
+					}),
+
+				_ =>
+					expect!("`video.texture.filtering.*.minify` must be a boolean or a string"),
+			}
+		}
+
+		if let Some(value) = toml.get("magnify") {
+			match value {
+				&Value::Boolean(true) =>
+					self.magnify = Some(MagnifySamplerFilter::Linear),
+
+				&Value::Boolean(false) =>
+					self.magnify = None,
+
+				&Value::String(ref string) =>
+					self.magnify = Some(match string.as_ref() {
+						"nearest" =>
+							MagnifySamplerFilter::Nearest,
+
+						"linear" =>
+							MagnifySamplerFilter::Linear,
+
+						_ =>
+							expect!("`video.texture.filtering.*.magnify` must be 'nearest' or 'linear'"),
+					}),
+
+				_ =>
+					expect!("`video.texture.filtering.*.magnify` must be a boolean or a string"),
+			}
+		}
+
+		if let Some(value) = toml.get("anisotropy") {
+			match value {
+				&Value::Boolean(true) =>
+					self.anisotropy = Some(16),
+
+				&Value::Boolean(false) =>
+					self.anisotropy = None,
+
+				&Value::Integer(value) =>
+					self.anisotropy = Some(value as u16),
+
+				_ =>
+					expect!("`video.texture.filtering.*.anisotropy` must be a boolean or a string"),
+			}
+		}
+
+		Ok(())
+	}
+}
+
+impl Video {
 	pub fn vsync(&self) -> bool {
 		self.vsync
 	}
@@ -114,6 +312,10 @@ impl Video {
 
 	pub fn effects(&self) -> &Effects {
 		&self.effects
+	}
+
+	pub fn texture(&self) -> &Texture {
+		&self.texture
 	}
 }
 
@@ -133,4 +335,62 @@ impl Plasma {
 	pub fn glow(&self) -> bool {
 		self.glow
 	}
+}
+
+impl Texture {
+	pub fn filtering(&self) -> &Filtering {
+		&self.filtering
+	}
+}
+
+impl Filtering {
+	pub fn background(&self) -> &Filter {
+		&self.background
+	}
+
+	pub fn ship(&self) -> &Filter {
+		&self.ship
+	}
+}
+
+impl Filter {
+	pub fn wrap(&self) -> Option<SamplerWrapFunction> {
+		self.wrap
+	}
+
+	pub fn magnify(&self) -> Option<MagnifySamplerFilter> {
+		self.magnify
+	}
+
+	pub fn minify(&self) -> Option<MinifySamplerFilter> {
+		self.minify
+	}
+
+	pub fn anisotropy(&self) -> Option<u16> {
+		self.anisotropy
+	}
+}
+
+macro_rules! sampled {
+	($tex:expr, $cfg:expr) => ({
+		let mut sampled = $tex.sampled();
+
+		if let Some(value) = $cfg.wrap() {
+			sampled = sampled.wrap_function(value);
+		}
+
+		if let Some(value) = $cfg.minify() {
+			sampled = sampled.minify_filter(value);
+		}
+
+		if let Some(value) = $cfg.magnify() {
+			sampled = sampled.magnify_filter(value);
+		}
+
+		if let Some(value) = $cfg.anisotropy() {
+			sampled = sampled.anisotropy(value);
+		}
+
+		sampled
+	})
 }

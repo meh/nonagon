@@ -1,5 +1,8 @@
 use docopt::ArgvMap;
-use toml::{Table, ParserError};
+
+use toml::{Value, ParserError};
+
+use config::Load;
 
 #[derive(Clone, Debug)]
 pub struct Audio {
@@ -16,8 +19,10 @@ impl Default for Audio {
 	}
 }
 
-impl Audio {
-	pub fn load(&mut self, args: &ArgvMap, toml: &Table) -> Result<(), ParserError> {
+impl Load for Audio {
+	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
+		let toml = toml.as_table().unwrap();
+
 		if let Some(toml) = toml.get("audio") {
 			let toml = expect!(toml.as_table(), "`audio` must be a table");
 
@@ -40,7 +45,9 @@ impl Audio {
 
 		Ok(())
 	}
+}
 
+impl Audio {
 	pub fn mute(&self) -> bool {
 		self.mute
 	}

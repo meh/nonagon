@@ -38,6 +38,7 @@ extern crate env_logger;
 #[macro_use]
 mod util;
 
+#[macro_use]
 mod config;
 use config::Config;
 
