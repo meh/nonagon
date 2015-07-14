@@ -2,7 +2,8 @@ use docopt::ArgvMap;
 
 use toml::{Value, ParserError};
 
-use glium::uniforms::{SamplerWrapFunction, MagnifySamplerFilter, MinifySamplerFilter};
+use glium;
+use glium::uniforms::{Sampler, SamplerWrapFunction, MagnifySamplerFilter, MinifySamplerFilter};
 
 use config::Load;
 
@@ -369,28 +370,26 @@ impl Filter {
 	pub fn anisotropy(&self) -> Option<u16> {
 		self.anisotropy
 	}
-}
 
-macro_rules! sampled {
-	($tex:expr, $cfg:expr) => ({
-		let mut sampled = $tex.sampled();
+	pub fn sampled<'a ,T: glium::Texture>(&self, texture: &'a T) -> Sampler<'a, T> {
+		let mut sampled = Sampler::new(texture);
 
-		if let Some(value) = $cfg.wrap() {
+		if let Some(value) = self.wrap() {
 			sampled = sampled.wrap_function(value);
 		}
 
-		if let Some(value) = $cfg.minify() {
+		if let Some(value) = self.minify() {
 			sampled = sampled.minify_filter(value);
 		}
 
-		if let Some(value) = $cfg.magnify() {
+		if let Some(value) = self.magnify() {
 			sampled = sampled.magnify_filter(value);
 		}
 
-		if let Some(value) = $cfg.anisotropy() {
+		if let Some(value) = self.anisotropy() {
 			sampled = sampled.anisotropy(value);
 		}
 
 		sampled
-	})
+	}
 }

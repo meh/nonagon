@@ -108,7 +108,7 @@ impl<'a> Video<'a> {
 
 		let uniforms = uniform! {
 			alpha: 0.8,
-			tex:  sampled!(texture, support.config().texture().filtering().background()),
+			tex:  support.config().texture().filtering().background().sampled(&texture),
 		};
 
 		target.clear_color(1.0, 1.0, 1.0, 1.0);
