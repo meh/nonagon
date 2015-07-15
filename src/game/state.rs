@@ -8,14 +8,15 @@ use ffmpeg::{frame, Rational};
 
 use util::Aspect;
 use config;
-use game::{Update, Alive, Support, Position, Player, Ship, Bullet, Particle};
+use game::{Update, Alive, Support, Position, Player, Ship, Projectile, Particle};
+use game::projectile;
 
 #[derive(Debug)]
 pub struct State {
-	player:    Player,
-	enemies:   Vec<Ship>,
-	bullets:   Vec<Bullet>,
-	particles: Vec<Particle>,
+	player:      Player,
+	enemies:     Vec<Ship>,
+	projectiles: Vec<Projectile>,
+	particles:   Vec<Particle>,
 
 	timestamp: i64,
 	frames:    VecDeque<frame::Audio>,
@@ -49,10 +50,10 @@ impl State {
 		debug!("{:#?}", player);
 
 		State {
-			player:    player,
-			enemies:   Vec::new(),
-			bullets:   Vec::new(),
-			particles: Vec::new(),
+			player:      player,
+			enemies:     Vec::new(),
+			projectiles: Vec::new(),
+			particles:   Vec::new(),
 
 			timestamp: -1,
 			frames:    VecDeque::new(),
@@ -102,8 +103,8 @@ impl State {
 		&self.enemies
 	}
 
-	pub fn bullets(&self) -> &[Bullet] {
-		&self.bullets
+	pub fn projectiles(&self) -> &[Projectile] {
+		&self.projectiles
 	}
 
 	pub fn particles(&self) -> &[Particle] {
@@ -192,16 +193,16 @@ impl Update for State {
 			enemy.update(support);
 		}
 
-		for bullet in &mut self.bullets {
-			bullet.update(support);
+		for projectile in &mut self.projectiles {
+			projectile.update(support);
 		}
 
 		for particle in &mut self.particles {
 			particle.update(support);
 		}
 
-		self.enemies.retain(|b| b.alive(support));
-		self.bullets.retain(|b| b.alive(support));
+		self.enemies.retain(|e| e.alive(support));
+		self.projectiles.retain(|p| p.alive(support));
 		self.particles.retain(|p| p.alive(support));
 	}
 }

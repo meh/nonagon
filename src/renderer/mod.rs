@@ -13,8 +13,8 @@ pub use self::background::Background;
 mod ship;
 pub use self::ship::Ship;
 
-mod bullet;
-pub use self::bullet::Bullet;
+mod projectile;
+pub use self::projectile::Projectile;
 
 mod particle;
 pub use self::particle::Particle;

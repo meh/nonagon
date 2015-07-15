@@ -3,16 +3,16 @@ use glium::{Display, Surface};
 
 use game;
 use config;
-use renderer::{Render, Support, Background, Ship, Bullet, Particle};
+use renderer::{Render, Support, Background, Ship, Projectile, Particle};
 
 pub struct Renderer<'a> {
 	display:    &'a Display,
 	support:    Support<'a>,
 	background: Background<'a>,
 
-	ship:     Ship<'a>,
-	bullet:   Bullet<'a>,
-	particle: Particle<'a>,
+	ship:       Ship<'a>,
+	projectile: Projectile<'a>,
+	particle:   Particle<'a>,
 }
 
 impl<'a> Renderer<'a> {
@@ -22,9 +22,9 @@ impl<'a> Renderer<'a> {
 			support:    Support::new(display, config, aspect),
 			background: Background::new(display),
 
-			ship:     Ship::new(display),
-			bullet:   Bullet::new(display),
-			particle: Particle::new(display),
+			ship:       Ship::new(display),
+			projectile: Projectile::new(display),
+			particle:   Particle::new(display),
 		}
 	}
 
@@ -43,8 +43,8 @@ impl<'a> Renderer<'a> {
 			self.ship.render(target, &self.support, enemy);
 		}
 
-		for bullet in state.bullets() {
-			self.bullet.render(target, &self.support, bullet);
+		for projectile in state.projectiles() {
+			self.projectile.render(target, &self.support, projectile);
 		}
 
 		for particle in state.particles() {

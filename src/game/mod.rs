@@ -19,8 +19,8 @@ pub use self::player::Player;
 pub mod ship;
 pub use self::ship::Ship;
 
-pub mod bullet;
-pub use self::bullet::Bullet;
+pub mod projectile;
+pub use self::projectile::Projectile;
 
 pub mod particle;
 pub use self::particle::Particle;
