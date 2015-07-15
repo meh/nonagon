@@ -10,7 +10,7 @@ pub enum Plasma {
 		velocity: Velocity,
 	},
 
-	Pulsating {
+	Dynamic {
 		min:  f32,
 		max:  f32,
 		step: f32,
@@ -46,7 +46,7 @@ impl Update for Plasma {
 				position.z = up(position.z, velocity.z, -100.0, 100.0);
 			},
 
-			&mut Plasma::Pulsating { ref mut position, ref velocity, min, max, ref mut step, ref mut radius, .. } => {
+			&mut Plasma::Dynamic { ref mut position, ref velocity, min, max, ref mut step, ref mut radius, .. } => {
 				position.x = up(position.x, velocity.x,    0.0, support.aspect().width() as f32);
 				position.y = up(position.y, velocity.y,    0.0, support.aspect().height() as f32);
 				position.z = up(position.z, velocity.z, -100.0, 100.0);
@@ -72,7 +72,7 @@ impl Update for Plasma {
 impl Alive for Plasma {
 	fn alive(&self, support: &Support) -> bool {
 		match self {
-			&Plasma::Static { position, velocity, .. } | &Plasma::Pulsating { position, velocity, .. } => {
+			&Plasma::Static { position, velocity, .. } | &Plasma::Dynamic { position, velocity, .. } => {
 				// if going against the right wall
 				if position.x == support.aspect().width() as f32 && velocity.x > 0.0 {
 					return false;

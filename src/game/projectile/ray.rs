@@ -14,7 +14,7 @@ pub enum Ray {
 		velocity:    Velocity,
 	},
 
-	Pulsating {
+	Dynamic {
 		start:    f64,
 		duration: f64,
 
@@ -68,7 +68,7 @@ impl Update for Ray {
 				orientation.yaw   = up(orientation.yaw,   velocity.yaw,   0.0, 360.0, true);
 			},
 
-			&mut Ray::Pulsating { ref mut position, ref mut orientation, ref velocity, min, max, ref mut step, ref mut width, .. } => {
+			&mut Ray::Dynamic { ref mut position, ref mut orientation, ref velocity, min, max, ref mut step, ref mut width, .. } => {
 				position.x = up(position.x, velocity.x,    0.0, support.aspect().width() as f32,  false);
 				position.y = up(position.y, velocity.y,    0.0, support.aspect().height() as f32, false);
 				position.z = up(position.z, velocity.z, -100.0, 100.0,                           false);
@@ -98,7 +98,7 @@ impl Update for Ray {
 impl Alive for Ray {
 	fn alive(&self, support: &Support) -> bool {
 		match self {
-			&Ray::Static { start, duration, .. } | &Ray::Pulsating { start, duration, .. } =>
+			&Ray::Static { start, duration, .. } | &Ray::Dynamic { start, duration, .. } =>
 				support.time() - start < duration,
 		}
 	}

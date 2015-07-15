@@ -97,7 +97,7 @@ impl<'a> Plasma<'a>{
 impl<'a> Render<game::Plasma> for Plasma<'a> {
 	fn render<S: Surface>(&mut self, target: &mut S, support: &Support, state: &game::Plasma) {
 		match state {
-			&game::Plasma::Static { position, radius, .. } | &game::Plasma::Pulsating { position, radius, .. } => {
+			&game::Plasma::Static { position, radius, .. } | &game::Plasma::Dynamic { position, radius, .. } => {
 				let mvp = support.scene().to_mat() *
 					support.scene().position(position) *
 					support.scene().scale(radius * 2.0) *
