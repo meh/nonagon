@@ -115,16 +115,6 @@ impl State {
 
 		self.update(&support);
 
-		// --
-		if support.tick() % 32 == 0 {
-			self.bullets.push(Bullet::Plasma {
-				position: Default::default(),
-				velocity: ::game::Velocity { x: 0.56, y: 1.0, .. Default::default() },
-				radius:   2.0,
-			});
-		}
-		// --
-
 		self.tick += 1;
 	}
 }
