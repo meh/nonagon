@@ -18,6 +18,7 @@ use ffmpeg::{frame, Rational};
 
 use config;
 use game;
+use renderer::Render;
 
 pub struct Support<'a> {
 	display: &'a Display,

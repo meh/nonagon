@@ -28,7 +28,7 @@ impl<'a> Projectile<'a>{
 }
 
 impl<'a> Render<game::Projectile> for Projectile<'a> {
-	fn render<S: Surface>(&mut self, target: &mut S, support: &Support, state: &game::Projectile) {
+	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &game::Projectile) {
 		match state {
 			&game::Projectile::Plasma(ref p) =>
 				self.plasma.render(target, support, p),
