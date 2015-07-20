@@ -58,14 +58,18 @@ impl<'a> Plasma<'a>{
 
 						void main() {
 							// get the texel from the background video or visualizer
-							vec4 color = texture2D(background,
+							vec4 texel = texture2D(background,
 								vec2(gl_FragCoord.x / width, gl_FragCoord.y / height));
 
 							// invert color and fix alpha
-							color.r = 1.0 - color.r;
-							color.g = 1.0 - color.g;
-							color.b = 1.0 - color.b;
-							color.a = 1.0;
+							vec4 color = vec4(1.0 - texel.r, 1.0 - texel.g, 1.0 - texel.b, 1.0);
+
+							// if gray it means we're invisible, make it black
+							if (color.r == color.g && color.g == color.b) {
+								if (color.r >= 0.48 && color.r <= 0.52) {
+									color.rgb = vec3(0.0, 0.0, 0.0);
+								}
+							}
 
 							// make the circle
 							float dist = 1.0 - sqrt(v_position.x * v_position.x + v_position.y * v_position.y);
