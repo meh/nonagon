@@ -105,7 +105,7 @@ impl<'a> Video<'a> {
 }
 
 impl<'a> Render<frame::Video> for Video<'a> {
-	fn render<T: Surface>(&self, target: &mut T, support: &Support, frame: &frame::Video) {
+	fn render<T: Surface>(&self, target: &mut T, support: &Support, frame: &Self::State) {
 		let texture = Texture::new(self.display, frame);
 
 		let uniforms = uniform! {

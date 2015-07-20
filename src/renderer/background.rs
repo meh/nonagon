@@ -66,7 +66,7 @@ impl<'a> Background<'a>{
 }
 
 impl<'a> Render<SrgbTexture2d> for Background<'a> {
-	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &SrgbTexture2d) {
+	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &Self::State) {
 		let uniforms = uniform! {
 			tex: state,
 		};

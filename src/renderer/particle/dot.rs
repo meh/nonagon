@@ -16,7 +16,7 @@ impl<'a> Dot<'a>{
 }
 
 impl<'a> Render<game::Particle> for Dot<'a> {
-	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &game::Particle) {
+	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &Self::State) {
 		// uguu~
 	}
 }

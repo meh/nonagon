@@ -16,7 +16,7 @@ impl<'a> Visualizer<'a>{
 }
 
 impl<'a> Render<game::State> for Visualizer<'a> {
-	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &game::State) {
-		// uguu~
+	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &Self::State) {
+		target.clear_color(0.5, 0.5, 0.5, 1.0);
 	}
 }

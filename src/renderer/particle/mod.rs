@@ -23,7 +23,7 @@ impl<'a> Particle<'a>{
 }
 
 impl<'a> Render<game::Particle> for Particle<'a> {
-	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &game::Particle) {
+	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &Self::State) {
 		match state {
 			&game::Particle::Dot { .. } =>
 				self.dot.render(target, support, state),

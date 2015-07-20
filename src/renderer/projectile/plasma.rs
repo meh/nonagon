@@ -99,7 +99,7 @@ impl<'a> Plasma<'a>{
 }
 
 impl<'a> Render<game::Plasma> for Plasma<'a> {
-	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &game::Plasma) {
+	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &Self::State) {
 		match state {
 			&game::Plasma::Static { position, radius, .. } | &game::Plasma::Dynamic { position, radius, .. } => {
 				let mvp = support.scene().to_mat() *

@@ -358,7 +358,7 @@ impl<'a> Ship<'a>{
 }
 
 impl<'a> Render<game::Ship> for Ship<'a> {
-	fn render<T: Surface>(&self, target: &mut T, support: &Support, state: &game::Ship) {
+	fn render<T: Surface>(&self, target: &mut T, support: &Support, state: &Self::State) {
 		let (faces, borders) = match state.shape {
 			ship::Shape::Cube =>
 				(&self.cube.faces, &self.cube.borders),

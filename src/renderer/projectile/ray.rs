@@ -93,7 +93,7 @@ impl<'a> Ray<'a>{
 }
 
 impl<'a> Render<game::Ray> for Ray<'a> {
-	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &game::Ray) {
+	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &Self::State) {
 		match state {
 			&game::Ray::Static { position, orientation, width, .. } | &game::Ray::Dynamic { position, orientation, width, .. } => {
 				let mvp = support.scene().to_mat() *
