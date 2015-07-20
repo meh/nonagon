@@ -5,8 +5,8 @@ use glium::index::PrimitiveType::TriangleStrip;
 
 use renderer::{Render, Support};
 
-#[derive(Copy, Clone)]
-pub struct Vertex {
+#[derive(Copy, Clone, Debug)]
+struct Vertex {
 	position: [f32; 2],
 	texture:  [f32; 2],
 }
