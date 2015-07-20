@@ -15,7 +15,7 @@ struct Shape {
 	borders: IndexBuffer<u16>,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct Vertex {
 	position: [f32; 3],
 	texture:  [f32; 2],
