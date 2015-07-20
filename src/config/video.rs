@@ -371,7 +371,7 @@ impl Filter {
 		self.anisotropy
 	}
 
-	pub fn sampled<'a ,T: glium::Texture>(&self, texture: &'a T) -> Sampler<'a, T> {
+	pub fn sampled<'a, T: glium::Texture>(&self, texture: &'a T) -> Sampler<'a, T> {
 		let mut sampled = Sampler::new(texture);
 
 		if let Some(value) = self.wrap() {
