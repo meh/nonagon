@@ -11,7 +11,7 @@ use ffmpeg::{time, Rational};
 #[macro_use]
 extern crate glium;
 use glium::{DisplayBuild, Surface};
-use glium::SwapBuffersError::ContextLost;
+use glium::SwapBuffersError::{ContextLost, AlreadySwapped};
 use glium::glutin::{self, Event};
 use glium::glutin::ElementState::Released;
 use glium::glutin::VirtualKeyCode::Escape;
@@ -262,7 +262,11 @@ fn main() {
 				renderer.resize(width, height);
 			},
 
-			Ok(..) => ()
+			Err(AlreadySwapped) =>
+				(),
+
+			Ok(..) =>
+				()
 		}
 	}
 

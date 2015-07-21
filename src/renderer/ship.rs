@@ -114,7 +114,7 @@ impl<'a> Ship<'a>{
 						}
 					}
 
-					VertexBuffer::new(display, vec![
+					VertexBuffer::new(display, &vec![
 						// front
 						Vertex { position: [-1.0, -1.0,  1.0], texture: coordinates(1, 0.0, 0.0) },
 						Vertex { position: [ 1.0, -1.0,  1.0], texture: coordinates(1, 1.0, 0.0) },
@@ -168,10 +168,10 @@ impl<'a> Ship<'a>{
 						Vertex { position: [ 1.0, -1.0,  1.0], texture: coordinates(6, 1.0, 1.0) },
 						Vertex { position: [-1.0, -1.0, -1.0], texture: coordinates(6, 0.0, 0.0) },
 						Vertex { position: [ 1.0, -1.0, -1.0], texture: coordinates(6, 1.0, 0.0) },
-					])
+					]).unwrap()
 				},
 
-				borders: IndexBuffer::new(display, LinesList, vec![
+				borders: IndexBuffer::new(display, LinesList, &vec![
 					// front
 					0, 1,
 					1, 2,
@@ -191,7 +191,7 @@ impl<'a> Ship<'a>{
 					// right
 					1, 10,
 					2,  6,
-				])
+				]).unwrap()
 			},
 
 			tetrahedron: Shape {
@@ -209,7 +209,7 @@ impl<'a> Ship<'a>{
 						}
 					}
 
-					VertexBuffer::new(display, vec![
+					VertexBuffer::new(display, &vec![
 						// front
 						Vertex { position: [ 0.0,  1.0,  0.0], texture: coordinates(1, 0.5, 1.0) },
 						Vertex { position: [-1.0, -1.0,  1.0], texture: coordinates(1, 0.0, 0.0) },
@@ -229,10 +229,10 @@ impl<'a> Ship<'a>{
 						Vertex { position: [-1.0, -1.0,  1.0], texture: coordinates(4, 0.5, 1.0) },
 						Vertex { position: [ 0.0, -1.0, -1.0], texture: coordinates(4, 0.0, 0.0) },
 						Vertex { position: [ 1.0, -1.0,  1.0], texture: coordinates(4, 1.0, 0.0) },
-					])
+					]).unwrap()
 				},
 
-				borders: IndexBuffer::new(display, LinesList, vec![
+				borders: IndexBuffer::new(display, LinesList, &vec![
 					// front
 					0, 1,
 
@@ -250,7 +250,7 @@ impl<'a> Ship<'a>{
 
 					// bottom back
 					7, 8,
-				])
+				]).unwrap()
 			},
 
 			octahedron: Shape {
@@ -272,7 +272,7 @@ impl<'a> Ship<'a>{
 						}
 					}
 
-					VertexBuffer::new(display, vec![
+					VertexBuffer::new(display, &vec![
 						// top front
 						Vertex { position: [-1.0,  0.0,  1.0], texture: coordinates(1, 0.0, 0.0) },
 						Vertex { position: [ 1.0,  0.0,  1.0], texture: coordinates(1, 0.0, 0.0) },
@@ -312,10 +312,10 @@ impl<'a> Ship<'a>{
 						Vertex { position: [-1.0,  0.0,  1.0], texture: coordinates(8, 0.0, 0.0) },
 						Vertex { position: [-1.0,  0.0, -1.0], texture: coordinates(8, 0.0, 0.0) },
 						Vertex { position: [ 0.0, -1.0,  0.0], texture: coordinates(8, 0.0, 0.0) },
-					])
+					]).unwrap()
 				},
 
-				borders: IndexBuffer::new(display, LinesList, vec![
+				borders: IndexBuffer::new(display, LinesList, &vec![
 					// front middle
 					0, 1,
 
@@ -351,7 +351,7 @@ impl<'a> Ship<'a>{
 
 					// bottom back right
 					17, 18,
-				])
+				]).unwrap()
 			},
 		}
 	}

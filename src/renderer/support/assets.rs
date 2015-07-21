@@ -30,7 +30,7 @@ impl<'a> Assets<'a> {
 		}
 
 		let img = image::open(path).unwrap();
-		let tex = SrgbTexture2d::with_mipmaps(self.display, img, NoMipmap);
+		let tex = SrgbTexture2d::with_mipmaps(self.display, img, NoMipmap).unwrap();
 
 		self.textures.borrow_mut().insert(path.to_owned(), Rc::new(tex));
 		self.textures.borrow().get(path).unwrap().clone()

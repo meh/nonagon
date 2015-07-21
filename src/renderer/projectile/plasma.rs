@@ -88,12 +88,12 @@ impl<'a> Plasma<'a>{
 				}
 			).unwrap(),
 
-			vertices: VertexBuffer::new(display, vec![
+			vertices: VertexBuffer::new(display, &[
 				Vertex { position: [-1.0,  1.0] },
 				Vertex { position: [ 1.0,  1.0] },
 				Vertex { position: [-1.0, -1.0] },
 				Vertex { position: [ 1.0, -1.0] },
-			]),
+			]).unwrap(),
 		}
 	}
 }

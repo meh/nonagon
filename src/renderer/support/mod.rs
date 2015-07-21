@@ -58,7 +58,7 @@ impl<'a> Support<'a> {
 	}
 
 	pub fn background(&mut self, state: &game::State, frame: Option<&frame::Video>) {
-		let texture = SrgbTexture2d::empty(self.display, self.scene().width(), self.scene().height());
+		let texture = SrgbTexture2d::empty(self.display, self.scene().width(), self.scene().height()).unwrap();
 
 		{
 			let mut surface = SimpleFrameBuffer::new(self.display, &texture);
