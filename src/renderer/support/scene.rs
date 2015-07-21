@@ -31,6 +31,14 @@ impl Scene {
 		self.projection = Ortho3::new(width as f32, height as f32, 0.1, 1000.0).to_mat();
 	}
 
+	pub fn is_vertical(&self) -> bool {
+		self.aspect.is_vertical()
+	}
+
+	pub fn is_horizontal(&self) -> bool {
+		self.aspect.is_horizontal()
+	}
+
 	pub fn width(&self) -> u32 {
 		self.width
 	}
@@ -48,7 +56,7 @@ impl Scene {
 	}
 
 	pub fn position(&self, Position { x, y, .. }: Position) -> Mat4<f32> {
-		let (x, y) = if self.aspect.is_vertical() {
+		let (x, y) = if self.is_vertical() {
 			(x * self.width as f32 / self.aspect.width() as f32,
 			 y * self.height as f32 / self.aspect.height() as f32)
 		}
