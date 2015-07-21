@@ -30,12 +30,12 @@ impl<'a> Renderer<'a> {
 
 	pub fn resize(&mut self, width: u32, height: u32) {
 		self.support.resize(width, height);
+		self.background.resize(width, height);
 	}
 
 	pub fn render<T: Surface>(&mut self, target: &mut T, time: f64, state: &game::State, frame: Option<&frame::Video>) {
-		self.support.update(time);
-		self.support.background(state, frame);
-		self.background.render(target, &self.support, self.support.as_ref());
+		self.background.render(target, &self.support, state, frame);
+		self.support.update(time, self.background.texture());
 
 		self.ship.render(target, &self.support, state.player());
 

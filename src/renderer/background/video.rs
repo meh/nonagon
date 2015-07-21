@@ -19,7 +19,7 @@ struct Vertex {
 
 implement_vertex!(Vertex, position, texture);
 
-pub struct Texture<'a> {
+struct Texture<'a> {
 	data: &'a [u8],
 
 	width:  u32,
