@@ -126,7 +126,6 @@ fn main() {
 	let mut display = glutin::WindowBuilder::new()
 		.with_title(String::from("nonagon"))
 		.with_dimensions(width, height)
-		.with_srgb(Some(true))
 		.with_depth_buffer(24);
 
 	if config.video().vsync() {

@@ -1,5 +1,5 @@
 use glium::{Program, Display, VertexBuffer, Surface};
-use glium::texture::SrgbTexture2d;
+use glium::texture::Texture2d;
 use glium::index::NoIndices;
 use glium::index::PrimitiveType::TriangleStrip;
 
@@ -65,7 +65,7 @@ impl<'a> Background<'a>{
 	}
 }
 
-impl<'a> Render<SrgbTexture2d> for Background<'a> {
+impl<'a> Render<Texture2d> for Background<'a> {
 	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &Self::State) {
 		let uniforms = uniform! {
 			tex: state,

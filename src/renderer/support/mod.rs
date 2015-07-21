@@ -11,7 +11,7 @@ mod visualizer;
 pub use self::visualizer::Visualizer;
 
 use glium::Display;
-use glium::texture::SrgbTexture2d;
+use glium::texture::Texture2d;
 use glium::framebuffer::SimpleFrameBuffer;
 
 use ffmpeg::{frame, Rational};
@@ -25,7 +25,7 @@ pub struct Support<'a> {
 	config:  config::Video,
 	time:    f64,
 
-	background: Option<SrgbTexture2d>,
+	background: Option<Texture2d>,
 	video:      Video<'a>,
 	visualizer: Visualizer<'a>,
 
@@ -58,7 +58,7 @@ impl<'a> Support<'a> {
 	}
 
 	pub fn background(&mut self, state: &game::State, frame: Option<&frame::Video>) {
-		let texture = SrgbTexture2d::empty(self.display, self.scene().width(), self.scene().height()).unwrap();
+		let texture = Texture2d::empty(self.display, self.scene().width(), self.scene().height()).unwrap();
 
 		{
 			let mut surface = SimpleFrameBuffer::new(self.display, &texture);
@@ -91,8 +91,8 @@ impl<'a> Support<'a> {
 	}
 }
 
-impl<'a> AsRef<SrgbTexture2d> for Support<'a> {
-	fn as_ref(&self) -> &SrgbTexture2d {
+impl<'a> AsRef<Texture2d> for Support<'a> {
+	fn as_ref(&self) -> &Texture2d {
 		self.background.as_ref().unwrap()
 	}
 }
