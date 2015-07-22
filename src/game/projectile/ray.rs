@@ -1,4 +1,4 @@
-use util::Aspect;
+use util::{Aspect, Color};
 use game::{Update, Alive, Support, Position, Orientation, Velocity};
 
 #[derive(Debug)]
@@ -7,7 +7,8 @@ pub enum Ray {
 		start:    f64,
 		duration: f64,
 
-		width: f32,
+		width:  f32,
+		border: Color,
 
 		position:    Position,
 		orientation: Orientation,
@@ -22,7 +23,8 @@ pub enum Ray {
 		max:  f32,
 		step: f32,
 
-		width: f32,
+		width:  f32,
+		border: Color,
 
 		position:    Position,
 		orientation: Orientation,

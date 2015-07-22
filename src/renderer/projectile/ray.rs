@@ -53,6 +53,7 @@ impl<'a> Ray<'a>{
 						uniform float height;
 
 						uniform float border;
+						uniform vec4  color;
 
 						varying vec2 v_position;
 
@@ -61,22 +62,16 @@ impl<'a> Ray<'a>{
 							vec4 texel = texture2D(background,
 								vec2(gl_FragCoord.x / width, gl_FragCoord.y / height));
 
-							// invert color and fix alpha
-							vec4 color = vec4(1.0 - texel.r, 1.0 - texel.g, 1.0 - texel.b, 1.0);
-
-							// if gray it means we're invisible, make it black
-							if (color.r == color.g && color.g == color.b) {
-								if (color.r >= 0.48 && color.r <= 0.52) {
-									color.rgb = vec3(0.0, 0.0, 0.0);
-								}
-							}
+							// invert color
+							vec3 pixel = vec3(1.0 - texel.r, 1.0 - texel.g, 1.0 - texel.b);
 
 							// make the smooth borders
 							if (v_position.y >= border || v_position.y <= -border) {
-								color.a = 1.0 - abs(v_position.y);
+								gl_FragColor = vec4(color.rgb, 1.0 - abs(v_position.y));
 							}
-
-							gl_FragColor = color;
+							else {
+								gl_FragColor = vec4(pixel, 1.0);
+							}
 						}
 					",
 				}
@@ -95,7 +90,7 @@ impl<'a> Ray<'a>{
 impl<'a> Render<game::Ray> for Ray<'a> {
 	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &Self::State) {
 		match state {
-			&game::Ray::Static { position, orientation, width, .. } | &game::Ray::Dynamic { position, orientation, width, .. } => {
+			&game::Ray::Static { position, orientation, width, border, .. } | &game::Ray::Dynamic { position, orientation, width, border, .. } => {
 				let mvp = support.scene().to_mat() *
 					support.scene().position(position) *
 					support.scene().orientation(orientation) *
@@ -109,6 +104,7 @@ impl<'a> Render<game::Ray> for Ray<'a> {
 					width:      support.scene().width() as f32,
 					height:     support.scene().height() as f32,
 
+					color:  border,
 					border: 0.5,
 				};
 
