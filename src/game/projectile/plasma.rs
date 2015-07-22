@@ -1,10 +1,11 @@
-use util::Aspect;
+use util::{Aspect, Color};
 use game::{Update, Alive, Support, Position, Velocity};
 
 #[derive(Debug)]
 pub enum Plasma {
 	Static {
 		radius: f32,
+		border: Color,
 
 		position: Position,
 		velocity: Velocity,
@@ -16,6 +17,7 @@ pub enum Plasma {
 		step: f32,
 
 		radius: f32,
+		border: Color,
 
 		position: Position,
 		velocity: Velocity,
