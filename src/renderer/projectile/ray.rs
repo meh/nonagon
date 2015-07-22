@@ -79,9 +79,9 @@ impl<'a> Ray<'a>{
 
 			vertices: VertexBuffer::new(display, &[
 				Vertex { position: [-1.0,  1.0] },
-				Vertex { position: [ 1.0,  1.0] },
+				Vertex { position: [ 0.0,  1.0] },
 				Vertex { position: [-1.0, -1.0] },
-				Vertex { position: [ 1.0, -1.0] },
+				Vertex { position: [ 0.0, -1.0] },
 			]).unwrap(),
 		}
 	}
