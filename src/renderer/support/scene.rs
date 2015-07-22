@@ -87,10 +87,10 @@ impl Scene {
 	#[inline(always)]
 	pub fn orientation(&self, Orientation { roll, pitch, mut yaw }: Orientation) -> Mat4<f32> {
 		if self.is_horizontal() {
-			yaw += 90.0;
+			yaw -= 90.0;
 
-			if yaw > 360.0 {
-				yaw = 360.0 - yaw;
+			if yaw < 0.0 {
+				yaw = 360.0 + yaw;
 			}
 		}
 
