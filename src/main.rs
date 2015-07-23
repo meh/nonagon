@@ -138,7 +138,6 @@ fn main() {
 
 	let display = display.build_glium().unwrap_or_else(|err| {
 		println!("error: opengl: configuration not supported");
-		println!("{}", err);
 		exit(4);
 	});
 
@@ -184,21 +183,8 @@ fn main() {
 	let mut lag      = 0.0;
 
 	'game: loop {
-		let mut current = time::relative() as f64 / 1_000_000.0;
-		let mut elapsed = current - previous;
-
-		// if the lag is smaller than granularity we wouldn't be doing anything, so
-		// sleep for about the left-over time
-		if lag + elapsed < GRANULARITY {
-			let time = ((GRANULARITY - lag + elapsed) * 1_000_000.0) as u32;
-
-			if time > 5_000 {
-				time::sleep(time - 5_000).unwrap();
-
-				current = time::relative() as f64 / 1_000_000.0;
-				elapsed = current - previous;
-			}
-		}
+		let current = time::relative() as f64 / 1_000_000.0;
+		let elapsed = current - previous;
 
 		previous  = current;
 		lag      += elapsed;
