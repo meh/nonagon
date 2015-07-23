@@ -85,7 +85,12 @@ impl Scene {
 	}
 
 	#[inline(always)]
-	pub fn orientation(&self, Orientation { roll, pitch, mut yaw }: Orientation) -> Mat4<f32> {
+	pub fn orientation(&self, Orientation { roll, pitch, yaw }: Orientation) -> Mat4<f32> {
+		self.rotate(deg(roll), deg(pitch), deg(yaw))
+	}
+
+	#[inline(always)]
+	pub fn rotate(&self, roll: f32, pitch: f32, mut yaw: f32) -> Mat4<f32> {
 		if self.is_horizontal() {
 			yaw -= 90.0;
 
@@ -94,40 +99,7 @@ impl Scene {
 			}
 		}
 
-		self.rotate(deg(roll), deg(pitch), deg(yaw))
-	}
-
-	#[inline(always)]
-	pub fn scale(&self, factor: f32) -> Mat4<f32> {
-		let factor = (factor * cmp::max(self.width, self.height) as f32) /
-			cmp::max(self.aspect.width(), self.aspect.height()) as f32;
-
-		Mat4::new(factor,    0.0,    0.0, 0.0,
-		             0.0, factor,    0.0, 0.0,
-		             0.0,    0.0, factor, 0.0,
-		             0.0,    0.0,    0.0, 1.0)
-	}
-
-	#[inline(always)]
-	pub fn transform(&self, x: f32, y: f32, z: f32) -> Mat4<f32> {
-		let x = (x * cmp::max(self.width, self.height) as f32) /
-			cmp::max(self.aspect.width(), self.aspect.height()) as f32;
-
-		let y = (y * cmp::max(self.width, self.height) as f32) /
-			cmp::max(self.aspect.width(), self.aspect.height()) as f32;
-
-		let z = (z * cmp::max(self.width, self.height) as f32) /
-			cmp::max(self.aspect.width(), self.aspect.height()) as f32;
-
-		Mat4::new(  x, 0.0, 0.0, 0.0,
-		          0.0,   y, 0.0, 0.0,
-		          0.0, 0.0,   z, 0.0,
-		          0.0, 0.0, 0.0, 1.0)
-	}
-
-	#[inline(always)]
-	pub fn translate(&self, x: f32, y: f32, z: f32) -> Mat4<f32> {
-		na::to_homogeneous(&Iso3::new(Vec3::new(x, y, z), na::zero()))
+		na::to_homogeneous(&Rot3::new_with_euler_angles(roll, pitch, yaw))
 	}
 
 	// FIXME: proportion between - and +
@@ -153,7 +125,24 @@ impl Scene {
 	}
 
 	#[inline(always)]
-	pub fn rotate(&self, roll: f32, pitch: f32, yaw: f32) -> Mat4<f32> {
-		na::to_homogeneous(&Rot3::new_with_euler_angles(roll, pitch, yaw))
+	pub fn scale(&self, factor: f32) -> Mat4<f32> {
+		self.transform(factor, factor, factor)
+	}
+
+	#[inline(always)]
+	pub fn transform(&self, x: f32, y: f32, z: f32) -> Mat4<f32> {
+		let x = (x * cmp::max(self.width, self.height) as f32) /
+			cmp::max(self.aspect.width(), self.aspect.height()) as f32;
+
+		let y = (y * cmp::max(self.width, self.height) as f32) /
+			cmp::max(self.aspect.width(), self.aspect.height()) as f32;
+
+		let z = (z * cmp::max(self.width, self.height) as f32) /
+			cmp::max(self.aspect.width(), self.aspect.height()) as f32;
+
+		Mat4::new(  x, 0.0, 0.0, 0.0,
+		          0.0,   y, 0.0, 0.0,
+		          0.0, 0.0,   z, 0.0,
+		          0.0, 0.0, 0.0, 1.0)
 	}
 }
