@@ -6,15 +6,15 @@ use glium::texture::Texture2d;
 use ffmpeg::Rational;
 
 use config;
-use renderer::support::{Scene, Assets};
+use renderer::support::{Scene, Assets, Debug};
 
 pub struct Support<'a> {
 	display: &'a Display,
 	config:  config::Video,
-	time:    f64,
 
 	background: Option<Rc<Texture2d>>,
 
+	debug:  Debug,
 	scene:  Scene,
 	assets: Assets<'a>,
 }
@@ -25,9 +25,9 @@ impl<'a> Support<'a> {
 			display: display,
 			config:  config.clone(),
 
-			time:       0.0,
 			background: None,
 
+			debug:  Debug::new(),
 			scene:  Scene::new(aspect),
 			assets: Assets::new(display),
 		}
@@ -38,7 +38,7 @@ impl<'a> Support<'a> {
 	}
 
 	pub fn update(&mut self, time: f64, background: Rc<Texture2d>) {
-		self.time       = time;
+		self.debug.update(time);
 		self.background = Some(background);
 	}
 
@@ -46,8 +46,8 @@ impl<'a> Support<'a> {
 		&self.config
 	}
 
-	pub fn time(&self) -> f64 {
-		self.time
+	pub fn debug(&self) -> &Debug {
+		&self.debug
 	}
 
 	pub fn scene(&self) -> &Scene {

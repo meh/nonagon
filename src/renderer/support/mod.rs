@@ -1,3 +1,6 @@
+mod debug;
+pub use self::debug::Debug;
+
 mod scene;
 pub use self::scene::Scene;
 
