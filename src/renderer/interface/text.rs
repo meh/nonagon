@@ -5,12 +5,12 @@ use glium::LinearBlendingFactor::{SourceAlpha, OneMinusSourceAlpha};
 use glium::index::NoIndices;
 use glium::index::PrimitiveType::TrianglesList;
 
-use na::Mat4;
+use na::{self, Mat4, Iso3, Vec3};
 
 use renderer::{Render, Support};
+use renderer::support::Scene;
 use renderer::interface::Font;
-use game::Position;
-use util::Color;
+use util::{Color, Aspect};
 
 #[derive(Copy, Clone, Debug)]
 struct Vertex {
@@ -98,7 +98,30 @@ impl<'a> Render<(&'a Font<'a>, Color, (u32, u32), u32, &'a str)> for Text<'a> {
 		}
 
 		#[inline(always)]
-		fn scale(font: &Font, factor: u32) -> Mat4<f32> {
+		fn position(scene: &Scene, x: u32, y: u32) -> Mat4<f32> {
+			let x = x as f32 * scene.width() as f32 / scene.aspect().width() as f32;
+			let y = y as f32 * scene.height() as f32 / scene.aspect().height() as f32;
+
+			na::to_homogeneous(&Iso3::new(Vec3::new(
+				if x > scene.width() as f32 / 2.0 {
+					-((scene.width() as f32 / 2.0) - x)
+				}
+				else {
+					x - scene.width() as f32 / 2.0
+				},
+
+				-if y > scene.height() as f32 / 2.0 {
+					-((scene.height() as f32 / 2.0) - y)
+				}
+				else {
+					y - scene.height() as f32 / 2.0
+				},
+
+				-500.0), na::zero()))
+		}
+
+		#[inline(always)]
+		fn scale(scene: &Scene, font: &Font, factor: u32) -> Mat4<f32> {
 			let factor = (factor * font.bounds().height) as f32;
 
 			Mat4::new(factor,    0.0,    0.0, 0.0,
@@ -108,8 +131,8 @@ impl<'a> Render<(&'a Font<'a>, Color, (u32, u32), u32, &'a str)> for Text<'a> {
 		}
 
 		let mvp = support.scene().to_mat() *
-			support.scene().position(Position { x: x as f32, y: y as f32, z: 0.0 }) *
-			scale(font, size);
+			position(support.scene(), x, y) *
+			scale(support.scene(), font, size);
 
 		let uniforms = uniform! {
 			mvp:   mvp,

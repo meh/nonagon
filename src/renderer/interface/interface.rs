@@ -42,12 +42,10 @@ impl<'a> Render<game::State> for Interface<'a> {
 			.color("#f00")
 			.size(2);
 
-		if support.scene().is_vertical() {
-			face.draw(&format!("min={:.0}ms max={:.0}ms avg={:.0}ms",
-				support.debug().min_frame_time() * 1_000.0,
-				support.debug().max_frame_time() * 1_000.0,
-				support.debug().avg_frame_time() * 1_000.0),
-			10, 32);
-		}
+		face.draw(&format!("min={:.0}ms max={:.0}ms avg={:.0}ms",
+			support.debug().min_frame_time() * 1_000.0,
+			support.debug().max_frame_time() * 1_000.0,
+			support.debug().avg_frame_time() * 1_000.0),
+		5, 30);
 	}
 }
