@@ -10,6 +10,9 @@ pub use self::renderer::Renderer;
 mod background;
 pub use self::background::Background;
 
+mod interface;
+pub use self::interface::Interface;
+
 mod ship;
 pub use self::ship::Ship;
 

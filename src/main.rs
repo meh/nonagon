@@ -21,6 +21,10 @@ extern crate openal;
 
 extern crate toml;
 
+extern crate bdf;
+
+extern crate lzma;
+
 extern crate image;
 
 extern crate regex;

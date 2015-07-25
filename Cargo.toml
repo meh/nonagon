@@ -20,6 +20,10 @@ ncollide = "*"
 
 toml = "*"
 
+bdf = "*"
+
+lzma = "*"
+
 [dependencies.ffmpeg]
 git = "https://github.com/meh/rust-ffmpeg"
 

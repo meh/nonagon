@@ -3,12 +3,13 @@ use glium::{Display, Surface};
 
 use game;
 use config;
-use renderer::{Render, Support, Background, Ship, Projectile, Particle};
+use renderer::{Render, Support, Background, Interface, Ship, Projectile, Particle};
 
 pub struct Renderer<'a> {
 	display:    &'a Display,
 	support:    Support<'a>,
 	background: Background<'a>,
+	interface:  Interface<'a>,
 
 	ship:       Ship<'a>,
 	projectile: Projectile<'a>,
@@ -21,6 +22,7 @@ impl<'a> Renderer<'a> {
 			display:    display,
 			support:    Support::new(display, config, aspect),
 			background: Background::new(display),
+			interface:  Interface::new(display),
 
 			ship:       Ship::new(display),
 			projectile: Projectile::new(display),
@@ -50,5 +52,7 @@ impl<'a> Renderer<'a> {
 		for particle in state.particles() {
 			self.particle.render(target, &self.support, particle);
 		}
+
+		self.interface.render(target, &self.support, state);
 	}
 }
