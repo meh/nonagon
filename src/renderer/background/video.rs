@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use ffmpeg::frame;
 
-use glium::texture::{Texture2dDataSource, RawImage2d, Texture2d};
+use glium::texture::{Texture2dDataSource, RawImage2d, SrgbTexture2d};
 use glium::texture::ClientFormat::U8U8U8;
 use glium::texture::MipmapsOption::NoMipmap;
 use glium::{Program, Display, VertexBuffer, Surface};
@@ -27,8 +27,8 @@ struct Texture<'a> {
 }
 
 impl<'a> Texture<'a> {
-	pub fn new(display: &Display, frame: &frame::Video) -> Texture2d {
-		Texture2d::with_mipmaps(display, Texture {
+	pub fn new(display: &Display, frame: &frame::Video) -> SrgbTexture2d {
+		SrgbTexture2d::with_mipmaps(display, Texture {
 			data: frame.data()[0],
 
 			width:  frame.width(),
