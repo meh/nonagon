@@ -24,11 +24,20 @@ bdf = "*"
 
 lzma = "*"
 
+num = "*"
+
+strided = "*"
+
+[dependencies.rft]
+git = "https://github.com/meh/rust-rft"
+
+features = ["f64"]
+
 [dependencies.ffmpeg]
 git = "https://github.com/meh/rust-ffmpeg"
 
 default-features = false
-features         = ["codec", "format", "software-scaling", "software-resampling"]
+features = ["codec", "format", "software-scaling", "software-resampling"]
 
 [dependencies.openal]
 version = "0.2"

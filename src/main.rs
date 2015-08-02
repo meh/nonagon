@@ -39,6 +39,12 @@ extern crate ncollide as nc;
 extern crate log;
 extern crate env_logger;
 
+extern crate rft;
+
+extern crate num;
+
+extern crate strided;
+
 #[macro_use]
 mod util;
 
