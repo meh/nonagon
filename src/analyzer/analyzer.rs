@@ -41,6 +41,9 @@ impl Analyzer {
 					continue;
 				}
 
+				// separate into channels and run FFT on them
+				let (mono, left, right) = util::channels(&samples[0..2048]);
+
 				// TODO: find a more performant way, probably using VecDeques and doing
 				// partial merges or something
 				for _ in 0 .. 2048 {
