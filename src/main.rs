@@ -149,7 +149,7 @@ fn main() {
 	}
 
 	let display = display.build_glium().unwrap_or_else(|err| {
-		println!("error: opengl: configuration not supported");
+		println!("error: opengl: configuration not supported: {}", err);
 		exit(4);
 	});
 
