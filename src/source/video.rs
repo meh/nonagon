@@ -58,7 +58,7 @@ impl Video {
 
 		thread::spawn(move || {
 			let mut decoded   = frame::Video::empty();
-			let mut converter = codec.converter(format::Pixel::RGB24).unwrap();
+			let mut converter = codec.converter(format::Pixel::BGRA).unwrap();
 
 			loop {
 				match receiver.recv().unwrap() {

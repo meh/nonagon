@@ -1,13 +1,16 @@
-use std::borrow::Cow;
+use image::Rgba;
 
 use ffmpeg::frame;
 
-use glium::texture::{Texture2dDataSource, RawImage2d, SrgbTexture2d};
-use glium::texture::ClientFormat::U8U8U8;
-use glium::texture::MipmapsOption::NoMipmap;
+use glium::texture::{SrgbTexture2d};
 use glium::{Program, Display, VertexBuffer, Surface};
+use glium::buffer::BufferView;
+use glium::buffer::BufferMode::Persistent;
+use glium::buffer::BufferType::PixelUnpackBuffer;
 use glium::index::PrimitiveType::TriangleStrip;
 use glium::index::NoIndices;
+use glium::texture::SrgbFormat::U8U8U8U8;
+use glium::texture::MipmapsOption::NoMipmap;
 
 use renderer::{Support};
 
@@ -19,37 +22,6 @@ struct Vertex {
 
 implement_vertex!(Vertex, position, texture);
 
-struct Texture<'a> {
-	data: &'a [u8],
-
-	width:  u32,
-	height: u32,
-}
-
-impl<'a> Texture<'a> {
-	pub fn new(display: &Display, frame: &frame::Video) -> SrgbTexture2d {
-		SrgbTexture2d::with_mipmaps(display, Texture {
-			data: frame.data()[0],
-
-			width:  frame.width(),
-			height: frame.height(),
-		}, NoMipmap).unwrap()
-	}
-}
-
-impl<'a> Texture2dDataSource<'a> for Texture<'a> {
-	type Data = u8;
-
-	fn into_raw(self) -> RawImage2d<'a, u8> {
-		RawImage2d {
-			data:   Cow::Borrowed(self.data),
-			width:  self.width,
-			height: self.height,
-			format: U8U8U8,
-		}
-	}
-}
-
 pub struct Video<'a> {
 	display: &'a Display,
 
@@ -57,7 +29,8 @@ pub struct Video<'a> {
 	vertices: VertexBuffer<Vertex>,
 
 	timestamp: i64,
-	texture:   SrgbTexture2d,
+	buffer:    Option<BufferView<[Rgba<u8>]>>,
+	texture:   Option<SrgbTexture2d>,
 }
 
 impl<'a> Video<'a> {
@@ -105,19 +78,41 @@ impl<'a> Video<'a> {
 			]).unwrap(),
 
 			timestamp: -1,
-			texture:   SrgbTexture2d::empty(display, 1, 1).unwrap(),
+			buffer:    None,
+			texture:   None,
 		}
 	}
 
 	pub fn render<T: Surface>(&mut self, target: &mut T, support: &Support, frame: &frame::Video) {
 		if self.timestamp < frame.timestamp().unwrap() {
-			self.texture   = Texture::new(self.display, frame);
 			self.timestamp = frame.timestamp().unwrap();
+
+			if self.buffer.is_none() {
+				self.buffer = Some(BufferView::empty_array(self.display,
+					PixelUnpackBuffer,
+					(frame.width() * frame.height()) as usize,
+					Persistent).unwrap());
+
+				self.texture = Some(SrgbTexture2d::empty_with_format(self.display,
+					U8U8U8U8, NoMipmap, frame.width(), frame.height()).unwrap());
+			}
+
+			println!("--");
+			println!("{}", ::ffmpeg::time::relative());
+			// write to the buffer
+			self.buffer.as_mut().unwrap().write(frame.plane(0));
+			println!("{}", ::ffmpeg::time::relative());
+
+			// write the buffer to the texture
+			self.texture.as_mut().unwrap().main_level()
+				.raw_upload_from_pixel_buffer(self.buffer.as_ref().unwrap(),
+					0 .. frame.width(), 0 .. frame.height(), 0 .. 1);
+			println!("{}", ::ffmpeg::time::relative());
 		}
 
 		let uniforms = uniform! {
 			alpha: 0.8,
-			tex:  support.config().texture().filtering().background().sampled(&self.texture),
+			tex:  support.config().texture().filtering().background().sampled(self.texture.as_ref().unwrap()),
 		};
 
 		target.clear_color(1.0, 1.0, 1.0, 1.0);
