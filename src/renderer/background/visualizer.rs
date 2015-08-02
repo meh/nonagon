@@ -1,7 +1,7 @@
 use glium::{Display, Surface};
 
 use game;
-use renderer::{Render, Support};
+use renderer::{Support};
 
 pub struct Visualizer<'a> {
 	display: &'a Display,
@@ -13,10 +13,9 @@ impl<'a> Visualizer<'a>{
 			display: display,
 		}
 	}
-}
 
-impl<'a> Render<game::State> for Visualizer<'a> {
-	fn render<S: Surface>(&self, target: &mut S, support: &Support, state: &Self::State) {
+	// FIXME: using the state is no good unless it provides an interface to the analyzer
+	pub fn render<S: Surface>(&mut self, target: &mut S, support: &Support, state: &game::State) {
 		target.clear_color(0.5, 0.5, 0.5, 1.0);
 	}
 }
