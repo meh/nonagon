@@ -9,7 +9,7 @@ use glium::{Program, Display, VertexBuffer, Surface};
 use glium::index::PrimitiveType::TriangleStrip;
 use glium::index::NoIndices;
 
-use renderer::{Render, Support};
+use renderer::{Support};
 
 #[derive(Copy, Clone, Debug)]
 struct Vertex {
@@ -55,6 +55,9 @@ pub struct Video<'a> {
 
 	program:  Program,
 	vertices: VertexBuffer<Vertex>,
+
+	timestamp: i64,
+	texture:   SrgbTexture2d,
 }
 
 impl<'a> Video<'a> {
@@ -100,17 +103,21 @@ impl<'a> Video<'a> {
 				Vertex { position: [-1.0, -1.0], texture: [0.0, 1.0] },
 				Vertex { position: [ 1.0, -1.0], texture: [1.0, 1.0] },
 			]).unwrap(),
+
+			timestamp: -1,
+			texture:   SrgbTexture2d::empty(display, 1, 1).unwrap(),
 		}
 	}
-}
 
-impl<'a> Render<frame::Video> for Video<'a> {
-	fn render<T: Surface>(&self, target: &mut T, support: &Support, frame: &Self::State) {
-		let texture = Texture::new(self.display, frame);
+	pub fn render<T: Surface>(&mut self, target: &mut T, support: &Support, frame: &frame::Video) {
+		if self.timestamp < frame.timestamp().unwrap() {
+			self.texture   = Texture::new(self.display, frame);
+			self.timestamp = frame.timestamp().unwrap();
+		}
 
 		let uniforms = uniform! {
 			alpha: 0.8,
-			tex:  support.config().texture().filtering().background().sampled(&texture),
+			tex:  support.config().texture().filtering().background().sampled(&self.texture),
 		};
 
 		target.clear_color(1.0, 1.0, 1.0, 1.0);
