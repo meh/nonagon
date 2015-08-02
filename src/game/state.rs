@@ -1,4 +1,4 @@
-use std::collections::{VecDeque, HashSet};
+use std::collections::{HashSet};
 
 use glium::glutin::Event;
 use glium::glutin::ElementState::{Pressed, Released};
@@ -8,8 +8,8 @@ use ffmpeg::{frame, Rational};
 
 use util::Aspect;
 use config;
+use analyzer::Analyzer;
 use game::{Update, Alive, Support, Position, Player, Ship, Projectile, Particle};
-use game::projectile;
 
 #[derive(Debug)]
 pub struct State {
@@ -19,7 +19,7 @@ pub struct State {
 	particles:   Vec<Particle>,
 
 	timestamp: i64,
-	frames:    VecDeque<frame::Audio>,
+	analyzer:  Analyzer,
 
 	config: config::Game,
 	aspect: Rational,
@@ -56,7 +56,7 @@ impl State {
 			particles:   Vec::new(),
 
 			timestamp: -1,
-			frames:    VecDeque::new(),
+			analyzer:  Analyzer::spawn(),
 
 			config: config.clone(),
 			aspect: aspect.reduce(),
@@ -70,8 +70,7 @@ impl State {
 			return;
 		}
 
-		// FIXME: uncomment this when ready
-		//self.frames.push_back(frame.clone());
+		self.analyzer.feed(frame);
 	}
 
 	pub fn handle(&mut self, event: &Event) {
