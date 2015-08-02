@@ -63,6 +63,8 @@ use sound::Sound;
 mod renderer;
 use renderer::Renderer;
 
+mod analyzer;
+
 const GRANULARITY: f64 = 0.015;
 
 static USAGE: &'static str = "
