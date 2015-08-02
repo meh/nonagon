@@ -177,10 +177,6 @@ fn main() {
 
 				state.lock().unwrap().feed(audio.frame());
 
-				if next > 0.0 {
-					time::sleep((next * 1_000_000.0) as u32).unwrap();
-				}
-
 				if audio.is_done() || receiver.try_recv().is_ok() {
 					break;
 				}
