@@ -116,6 +116,10 @@ impl Audio {
 	}
 
 	pub fn next(&mut self) -> Option<frame::Audio> {
-		get(&self.channel).unwrap()
+		loop {
+			if let Ok(frame) = get(&self.channel) {
+				return frame;
+			}
+		}
 	}
 }
