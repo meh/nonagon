@@ -168,43 +168,78 @@ fn main() {
 		let (sender, receiver) = channel();
 
 		(sender, thread::spawn(move || {
-			let mut start  = time::relative() as f64 / 1_000_000.0;
+			// Set to 0 because we set it as soon as we get the first frame so it
+			// stays in sync.
+			let mut start = 0.0;
+
+			// Keeps track of how far in stream we got.
 			let mut offset = 0.0;
-			let mut time   = 0.0;
+
+			// How many seconds of samples we have.
+			let mut duration = 0.0;
 
 			loop {
+				// Return if the main has exited or the stream is done.
+				if audio.is_done() || receiver.try_recv().is_ok() {
+					return;
+				}
+
 				if let Some(frame) = audio.next() {
+					// Only play the sound if it's not muted.
 					if play {
 						sound.lock().unwrap().play(&frame);
 					}
 
-					time += (1.0 / 44100.0) * frame.samples() as f64;
+					// Initialize the start as soon as the first frame is played.
+					if start == 0.0 {
+						start = time::relative() as f64 / 1_000_000.0;
+						state.lock().unwrap().start(start);
+					}
 
+					// Increment by seconds of sample data we have.
+					duration += (1.0 / 44100.0) * frame.samples() as f64;
+
+					// Feed the frame to the analyzer.
 					state.lock().unwrap().feed(frame);
 
+					// Return if the stream is over or main has exited.
 					if audio.is_done() || receiver.try_recv().is_ok() {
 						return;
 					}
 
-					if time >= 2.0 {
-						let     current   = time::relative() as f64 / 1_000_000.0;
-						let mut corrected = current - start + offset;
+					// If we have 1 second and half worth of samples sleep for the
+					// remaining duration.
+					if duration >= 1.5 {
+						// Add the current duration to the offset so we have a baseline to
+						// correct.
+						offset += duration;
 
+						// We need the current time so we don't oversleep.
+						let current = time::relative() as f64 / 1_000_000.0;
+
+						// Correct the duration considering time that has passed since we
+						// fetched the samples.
+						let mut corrected = offset - (current - start);
+
+						// Sleep in small portions so we can check for liveness.
 						while corrected >= 0.1 {
 							corrected -= 0.1;
-							time::sleep(10_000).unwrap();
+							time::sleep((0.1 * 1_000_000.0) as u32).unwrap();
 
-							if audio.is_done() || receiver.try_recv().is_ok() {
+							// Return if the main has exited.
+							if receiver.try_recv().is_ok() {
 								return;
 							}
 						}
 
-						offset += time;
-						time    = 0.0;
+						// Do a final sleep in case the loop is done with a leftover.
+						if corrected > 0.0 {
+							time::sleep((corrected * 1_000_000.0) as u32).unwrap();
+						}
+
+						// Reset the duration for the next cycle.
+						duration = 0.0;
 					}
-				}
-				else {
-					return;
 				}
 			}
 		}))
