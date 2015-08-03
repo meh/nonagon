@@ -11,6 +11,8 @@ pub fn channels(samples: &[i16]) -> (Vec<Complex<f64>>, Vec<Complex<f64>>, Vec<C
 		.map(|(&l, &r)| ((l as i32 + r as i32) / 2) as i16)
 		.collect::<Vec<i16>>();
 
-	// run FFT on all of them
-	(rft::forward(mono), rft::forward(left), rft::forward(right))
+	// run a hamming window FFT on all of them
+	(rft::forward(rft::window::hamming(mono)),
+	 rft::forward(rft::window::hamming(left)),
+	 rft::forward(rft::window::hamming(right)))
 }
