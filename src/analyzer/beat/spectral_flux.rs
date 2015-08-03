@@ -2,15 +2,15 @@ use num::Complex;
 
 #[derive(Debug)]
 pub struct SpectralFlux {
-	size: usize,
-	last: Vec<f64>,
+	size:     usize,
+	previous: Vec<f64>,
 }
 
 impl SpectralFlux {
 	pub fn new(size: usize) -> Self {
 		SpectralFlux {
-			size: size,
-			last: vec![0.0; size],
+			size:     size,
+			previous: vec![0.0; size],
 		}
 	}
 
@@ -19,19 +19,19 @@ impl SpectralFlux {
 			panic!("size mismatch: input={} size={}", input.len(), self.size);
 		}
 
-		let mut flux = 0.0;
+		let mut result = 0.0;
 
-		for (current, last) in input.iter().zip(self.last.iter_mut()) {
-			let value = current.norm_sqr() - *last;
+		for (current, previous) in input.iter().zip(self.previous.iter_mut()) {
+			let value = current.norm_sqr() - *previous;
 
 			if value > 0.0 {
-				flux += value;
+				result += value;
 			}
 
-			*last = current.norm_sqr();
+			*previous = current.norm_sqr();
 		}
 
-		flux
+		result
 	}
 
 	pub fn falling(&mut self, input: &[Complex<f64>]) -> f64 {
@@ -39,19 +39,19 @@ impl SpectralFlux {
 			panic!("size mismatch: input={} size={}", input.len(), self.size);
 		}
 
-		let mut flux = 0.0;
+		let mut result = 0.0;
 
-		for (current, last) in input.iter().zip(self.last.iter_mut()) {
-			let value = current.norm_sqr() - *last;
+		for (current, previous) in input.iter().zip(self.previous.iter_mut()) {
+			let value = current.norm_sqr() - *previous;
 
 			if value < 0.0 {
-				flux += value;
+				result += value;
 			}
 
-			*last = current.norm_sqr();
+			*previous = current.norm_sqr();
 		}
 
-		flux
+		result
 	}
 
 	pub fn full(&mut self, input: &[Complex<f64>]) -> f64 {
@@ -59,13 +59,13 @@ impl SpectralFlux {
 			panic!("size mismatch: input={} size={}", input.len(), self.size);
 		}
 
-		let mut flux = 0.0;
+		let mut result = 0.0;
 
-		for (current, last) in input.iter().zip(self.last.iter_mut()) {
-			flux += current.norm_sqr() - *last;
-			*last = current.norm_sqr();
+		for (current, previous) in input.iter().zip(self.previous.iter_mut()) {
+			 result   += current.norm_sqr() - *previous;
+			*previous  = current.norm_sqr();
 		}
 
-		flux
+		result
 	}
 }
