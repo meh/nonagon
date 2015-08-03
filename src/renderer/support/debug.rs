@@ -1,26 +1,21 @@
-use std::collections::VecDeque;
 use std::f64::INFINITY;
+use util::Ring;
 
 pub struct Debug {
 	time:   f64,
-	frames: VecDeque<f64>,
+	frames: Ring<f64>,
 }
 
 impl Debug {
 	pub fn new() -> Debug {
 		Debug {
-			time:   0.0,
-			frames: VecDeque::new(),
+			time:   INFINITY,
+			frames: Ring::new(60),
 		}
 	}
 
 	pub fn update(&mut self, time: f64) {
-		self.frames.push_back(time - self.time);
-
-		if self.frames.len() > 60 {
-			self.frames.pop_front();
-		}
-
+		self.frames.push(time - self.time);
 		self.time = time;
 	}
 
