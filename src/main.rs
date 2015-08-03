@@ -168,21 +168,43 @@ fn main() {
 		let (sender, receiver) = channel();
 
 		(sender, thread::spawn(move || {
+			let mut start  = time::relative() as f64 / 1_000_000.0;
+			let mut offset = 0.0;
+			let mut time   = 0.0;
+
 			loop {
-				let next = audio.sync();
+				if let Some(frame) = audio.next() {
+					if play {
+						sound.lock().unwrap().play(&frame);
+					}
 
-				if play {
-					sound.lock().unwrap().play(audio.frame());
+					time += (1.0 / 44100.0) * frame.samples() as f64;
+
+					state.lock().unwrap().feed(frame);
+
+					if audio.is_done() || receiver.try_recv().is_ok() {
+						return;
+					}
+
+					if time >= 2.0 {
+						let     current   = time::relative() as f64 / 1_000_000.0;
+						let mut corrected = current - start + offset;
+
+						while corrected >= 0.1 {
+							corrected -= 0.1;
+							time::sleep(10_000).unwrap();
+
+							if audio.is_done() || receiver.try_recv().is_ok() {
+								return;
+							}
+						}
+
+						offset += time;
+						time    = 0.0;
+					}
 				}
-
-				state.lock().unwrap().feed(audio.frame());
-
-				if next > 0.0 {
-					time::sleep((next * 1_000_000.0) as u32).unwrap();
-				}
-
-				if audio.is_done() || receiver.try_recv().is_ok() {
-					break;
+				else {
+					return;
 				}
 			}
 		}))

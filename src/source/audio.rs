@@ -1,13 +1,12 @@
 use std::sync::mpsc::{SyncSender, Receiver, sync_channel};
 use std::thread;
-use std::mem;
 
-use ffmpeg::{Error, Stream, format, frame, decoder, time};
+use ffmpeg::{Error, Stream, format, frame, decoder};
 use ffmpeg::channel_layout as layout;
 use ffmpeg::format::sample;
 
 use super::{Decoder, Reader};
-use super::decoder::{get, try};
+use super::decoder::{get};
 
 pub type D = super::Decoder<Details, frame::Audio>;
 
@@ -37,10 +36,7 @@ pub struct Audio {
 	channel: Receiver<D>,
 	details: Details,
 
-	done:    bool,
-	time:    i64,
-	current: frame::Audio,
-	next:    frame::Audio,
+	done: bool,
 }
 
 impl Audio {
@@ -96,10 +92,7 @@ impl Audio {
 
 	pub fn new(channel: Receiver<D>, details: Details) -> Self {
 		Audio {
-			done:    false,
-			time:    time::relative(),
-			current: get(&channel).unwrap().unwrap(),
-			next:    get(&channel).unwrap().unwrap(),
+			done: false,
 
 			channel: channel,
 			details: details,
@@ -122,29 +115,7 @@ impl Audio {
 		self.done
 	}
 
-	pub fn frame(&self) -> &frame::Audio {
-		&self.current
-	}
-
-	pub fn sync(&mut self) -> f64 {
-		let time: f64 = (time::relative() - self.time) as f64 / 1_000_000.0;
-		let pts:  f64 = self.next.timestamp().unwrap_or(0) as f64 * self.details.time_base;
-
-		if time > pts {
-			if let Some(result) = try(&self.channel) {
-				if let Some(frame) = result.unwrap() {
-					mem::swap(&mut self.current, &mut self.next);
-					self.next = frame;
-				}
-				else {
-					self.done = true;
-				}
-			}
-
-			0.0
-		}
-		else {
-			pts - time
-		}
+	pub fn next(&mut self) -> Option<frame::Audio> {
+		get(&self.channel).unwrap()
 	}
 }
