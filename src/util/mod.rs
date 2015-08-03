@@ -9,6 +9,9 @@ pub use self::color::{Color, Parse};
 pub mod aspect;
 pub use self::aspect::Aspect;
 
+mod ring;
+pub use self::ring::Ring;
+
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Fill {
 	Color(Color),
