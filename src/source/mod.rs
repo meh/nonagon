@@ -13,21 +13,41 @@ pub use self::video::Video;
 pub mod audio;
 pub use self::audio::Audio;
 
-pub const FRAMES:  usize = 8;
+/// How many frames to decode before the waiting for the consumer to use them.
+pub const FRAMES: usize = 8;
+
+/// How many packets to read before the reader waits for them to be consumed by
+/// the decoder threads.
+///
+/// Note that the packet limit is shared between audio and video packets.
 pub const PACKETS: usize = 64;
 
+/// Possible values sent to the decoder threads.
 pub enum Reader {
+	/// A new incoming packet.
 	Packet(Packet),
+
+	/// The EOF packet.
+	///
+	/// Note that the sender is sent along so the receiver will be able to
+	/// receive all still-standing incoming packets.
 	End(SyncSender<Reader>),
 }
 
+/// Spawns a packet reader, an audio decoder and a video decoder.
 pub fn spawn(path: &str, no_video: bool) -> (Result<Option<Audio>, Error>, Result<Option<Video>, Error>) {
-	let path = path.to_string();
+	let path = path.to_owned();
 
 	let (video_sender, video_receiver) = sync_channel(FRAMES);
 	let (audio_sender, audio_receiver) = sync_channel(FRAMES);
 
+	// This thread will try to open the given path with ffmpeg then it will loop
+	// until there are no more packets in the file.
+	//
+	// It will spawn a video and audio decoder and send the appropriate packets
+	// to the appropriate thread.
 	thread::spawn(move || {
+		// Try to open the file, returning in case of error.
 		let mut context = match format::open(&path) {
 			Ok(context) =>
 				context,
@@ -44,7 +64,7 @@ pub fn spawn(path: &str, no_video: bool) -> (Result<Option<Audio>, Error>, Resul
 			format::dump(&context, 0, Some(&path));
 		}
 		
-		// audio decoder
+		// Spawn the audio decoder.
 		let audio = match context.streams().find(|s| s.codec().medium() == media::Type::Audio) {
 			Some(ref stream) => {
 				let codec = match stream.codec().decoder().and_then(|c| c.audio()) {
@@ -67,7 +87,7 @@ pub fn spawn(path: &str, no_video: bool) -> (Result<Option<Audio>, Error>, Resul
 			}
 		};
 
-		// video decoder
+		// Spawn the video decoder.
 		let video = match context.streams().find(|s| s.codec().medium() == media::Type::Video) {
 			Some(ref stream) if !no_video => {
 				let codec = match stream.codec().decoder().and_then(|c| c.video()) {
@@ -90,6 +110,7 @@ pub fn spawn(path: &str, no_video: bool) -> (Result<Option<Audio>, Error>, Resul
 			}
 		};
 
+		// Iterate over the packets.
 		for (stream, packet) in context.packets() {
 			if let Some((ref channel, index)) = video {
 				if stream.index() == index {
@@ -104,15 +125,19 @@ pub fn spawn(path: &str, no_video: bool) -> (Result<Option<Audio>, Error>, Resul
 			}
 		}
 
-		if let Some((ref channel, _)) = video {
+		// Send the EOF to the audio decoder.
+		if let Some((ref channel, _)) = audio {
 			ret!(channel.send(Reader::End(channel.clone())));
 		}
 
-		if let Some((ref channel, _)) = audio {
+		// Send the EOF to the video decoder.
+		if let Some((ref channel, _)) = video {
 			ret!(channel.send(Reader::End(channel.clone())));
 		}
 	});
 
+	// Check the status of the audio decoder and create the wrapper with the
+	// decoder details.
 	let audio = match audio_receiver.recv().unwrap() {
 		Decoder::Start(None) =>
 			Ok(None),
@@ -127,6 +152,8 @@ pub fn spawn(path: &str, no_video: bool) -> (Result<Option<Audio>, Error>, Resul
 			Err(Error::Bug),
 	};
 
+	// Check the status of the video decoder and create the wrapper with the
+	// decoder details.
 	let video = match video_receiver.recv().unwrap() {
 		Decoder::Start(None) =>
 			Ok(None),
