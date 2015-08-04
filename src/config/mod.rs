@@ -38,20 +38,24 @@ pub trait Load {
 pub mod game;
 pub use self::game::Game;
 
+pub mod analyzer;
+pub use self::analyzer::Analyzer;
+
 pub mod audio;
 pub use self::audio::Audio;
 
-#[macro_use]
 pub mod video;
 pub use self::video::Video;
+
 
 #[derive(Clone, Default, Debug)]
 pub struct Config {
 	input: Option<String>,
 
-	game:  Game,
-	audio: Audio,
-	video: Video,
+	game:     Game,
+	analyzer: Analyzer,
+	audio:    Audio,
+	video:    Video,
 }
 
 impl Config {
@@ -69,6 +73,7 @@ impl Config {
 
 				if let Some(toml) = parser.parse() {
 					try!(config.game.load(args, &Value::Table(toml.clone())));
+					try!(config.analyzer.load(args, &Value::Table(toml.clone())));
 					try!(config.audio.load(args, &Value::Table(toml.clone())));
 					try!(config.video.load(args, &Value::Table(toml.clone())));
 				}
@@ -98,5 +103,9 @@ impl Config {
 
 	pub fn video(&self) -> &Video {
 		&self.video
+	}
+
+	pub fn analyzer(&self) -> &Analyzer {
+		&self.analyzer
 	}
 }
