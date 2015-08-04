@@ -42,10 +42,11 @@ impl<'a> Render<game::State> for Interface<'a> {
 			.color("#f00")
 			.size(2);
 
-		face.draw(&format!("min={:.0}ms max={:.0}ms avg={:.0}ms",
+		face.draw(&format!("FPS={:.0} min={:.0}ms max={:.0}ms avg={:.0}ms",
+			1.0 / support.debug().avg_frame_time(),
 			support.debug().min_frame_time() * 1_000.0,
 			support.debug().max_frame_time() * 1_000.0,
 			support.debug().avg_frame_time() * 1_000.0),
-		5, 30);
+		7, 30);
 	}
 }
