@@ -38,19 +38,34 @@ pub struct Audio {
 }
 
 impl Audio {
+	// Sends a specific decoder error to the channel, helps inference.
+	#[doc(hidden)]
 	pub fn error(channel: &SyncSender<D>, error: Error) {
 		channel.send(Decoder::Error(error)).unwrap();
 	}
 
+	// Sends an empty decoder to the channel, helps inference.
+	#[doc(hidden)]
 	pub fn none(channel: &SyncSender<D>) {
 		channel.send(Decoder::Start(None)).unwrap();
 	}
 
+	#[doc(hidden)]
 	pub fn spawn(mut codec: decoder::Audio, stream: &Stream, channel: SyncSender<D>) -> SyncSender<Reader> {
 		channel.send(Decoder::Start(Some(Details::from(&codec, stream)))).unwrap();
 
 		let (sender, receiver) = sync_channel(super::PACKETS);
 
+		// This thread will loop receiving audio packets from the packet reader
+		// thread until there are no more packets in the audio stream.
+		//
+		// Once a packet is received, it will be decoded to an audio frame.
+		//
+		// In case of error the error is sent upstream.
+		//
+		// In case of success the frame will be resampled to a packed signed short
+		// representation from its native representation, this way it will be able
+		// to be streamed to OpenAL.
 		thread::spawn(move || {
 			let mut decoded   = frame::Audio::empty();
 			let mut resampler = codec.resampler(format::Sample::I16(sample::Type::Packed), layout::STEREO, 44100).unwrap();
@@ -88,6 +103,7 @@ impl Audio {
 		sender
 	}
 
+	#[doc(hidden)]
 	pub fn new(channel: Receiver<D>, details: Details) -> Self {
 		Audio {
 			channel: channel,
@@ -95,18 +111,24 @@ impl Audio {
 		}
 	}
 
+	/// Gets the format of the source.
 	pub fn format(&self) -> format::Sample {
 		self.details.format
 	}
 
+	/// Gets the rate of the source.
 	pub fn rate(&self) -> u32 {
 		self.details.rate
 	}
 
+	/// Gets the number of channels in the source.
 	pub fn channels(&self) -> u16 {
 		self.details.channels
 	}
 
+	/// Fetches the next audio frame.
+	///
+	/// Returns `None` on EOF.
 	pub fn next(&mut self) -> Option<frame::Audio> {
 		loop {
 			if let Ok(frame) = get(&self.channel) {
