@@ -29,9 +29,11 @@ impl<'a> Plasma<'a>{
 			display: display,
 
 			program: program!(display,
-				110 => {
+				100 => {
 					vertex: "
-						#version 110
+						#version 100
+
+						precision lowp float;
 
 						attribute vec2 position;
 
@@ -46,7 +48,9 @@ impl<'a> Plasma<'a>{
 					",
 
 					fragment: "
-						#version 110
+						#version 100
+
+						precision lowp float;
 
 						uniform sampler2D background;
 						uniform float     width;

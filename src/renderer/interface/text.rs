@@ -31,9 +31,11 @@ impl<'a> Text<'a> {
 			display: display,
 
 			program: program!(display,
-				110 => {
+				100 => {
 					vertex: "
-						#version 110
+						#version 100
+
+						precision lowp float;
 
 						attribute vec2 position;
 						attribute vec2 texture;
@@ -49,7 +51,9 @@ impl<'a> Text<'a> {
 					",
 
 					fragment: "
-						#version 110
+						#version 100
+
+						precision lowp float;
 
 						uniform sampler2D font;
 						uniform vec4      color;

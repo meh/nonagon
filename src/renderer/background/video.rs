@@ -37,9 +37,11 @@ impl<'a> Video<'a> {
 			display: display,
 
 			program: program!(display,
-				110 => {
+				100 => {
 					vertex: "
-						#version 110
+						#version 100
+
+						precision lowp float;
 
 						attribute vec2 position;
 						attribute vec2 texture;
@@ -53,7 +55,9 @@ impl<'a> Video<'a> {
 					",
 
 					fragment: "
-						#version 110
+						#version 100
+
+						precision lowp float;
 
 						uniform sampler2D tex;
 						uniform float alpha;

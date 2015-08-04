@@ -40,9 +40,11 @@ impl<'a> Ship<'a>{
 			display: display,
 
 			with_color: program!(display,
-				110 => {
+				100 => {
 					vertex: "
-						#version 110
+						#version 100
+
+						precision lowp float;
 
 						attribute vec3 position;
 
@@ -54,7 +56,9 @@ impl<'a> Ship<'a>{
 					",
 
 					fragment: "
-						#version 110
+						#version 100
+
+						precision lowp float;
 
 						uniform vec4 color;
 
@@ -66,9 +70,11 @@ impl<'a> Ship<'a>{
 			).unwrap(),
 
 			with_texture: program!(display,
-				110 => {
+				100 => {
 					vertex: "
-						#version 110
+						#version 100
+
+						precision lowp float;
 
 						attribute vec3 position;
 						attribute vec2 texture;
@@ -84,7 +90,9 @@ impl<'a> Ship<'a>{
 					",
 
 					fragment: "
-						#version 110
+						#version 100
+
+						precision lowp float;
 
 						uniform sampler2D tex;
 
