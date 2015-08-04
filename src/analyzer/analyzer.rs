@@ -6,14 +6,14 @@ use ffmpeg::frame;
 
 use super::{util, Beat};
 
-#[derive(Debug)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Channel {
 	Left(f64, Event),
 	Right(f64, Event),
 	Mono(f64, Event),
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Event {
 	Beat(f64),
 }
