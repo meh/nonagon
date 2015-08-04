@@ -329,21 +329,27 @@ fn main() {
 			}
 		}
 
+		// Make sure the state gets updated in splits of `GRANULARITY` seconds.
 		while lag >= GRANULARITY {
-			if let Some(video) = video.as_mut() {
-				video.sync();
-			}
-
+			// Run an update tick.
 			state.tick(current - lag, &mut analyzer.lock().unwrap());
 
 			lag -= GRANULARITY;
 		}
 
+		// Render the sounds effects.
 		sound.lock().unwrap().render(&state);
 
+		// If we have a video, sync it.
+		if let Some(video) = video.as_mut() {
+			video.sync();
+		}
+
+		// Prepare to render a frame.
 		let mut target = display.draw();
 		target.clear_all((1.0, 1.0, 1.0, 1.0), 1.0, 0);
 
+		// Run the renderer.
 		renderer.render(&mut target, current, &state, video.as_ref().and_then(|v|
 			if v.is_done() {
 				None
@@ -352,7 +358,9 @@ fn main() {
 				Some(v.frame())
 			}));
 
+		// Draw the frame.
 		match target.finish() {
+			// If we lost the context (it can happen) recreate the renderer.
 			Err(ContextLost) => {
 				renderer = Renderer::new(&display, config.video(), aspect);
 				renderer.resize(width, height);
@@ -366,7 +374,7 @@ fn main() {
 		}
 	}
 
-	// ensure the music thread is closed
+	// Ensure the music thread is closed.
 	let _ = music.0.send(());
 	music.1.join().unwrap();
 }
