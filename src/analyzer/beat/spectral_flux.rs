@@ -15,9 +15,7 @@ impl SpectralFlux {
 	}
 
 	pub fn rising(&mut self, input: &[Complex<f64>]) -> f64 {
-		if input.len() != self.size {
-			panic!("size mismatch: input={} size={}", input.len(), self.size);
-		}
+		debug_assert_eq!(input.len(), self.size, "input size and internal size must match");
 
 		let mut result = 0.0;
 
@@ -35,9 +33,7 @@ impl SpectralFlux {
 	}
 
 	pub fn falling(&mut self, input: &[Complex<f64>]) -> f64 {
-		if input.len() != self.size {
-			panic!("size mismatch: input={} size={}", input.len(), self.size);
-		}
+		debug_assert_eq!(input.len(), self.size, "input size and internal size must match");
 
 		let mut result = 0.0;
 
@@ -55,9 +51,7 @@ impl SpectralFlux {
 	}
 
 	pub fn full(&mut self, input: &[Complex<f64>]) -> f64 {
-		if input.len() != self.size {
-			panic!("size mismatch: input={} size={}", input.len(), self.size);
-		}
+		debug_assert_eq!(input.len(), self.size, "input size and internal size must match");
 
 		let mut result = 0.0;
 
