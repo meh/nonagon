@@ -1,7 +1,5 @@
 use std::ops::Deref;
 
-use ffmpeg::time;
-
 use analyzer::{Analyzer, Channel, Event};
 
 #[derive(Debug)]
@@ -18,22 +16,18 @@ impl Events {
 		}
 	}
 
-	pub fn start(&mut self, time: f64) {
-		self.start = time;
-	}
-
 	pub fn fetch(&mut self, analyzer: &mut Analyzer) {
-		let high = time::relative() as f64 / 1_000_000.0 - self.start;
+		let high = analyzer.time();
 
 		self.queue.retain(|e| match e {
 			&Channel::Left(offset, _) =>
-				offset >= high,
+				offset > high,
 
 			&Channel::Right(offset, _) =>
-				offset >= high,
+				offset > high,
 
 			&Channel::Mono(offset, _) =>
-				offset >= high,
+				offset > high,
 		});
 
 		while let Ok(v) = analyzer.try_recv() {

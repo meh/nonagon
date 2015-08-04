@@ -35,8 +35,6 @@ impl Details {
 pub struct Audio {
 	channel: Receiver<D>,
 	details: Details,
-
-	done: bool,
 }
 
 impl Audio {
@@ -92,8 +90,6 @@ impl Audio {
 
 	pub fn new(channel: Receiver<D>, details: Details) -> Self {
 		Audio {
-			done: false,
-
 			channel: channel,
 			details: details,
 		}
@@ -109,10 +105,6 @@ impl Audio {
 
 	pub fn channels(&self) -> u16 {
 		self.details.channels
-	}
-
-	pub fn is_done(&self) -> bool {
-		self.done
 	}
 
 	pub fn next(&mut self) -> Option<frame::Audio> {

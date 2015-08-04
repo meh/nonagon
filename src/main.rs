@@ -64,8 +64,7 @@ mod renderer;
 use renderer::Renderer;
 
 mod analyzer;
-
-const GRANULARITY: f64 = 0.015;
+use analyzer::Analyzer;
 
 static USAGE: &'static str = "
 Usage: nonagon [options] <input>
@@ -82,17 +81,21 @@ Options:
 ";
 
 fn main() {
+	// Initialize libraries.
 	env_logger::init().unwrap();
 	ffmpeg::init().unwrap();
 
+	// Load the config from the given args.
 	let config = Config::load(&Docopt::new(USAGE).
 		and_then(|d| d.parse()).
 		unwrap_or_else(|e| e.exit())).unwrap();
 
 	debug!("{:#?}", config);
 
+	// Spawn the source decoder.
 	let (a, v) = source::spawn(config.input(), config.audio().only());
 
+	// Check for errors for the audio decoder.
 	let mut audio = match a {
 		Err(error) => {
 			println!("error: ffmpeg: {}", error);
@@ -108,6 +111,7 @@ fn main() {
 			a
 	};
 
+	// Check for errors for the video decoder.
 	let mut video = match v {
 		Err(error) => {
 			println!("error: ffmpeg: {}", error);
@@ -118,6 +122,7 @@ fn main() {
 			v
 	};
 
+	// Calculate the window size based on the monitor dimension.
 	let (mut width, mut height, aspect) = {
 		let (width, height) = get_primary_monitor().get_dimensions();
 
@@ -135,36 +140,54 @@ fn main() {
 		}
 	};
 
+	// Open the display with mandatory options.
 	let mut display = glutin::WindowBuilder::new()
 		.with_title(String::from("nonagon"))
 		.with_dimensions(width, height)
 		.with_depth_buffer(24);
 
+	// Enable vsync if the config says so.
 	if config.video().vsync() {
 		display = display.with_vsync();
 	}
 
+	// Enable multisampling if the config says so.
 	if let Some(value) = config.video().multisampling() {
 		display = display.with_multisampling(value);
 	}
 
+	// Build the display.
 	let display = display.build_glium().unwrap_or_else(|err| {
 		println!("error: opengl: configuration not supported: {}", err);
 		exit(4);
 	});
 
+	// Create the sound device.
+	//
+	// It's in an Arc<Mutex<_>> because it's accessed both from the main thread
+	// and the music thread.
 	let sound = Arc::new(Mutex::new(Sound::new(config.audio()).unwrap_or_else(|err| {
 		println!("error: sound: {}", err);
 		exit(5);
 	})));
 
-	let state = Arc::new(Mutex::new(State::new(config.game(), aspect)));
+	// Create the analyzer.
+	//
+	// It's in an Arc<Mutex<_>> because it's accessed both from the main thread
+	// and the music thread.
+	let analyzer = Arc::new(Mutex::new(Analyzer::spawn(config.analyzer())));
 
+	// Create the state to keep track of the game.
+	let mut state = State::new(config.game(), aspect);
+
+	// Music thread, the result is stored so it can be killed from the main later
+	// on.
 	let music = {
-		let state = state.clone();
-		let sound = sound.clone();
-		let play  = !config.audio().mute();
+		let analyzer = analyzer.clone();
+		let sound    = sound.clone();
+		let mute     = config.audio().mute();
 
+		// Channel for killing.
 		let (sender, receiver) = channel();
 
 		(sender, thread::spawn(move || {
@@ -180,76 +203,93 @@ fn main() {
 
 			loop {
 				// Return if the main has exited or the stream is done.
-				if audio.is_done() || receiver.try_recv().is_ok() {
+				if receiver.try_recv().is_ok() {
 					return;
 				}
 
-				if let Some(frame) = audio.next() {
-					// Only play the sound if it's not muted.
-					if play {
-						sound.lock().unwrap().play(&frame);
-					}
+				// Get the next frame, if any.
+				let frame = audio.next();
 
-					// Initialize the start as soon as the first frame is played.
-					if start == 0.0 {
-						start = time::relative() as f64 / 1_000_000.0;
-						state.lock().unwrap().start(start);
-					}
+				// If there's no frame the stream is done.
+				if frame.is_none() {
+					return;
+				}
 
-					// Increment by seconds of sample data we have.
-					duration += (1.0 / 44100.0) * frame.samples() as f64;
+				let frame = frame.unwrap();
 
-					// Feed the frame to the analyzer.
-					state.lock().unwrap().feed(frame);
+				// Only play the sound if it's not muted.
+				if !mute {
+					sound.lock().unwrap().play(&frame);
+				}
 
-					// Return if the stream is over or main has exited.
-					if audio.is_done() || receiver.try_recv().is_ok() {
-						return;
-					}
+				// Initialize the start as soon as the first frame is played.
+				if start == 0.0 {
+					start = time::relative() as f64 / 1_000_000.0;
+					analyzer.lock().unwrap().start(start);
+				}
 
-					// If we have 1 second and half worth of samples sleep for the
-					// remaining duration.
-					if duration >= 1.5 {
-						// Add the current duration to the offset so we have a baseline to
-						// correct.
-						offset += duration;
+				// Increment by seconds of sample data we have.
+				duration += (1.0 / 44100.0) * frame.samples() as f64;
 
-						// We need the current time so we don't oversleep.
-						let current = time::relative() as f64 / 1_000_000.0;
+				// Feed the frame to the analyzer.
+				analyzer.lock().unwrap().feed(frame);
 
-						// Correct the duration considering time that has passed since we
-						// fetched the samples.
-						let mut corrected = offset - (current - start);
+				// Return if the stream is over or main has exited.
+				if receiver.try_recv().is_ok() {
+					return;
+				}
 
-						// Sleep in small portions so we can check for liveness.
-						while corrected >= 0.1 {
-							corrected -= 0.1;
-							time::sleep((0.1 * 1_000_000.0) as u32).unwrap();
+				// If we have 1 second and half worth of samples sleep for the
+				// remaining duration.
+				if duration >= 1.5 {
+					// Add the current duration to the offset so we have a baseline to
+					// correct.
+					offset += duration;
 
-							// Return if the main has exited.
-							if receiver.try_recv().is_ok() {
-								return;
-							}
+					// We need the current time so we don't oversleep.
+					let current = time::relative() as f64 / 1_000_000.0;
+
+					// Correct the duration considering time that has passed since we
+					// fetched the samples.
+					let mut corrected = offset - (current - start);
+
+					// Sleep in small portions so we can check for liveness.
+					while corrected >= 0.1 {
+						corrected -= 0.1;
+						time::sleep((0.1 * 1_000_000.0) as u32).unwrap();
+
+						// Return if the main has exited.
+						if receiver.try_recv().is_ok() {
+							return;
 						}
-
-						// Do a final sleep in case the loop is done with a leftover.
-						if corrected > 0.0 {
-							time::sleep((corrected * 1_000_000.0) as u32).unwrap();
-						}
-
-						// Reset the duration for the next cycle.
-						duration = 0.0;
 					}
+
+					// Do a final sleep in case the loop is done with a leftover.
+					if corrected > 0.0 {
+						time::sleep((corrected * 1_000_000.0) as u32).unwrap();
+					}
+
+					// Reset the duration for the next cycle.
+					duration = 0.0;
 				}
 			}
 		}))
 	};
 
+	// Create the renderer.
 	let mut renderer = Renderer::new(&display, config.video(), aspect);
+
+	// Give it the initial size.
 	renderer.resize(width, height);
 
+	// The static step between each state update.
+	const GRANULARITY: f64 = 0.015;
+
+	// The previous time.
 	let mut previous = time::relative() as f64 / 1_000_000.0;
-	let mut lag      = 0.0;
+
+	// The accumulated lag.
+	let mut lag = 0.0;
 
 	'game: loop {
 		let current = time::relative() as f64 / 1_000_000.0;
@@ -258,32 +298,34 @@ fn main() {
 		previous  = current;
 		lag      += elapsed;
 
+		// Fetch the events and handle them.
 		for event in display.poll_events() {
 			match event {
+				// These do nothing, but we match on them so the state handle can be
+				// partial.
 				Event::Awakened => (),
 				Event::Refresh  => (),
+				Event::Moved(x, y)    => (),
+				Event::Focused(true)  => (),
+				Event::Focused(false) => (),
 
+				// When the window is closed or ESC is pressed, quit the game.
 				Event::Closed | Event::KeyboardInput(Released, _, Some(Escape)) =>
 					break 'game,
 
+				// The window has been resized.
 				Event::Resized(w, h) => {
+					// Cache the new dimension.
 					width  = w;
 					height = h;
 
+					// Tell the renderer the new size.
 					renderer.resize(width, height);
 				},
 
-				Event::Moved(x, y) =>
-					debug!("moved: {}:{}", x, y),
-
-				Event::Focused(true) =>
-					debug!("focused"),
-
-				Event::Focused(false) =>
-					debug!("defocused"),
-
+				// Handle the supported events.
 				event =>
-					state.lock().unwrap().handle(&event)
+					state.handle(&event)
 			}
 		}
 
@@ -292,17 +334,17 @@ fn main() {
 				video.sync();
 			}
 
-			state.lock().unwrap().tick(current - lag);
+			state.tick(current - lag, &mut analyzer.lock().unwrap());
 
 			lag -= GRANULARITY;
 		}
 
-		sound.lock().unwrap().render(&state.lock().unwrap());
+		sound.lock().unwrap().render(&state);
 
 		let mut target = display.draw();
 		target.clear_all((1.0, 1.0, 1.0, 1.0), 1.0, 0);
 
-		renderer.render(&mut target, current, &state.lock().unwrap(), video.as_ref().and_then(|v|
+		renderer.render(&mut target, current, &state, video.as_ref().and_then(|v|
 			if v.is_done() {
 				None
 			}

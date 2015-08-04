@@ -4,7 +4,7 @@ use glium::glutin::Event;
 use glium::glutin::ElementState::{Pressed, Released};
 use glium::glutin::VirtualKeyCode as Key;
 
-use ffmpeg::{frame, Rational};
+use ffmpeg::Rational;
 
 use util::Aspect;
 use config;
@@ -18,14 +18,11 @@ pub struct State {
 	projectiles: Vec<Projectile>,
 	particles:   Vec<Particle>,
 
-	timestamp: i64,
-	analyzer:  Analyzer,
-	events:    Events,
-
 	config: config::Game,
 	aspect: Rational,
 	keys:   HashSet<Key>,
 	tick:   usize,
+	events: Events,
 }
 
 impl State {
@@ -56,29 +53,14 @@ impl State {
 			projectiles: Vec::new(),
 			particles:   Vec::new(),
 
-			timestamp: -1,
-			analyzer:  Analyzer::spawn(),
-			events:    Events::new(),
-
 			config: config.clone(),
 			aspect: aspect.reduce(),
 			keys:   HashSet::new(),
 			tick:   0,
+			events: Events::new(),
 		}
 	}
 	
-	pub fn start(&mut self, time: f64) {
-		self.events.start(time);
-	}
-
-	pub fn feed(&mut self, frame: frame::Audio) {
-		if self.timestamp >= frame.timestamp().unwrap() {
-			return;
-		}
-
-		self.analyzer.feed(frame);
-	}
-
 	pub fn handle(&mut self, event: &Event) {
 		match event {
 			&Event::ReceivedCharacter(..) |
@@ -116,9 +98,9 @@ impl State {
 		&self.particles
 	}
 
-	pub fn tick(&mut self, time: f64) {
+	pub fn tick(&mut self, time: f64, analyzer: &mut Analyzer) {
 		// Fetch events from the analyzer.
-		self.events.fetch(&mut self.analyzer);
+		self.events.fetch(analyzer);
 
 		// Deal with the player.
 		{

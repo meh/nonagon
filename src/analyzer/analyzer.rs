@@ -2,9 +2,10 @@ use std::thread;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::ops::{Deref, DerefMut};
 
-use ffmpeg::frame;
+use ffmpeg::{time, frame};
 
 use super::{util, Beat};
+use config;
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub enum Channel {
@@ -21,23 +22,22 @@ pub enum Event {
 pub struct Analyzer {
 	receiver: Receiver<Channel>,
 	sender:   Sender<frame::Audio>,
+
+	start:     f64,
+	timestamp: i64,
 }
 
 impl Analyzer {
-	pub fn spawn() -> Analyzer {
+	pub fn spawn(config: &config::Analyzer) -> Analyzer {
+		let config = config.clone();
+
 		let (event_sender, event_receiver) = channel::<Channel>();
 		let (frame_sender, frame_receiver) = channel::<frame::Audio>();
 
 		thread::spawn(move || {
 			// The onset detector.
-			//
-			// 1024 samples window.
-			//
-			// 20 samples of look-ahead and look-behind for the threshold, about
-			// a second worth of samples.
-			//
-			// 1.5 sensitivity for the threshold, magic number from the gods.
-			let mut beat = Beat::new(1024, (20, 1.5));
+			let mut beat = Beat::new(config.window(),
+				(config.threshold().size(), config.threshold().sensitivity()));
 
 			// The buffer for the samples, so we can take out 1024 samples at a time.
 			let mut samples = Vec::new();
@@ -81,17 +81,33 @@ impl Analyzer {
 		Analyzer {
 			receiver: event_receiver,
 			sender:   frame_sender,
+
+			start:     0.0,
+			timestamp: -1,
 		}
 	}
 
+	pub fn start(&mut self, time: f64) {
+		self.start = time;
+	}
+
+	pub fn time(&self) -> f64 {
+		time::relative() as f64 / 1_000_000.0 - self.start
+	}
+
 	pub fn feed(&mut self, frame: frame::Audio) {
+		if self.timestamp >= frame.timestamp().unwrap() {
+			return;
+		}
+
+		self.timestamp = frame.timestamp().unwrap();
 		self.sender.send(frame).unwrap();
 	}
 }
 
 impl ::std::fmt::Debug for Analyzer {
 	fn fmt(&self, f: &mut ::std::fmt::Formatter) -> Result<(), ::std::fmt::Error> {
-		f.write_str("Analyzer")
+		write!(f, "Analyzer {{ start: {} }}", self.start)
 	}
 }
 
