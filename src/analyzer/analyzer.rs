@@ -31,11 +31,13 @@ impl Analyzer {
 		thread::spawn(move || {
 			// The onset detector.
 			//
-			// 1024 samples for the spectral flux analyzer.
+			// 1024 samples window.
 			//
-			// 10 samples of look-ahead and look-behind for the threshold.
-			// 1.5 sensitivity for the threshold.
-			let mut beat = Beat::new(1024, (10, 1.5));
+			// 20 samples of look-ahead and look-behind for the threshold, about
+			// a second worth of samples.
+			//
+			// 1.5 sensitivity for the threshold, magic number from the gods.
+			let mut beat = Beat::new(1024, (20, 1.5));
 
 			// The buffer for the samples, so we can take out 1024 samples at a time.
 			let mut samples = Vec::new();
