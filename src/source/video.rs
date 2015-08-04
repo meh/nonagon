@@ -43,19 +43,34 @@ pub struct Video {
 }
 
 impl Video {
+	// Sends a specific decoder error to the channel.
+	#[doc(hidden)]
 	pub fn error(channel: &SyncSender<D>, error: Error) {
 		channel.send(Decoder::Error(error)).unwrap();
 	}
 
+	// Sends an empty decoder to the channel.
+	#[doc(hidden)]
 	pub fn none(channel: &SyncSender<D>) {
 		channel.send(Decoder::Start(None)).unwrap();
 	}
 
+	#[doc(hidden)]
 	pub fn spawn(mut codec: decoder::Video, stream: &Stream, channel: SyncSender<D>) -> SyncSender<Reader> {
 		channel.send(Decoder::Start(Some(Details::from(&codec, stream)))).unwrap();
 
+		// We use a synchronized channel so we don't decode the whole file and clog
+		// the memory.
 		let (sender, receiver) = sync_channel(super::PACKETS);
 
+		// This thread will loop receiving video packets from the packet reader
+		// thread until there are no more packets in the video stream.
+		//
+		// Once a packet is received, it will be decoded to a video frame.
+		// In case of error the error is sent upstream.
+		// In case of success the frame will be converted to BGRA from its native
+		// pixel format, this way it will be able to be streamed to a texture
+		// directly.
 		thread::spawn(move || {
 			let mut decoded   = frame::Video::empty();
 			let mut converter = codec.converter(format::Pixel::BGRA).unwrap();
@@ -93,6 +108,7 @@ impl Video {
 		sender
 	}
 
+	#[doc(hidden)]
 	pub fn new(channel: Receiver<D>, details: Details) -> Self {
 		Video {
 			done:    false,
@@ -105,35 +121,48 @@ impl Video {
 		}
 	}
 
+	/// Gets the format of the source.
 	pub fn format(&self) -> format::Pixel {
 		self.details.format
 	}
 
+	/// Gets the width of the source.
 	pub fn width(&self) -> u32 {
 		self.details.width
 	}
 
+	/// Gets the height of the source.
 	pub fn height(&self) -> u32 {
 		self.details.height
 	}
 
+	/// Checks if the stream is over.
 	pub fn is_done(&self) -> bool {
 		self.done
 	}
 
+	/// Gets the current frame.
 	pub fn frame(&self) -> &frame::Video {
 		&self.current
 	}
 
+	/// Synchronizes the source to get the current frame.
 	pub fn sync(&mut self) {
 		loop {
 			if self.done {
 				break;
 			}
 
-			let time: f64 = (time::relative() - self.time) as f64 / 1_000_000.0;
-			let pts:  f64 = self.next.timestamp().unwrap_or(0) as f64 * self.details.time_base;
+			// Get how much time has passed since the start in seconds.
+			let time = (time::relative() - self.time) as f64 / 1_000_000.0;
 
+			// Normalize the timestamp with the time base.
+			let pts = self.next.timestamp().unwrap_or(0) as f64 * self.details.time_base;
+
+			// Synchronization is based on frame skipping.
+			//
+			// I know, it sucks, but it works, and besides, you should be busy
+			// shooting things.
 			if time > pts {
 				if let Some(result) = try(&self.channel) {
 					if let Some(frame) = result.unwrap() {
