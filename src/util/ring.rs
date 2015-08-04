@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 
 #[derive(Debug)]
 pub struct Ring<T> {
@@ -26,12 +26,6 @@ impl<T> Ring<T> {
 	pub fn pop(&mut self) -> Option<T> {
 		self.buffer.pop_front()
 	}
-
-	pub fn push_back() -> ! { unimplemented!(); }
-	pub fn pop_back() -> ! { unimplemented!(); }
-	pub fn push_front() -> ! { unimplemented!(); }
-	pub fn pop_front() -> ! { unimplemented!(); }
-	pub fn remove() -> ! { unimplemented!(); }
 }
 
 impl<T> Deref for Ring<T> {
@@ -39,11 +33,5 @@ impl<T> Deref for Ring<T> {
 
 	fn deref(&self) -> &Self::Target {
 		&self.buffer
-	}
-}
-
-impl<T> DerefMut for Ring<T> {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.buffer
 	}
 }
