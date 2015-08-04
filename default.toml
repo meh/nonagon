@@ -3,6 +3,15 @@ shape  = "cube"
 face   = "#fff"
 border = "#000"
 
+[analyzer]
+window = 1024 # sample windows
+
+[analyzer.threshold]
+size = 20 # samples of look-ahead and look-behind for the threshold, about a
+          # second worth of samples.
+
+sensitivity = 1.5 # magic number from the gods
+
 [audio]
 only = false
 mute = false
