@@ -43,13 +43,13 @@ pub struct Video {
 }
 
 impl Video {
-	// Sends a specific decoder error to the channel.
+	// Sends a specific decoder error to the channel, helps inference.
 	#[doc(hidden)]
 	pub fn error(channel: &SyncSender<D>, error: Error) {
 		channel.send(Decoder::Error(error)).unwrap();
 	}
 
-	// Sends an empty decoder to the channel.
+	// Sends an empty decoder to the channel, helps inference.
 	#[doc(hidden)]
 	pub fn none(channel: &SyncSender<D>) {
 		channel.send(Decoder::Start(None)).unwrap();
@@ -67,7 +67,9 @@ impl Video {
 		// thread until there are no more packets in the video stream.
 		//
 		// Once a packet is received, it will be decoded to a video frame.
+		//
 		// In case of error the error is sent upstream.
+		//
 		// In case of success the frame will be converted to BGRA from its native
 		// pixel format, this way it will be able to be streamed to a texture
 		// directly.
