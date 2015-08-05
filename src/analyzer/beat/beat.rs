@@ -3,7 +3,6 @@ use rft;
 
 use analyzer::Range;
 use super::{SpectralFlux, Threshold, State};
-use util::Ring;
 use config;
 
 #[derive(Debug)]
@@ -153,7 +152,7 @@ impl Beat {
 				// Is it a beat?
 				if state.previous > current {
 					// The beat was actually in the previous sample.
-					let time = (1.0 / 44100.0) * ((offset - 1) as f64 * 1024.0);
+					let time = (1.0 / 44100.0) * ((offset - 1) as f64 * self.config.window().size() as f64);
 
 					// Normalize the flux with the threshold.
 					let flux = state.previous - threshold;
