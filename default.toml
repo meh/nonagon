@@ -7,15 +7,6 @@ shape  = "tetrahedron"
 face   = "#ff69b4"
 border = "#000"
 
-[analyzer]
-window = 1024 # sample windows
-
-[analyzer.threshold]
-size = 20 # samples of look-ahead and look-behind for the threshold, about a
-          # second worth of samples.
-
-sensitivity = 1.5 # magic number from the gods
-
 [audio]
 only = false
 mute = false
@@ -36,3 +27,42 @@ anisotropy = 16
 
 [video.effects.bullet.plasma]
 glow = true
+
+[analyzer.window]
+# number of samples in every window
+size = 1024
+
+# number of overlapping samples
+hop = 512
+
+# make the window a hamming window
+hamming = true
+
+[analyzer.beat.threshold]
+# samples of look-ahead and look-behind for the threshold, about a
+# second worth of samples.
+size = 25
+
+# magic number from the gods
+sensitivity = 1.5
+
+[[analyzer.beat.band]]
+# the band frequency range
+range = [80, 4000]
+
+# a custom sensitivity for this band
+sensitivity = 2.0
+
+[[analyzer.beat.band]]
+# the band frequency range
+range = [4000, 10000]
+
+# a custom sensitivity for this band
+sensitivity = 2.0
+
+[[analyzer.beat.band]]
+# the band frequency range
+range = [10000, 16000]
+
+# a custom sensitivity for this band
+sensitivity = 2.0
