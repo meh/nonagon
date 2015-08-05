@@ -3,37 +3,27 @@ use docopt::ArgvMap;
 use toml::{Value, ParserError};
 
 use config::Load;
+use analyzer::Range;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct Analyzer {
-	window: usize,
-
-	threshold: Threshold,
-}
-
-impl Default for Analyzer {
-	fn default() -> Self {
-		Analyzer {
-			window: 1024,
-
-			threshold: Default::default(),
-		}
-	}
+	window: Window,
+	beat:   Beat,
 }
 
 impl Load for Analyzer {
 	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
-		let toml = toml.as_table().unwrap();
+		let top = toml.as_table().unwrap();
 
-		if let Some(toml) = toml.get("analyzer") {
+		if let Some(toml) = top.get("analyzer") {
 			let toml = expect!(toml.as_table(), "`analyzer` must be a table");
 
-			if let Some(value) = toml.get("window") {
-				self.window = expect!(value.as_integer(), "`analyzer.window` must be an integer") as usize;
+			if let Some(toml) = toml.get("window") {
+				try!(self.window.load(args, toml));
 			}
 
-			if let Some(toml) = toml.get("threshold") {
-				try!(self.threshold.load(args, toml));
+			if let Some(toml) = toml.get("beat") {
+				try!(self.beat.load(args, toml));
 			}
 		}
 
@@ -42,8 +32,169 @@ impl Load for Analyzer {
 }
 
 impl Analyzer {
-	pub fn window(&self) -> usize {
-		self.window
+	pub fn window(&self) -> &Window {
+		&self.window
+	}
+
+	pub fn beat(&self) -> &Beat {
+		&self.beat
+	}
+}
+
+#[derive(Clone, Debug)]
+pub struct Window {
+	size:    usize,
+	hop:     usize,
+	hamming: bool,
+}
+
+impl Default for Window {
+	fn default() -> Self {
+		Window {
+			size:    1024,
+			hop:     512,
+			hamming: true,
+		}
+	}
+}
+
+impl Load for Window {
+	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
+		let top = expect!(toml.as_table(), "`analyzer.window` must be a table");
+
+		if let Some(value) = top.get("size") {
+			self.size = expect!(value.as_integer(), "`analyzer.window.size` must be an integer") as usize;
+		}
+
+		if let Some(value) = top.get("hop") {
+			self.hop = expect!(value.as_integer(), "`analyzer.window.hop` must be an integer") as usize;
+		}
+
+		if let Some(value) = top.get("hamming") {
+			self.hamming = expect!(value.as_bool(), "`analyzer.window.hamming` must be a boolean");
+		}
+
+		if self.size < self.hop {
+			expect!("`analyzer.window.hop` must be lesser than or equal to `analyzer.window.size`");
+		}
+
+		Ok(())
+	}
+}
+
+impl Window {
+	pub fn size(&self) -> usize {
+		self.size
+	}
+
+	pub fn hop(&self) -> usize {
+		self.hop
+	}
+
+	pub fn is_hamming(&self) -> bool {
+		self.hamming
+	}
+}
+
+#[derive(Clone, Debug)]
+pub struct Beat {
+	threshold: Threshold,
+	bands:     Vec<Band>,
+}
+
+impl Default for Beat {
+	fn default() -> Self {
+		Beat {
+			threshold: Default::default(),
+			bands:     Vec::new(),
+		}
+	}
+}
+
+impl Load for Beat {
+	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
+		let top = expect!(toml.as_table(), "`analyzer.beat` must be a table");
+
+		if let Some(toml) = top.get("threshold") {
+			try!(self.threshold.load(args, toml));
+		}
+
+		if let Some(toml) = top.get("band") {
+			let  toml = expect!(toml.as_slice(), "`analyzer.band` must be an array");
+			self.bands = vec![Default::default(); toml.len()];
+
+			for (band, value) in self.bands.iter_mut().zip(toml.iter()) {
+				if let Some(toml) = top.get("threshold") {
+					try!(band.threshold.load(args, toml));
+				}
+
+				try!(band.load(args, value));
+			}
+		}
+
+		Ok(())
+	}
+}
+
+impl Beat {
+	pub fn threshold(&self) -> &Threshold {
+		&self.threshold
+	}
+
+	pub fn bands(&self) -> &[Band] {
+		&*self.bands
+	}
+}
+
+#[derive(Clone, Debug)]
+pub struct Band {
+	range:     Range,
+	threshold: Threshold,
+}
+
+impl Default for Band {
+	fn default() -> Self {
+		Band {
+			range:     Range::default(),
+			threshold: Default::default(),
+		}
+	}
+}
+
+impl Load for Band {
+	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
+		let top = expect!(toml.as_table(), "`analyzer.beat.band.*` must be a table");
+
+		if let Some(value) = top.get("range") {
+			match value {
+				&Value::Array(ref range) => {
+					if range.len() != 2 {
+						expect!("`analyzer.beat.band.*.range` must be an array of two elements");
+					}
+
+					let lo = expect!(range[0].as_integer(), "`analyzer.beat.band.*.range.0` must be an integer");
+					let hi = expect!(range[1].as_integer(), "`analyzer.beat.band.*.range.1` must be an integer");
+
+					self.range = Range::new(lo as u32, hi as u32);
+				},
+
+				&Value::Boolean(false) =>
+					(),
+
+				_ =>
+					expect!("`analyzer.beat.band.*.range` must be an array or false")
+			}
+		}
+
+		try!(self.threshold.load(args, &Value::Table(top.clone())));
+
+		Ok(())
+	}
+}
+
+impl Band {
+	pub fn range(&self) -> Range {
+		self.range.clone()
 	}
 
 	pub fn threshold(&self) -> &Threshold {
@@ -53,6 +204,7 @@ impl Analyzer {
 
 #[derive(Clone, Debug)]
 pub struct Threshold {
+	band:        Option<Range>,
 	size:        usize,
 	sensitivity: f64,
 }
@@ -60,6 +212,7 @@ pub struct Threshold {
 impl Default for Threshold {
 	fn default() -> Self {
 		Threshold {
+			band:        None,
 			size:        20,
 			sensitivity: 1.5,
 		}
@@ -68,14 +221,14 @@ impl Default for Threshold {
 
 impl Load for Threshold {
 	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
-		let toml = expect!(toml.as_table(), "`analyzer.threshold` must be a table");
+		let top = expect!(toml.as_table(), "`analyzer.threshold` must be a table");
 
-		if let Some(value) = toml.get("size") {
-			self.size = expect!(value.as_integer(), "`analyzer.threshold.size` must be an integer") as usize;
+		if let Some(value) = top.get("size") {
+			self.size = expect!(value.as_integer(), "`analyzer.beat.threshold.size` must be an integer") as usize;
 		}
 
-		if let Some(value) = toml.get("sensitivity") {
-			self.sensitivity = expect!(value.as_float(), "`analyzer.threshold.sensitivity` must be a float") as f64;
+		if let Some(value) = top.get("sensitivity") {
+			self.sensitivity = expect!(value.as_float(), "`analyzer.beat.threshold.sensitivity` must be a float") as f64;
 		}
 
 		Ok(())
