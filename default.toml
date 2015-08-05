@@ -1,6 +1,10 @@
+[game.window.16-9]
+width  = 640
+height = 360
+
 [game.ship]
-shape  = "cube"
-face   = "#fff"
+shape  = "tetrahedron"
+face   = "#ff69b4"
 border = "#000"
 
 [analyzer]

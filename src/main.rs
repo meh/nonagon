@@ -141,6 +141,24 @@ fn main() {
 		}
 	};
 
+	if let Some(w) = config.game().window().width() {
+		width = w;
+	}
+
+	if let Some(h) = config.game().window().height() {
+		height = h;
+	}
+
+	if let Some(config) = config.game().window().aspect(aspect) {
+		if let Some(w) = config.width() {
+			width = w;
+		}
+
+		if let Some(h) = config.height() {
+			height = h;
+		}
+	}
+
 	// Open the display with mandatory options.
 	let mut display = glutin::WindowBuilder::new()
 		.with_title(String::from("nonagon"))

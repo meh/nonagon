@@ -1,6 +1,9 @@
-use docopt::ArgvMap;
+use std::collections::HashMap;
 
+use docopt::ArgvMap;
 use toml::{Value, ParserError};
+use ffmpeg::Rational;
+use regex::Regex;
 
 use game::ship::Shape;
 use util::Fill;
@@ -8,7 +11,8 @@ use config::Load;
 
 #[derive(Clone, Default, Debug)]
 pub struct Game {
-	ship: Ship,
+	window: Window,
+	ship:   Ship,
 }
 
 impl Load for Game {
@@ -18,12 +22,84 @@ impl Load for Game {
 		if let Some(toml) = toml.get("game") {
 			let toml = expect!(toml.as_table(), "`game` must be a table");
 
+			if let Some(toml) = toml.get("window") {
+				try!(self.window.load(args, toml));
+			}
+
 			if let Some(toml) = toml.get("ship") {
 				try!(self.ship.load(args, toml));
 			}
 		}
 
 		Ok(())
+	}
+}
+
+impl Game {
+	pub fn window(&self) -> &Window {
+		&self.window
+	}
+
+	pub fn ship(&self) -> &Ship {
+		&self.ship
+	}
+}
+
+#[derive(Clone, Debug)]
+pub struct Window {
+	aspects: HashMap<String, Window>,
+
+	width:  Option<u32>,
+	height: Option<u32>,
+}
+
+impl Default for Window {
+	fn default() -> Self {
+		Window {
+			aspects: HashMap::new(),
+
+			width:  None,
+			height: None,
+		}
+	}
+}
+
+impl Load for Window {
+	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
+		let toml = expect!(toml.as_table(), "`game.window` must be a table");
+
+		if let Some(value) = toml.get("width") {
+			self.width = Some(expect!(value.as_integer(), "`game.window.width` must be an integer") as u32);
+		}
+
+		if let Some(value) = toml.get("height") {
+			self.height = Some(expect!(value.as_integer(), "`game.window.height` must be an integer") as u32);
+		}
+
+		for (key, toml) in toml {
+			if Regex::new(r"(\d+)-(\d+)").unwrap().is_match(key) {
+				let mut window = Window::default();
+				window.load(args, toml);
+
+				self.aspects.insert(key.clone(), window);
+			}
+		}
+
+		Ok(())
+	}
+}
+
+impl Window {
+	pub fn aspect(&self, aspect: Rational) -> Option<&Window> {
+		self.aspects.get(&format!("{}-{}", aspect.numerator(), aspect.denominator()))
+	}
+
+	pub fn width(&self) -> Option<u32> {
+		self.width
+	}
+
+	pub fn height(&self) -> Option<u32> {
+		self.height
 	}
 }
 
@@ -89,12 +165,6 @@ impl Load for Ship {
 		}
 
 		Ok(())
-	}
-}
-
-impl Game {
-	pub fn ship(&self) -> &Ship {
-		&self.ship
 	}
 }
 
