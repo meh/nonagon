@@ -207,21 +207,23 @@ fn main() {
 		let music    = config.audio().music();
 
 		// Channel for killing.
-		let (sender, receiver) = channel();
+		let (sender, receiver) = channel::<f64>();
 
 		(sender, thread::spawn(move || {
-			// Set to 0 because we set it as soon as we get the first frame so it
-			// stays in sync.
-			let mut start = 0.0;
-
 			// Keeps track of how far in stream we got.
 			let mut offset = 0.0;
 
 			// How many seconds of samples we have.
 			let mut duration = 0.0;
 
+			// Wait for the game to be ready.
+			let start = receiver.recv().unwrap();
+
+			// Synchronize the source start.
+			audio.start(start);
+
 			loop {
-				// Return if the main has exited or the stream is done.
+				// Return if the main has exited.
 				if receiver.try_recv().is_ok() {
 					return;
 				}
@@ -234,6 +236,7 @@ fn main() {
 					return;
 				}
 
+				// Take out the frame value.
 				let frame = frame.unwrap();
 
 				// Only play the music if it's not muted.
@@ -241,22 +244,16 @@ fn main() {
 					sound.lock().unwrap().play(&frame);
 				}
 
-				// Initialize the start as soon as the first frame is played.
-				if start == 0.0 {
-					start = time::relative() as f64 / 1_000_000.0;
-					analyzer.lock().unwrap().start(start);
-				}
-
 				// Increment by seconds of sample data we have.
 				duration += (1.0 / 44100.0) * frame.samples() as f64;
 
-				// Feed the frame to the analyzer.
-				analyzer.lock().unwrap().feed(frame);
-
-				// Return if the stream is over or main has exited.
+				// Return if main has exited.
 				if receiver.try_recv().is_ok() {
 					return;
 				}
+
+				// Feed the frame to the analyzer.
+				analyzer.lock().unwrap().feed(frame);
 
 				// If we have five seconds worth of samples sleep for the
 				// remaining duration.
@@ -301,6 +298,18 @@ fn main() {
 	// Give it the initial size.
 	renderer.resize(width, height);
 
+	// Synchronize start times.
+	{
+		let start = time::relative() as f64 / 1_000_000.0;
+
+		if let Some(video) = video.as_mut() {
+			video.start(start);
+		}
+
+		analyzer.lock().unwrap().start(start);
+
+		music.0.send(start).unwrap();
+	}
 
 	// The previous time.
 	let mut previous = time::relative() as f64 / 1_000_000.0;
@@ -392,6 +401,6 @@ fn main() {
 	}
 
 	// Ensure the music thread is closed.
-	let _ = music.0.send(());
+	let _ = music.0.send(0.0);
 	music.1.join().unwrap();
 }

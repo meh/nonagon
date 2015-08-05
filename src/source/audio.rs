@@ -35,6 +35,10 @@ impl Details {
 pub struct Audio {
 	channel: Receiver<D>,
 	details: Details,
+
+	// Used to know when the source is ready.
+	first: Option<frame::Audio>,
+	start: f64,
 }
 
 impl Audio {
@@ -106,6 +110,9 @@ impl Audio {
 	#[doc(hidden)]
 	pub fn new(channel: Receiver<D>, details: Details) -> Self {
 		Audio {
+			first: Some(get(&channel).unwrap().unwrap()),
+			start: -1.0,
+
 			channel: channel,
 			details: details,
 		}
@@ -126,10 +133,19 @@ impl Audio {
 		self.details.channels
 	}
 
+	/// Sets the synchronized start time.
+	pub fn start(&mut self, time: f64) {
+		self.start = time;
+	}
+
 	/// Fetches the next audio frame.
 	///
 	/// Returns `None` on EOF.
 	pub fn next(&mut self) -> Option<frame::Audio> {
+		if self.first.is_some() {
+			return self.first.take();
+		}
+
 		loop {
 			if let Ok(frame) = get(&self.channel) {
 				return frame;

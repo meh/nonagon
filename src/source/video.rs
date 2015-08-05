@@ -37,7 +37,7 @@ pub struct Video {
 	details: Details,
 
 	done:    bool,
-	time:    i64,
+	start:   f64,
 	current: frame::Video,
 	next:    frame::Video,
 }
@@ -114,7 +114,7 @@ impl Video {
 	pub fn new(channel: Receiver<D>, details: Details) -> Self {
 		Video {
 			done:    false,
-			time:    time::relative(),
+			start:   -1.0,
 			current: get(&channel).unwrap().unwrap(),
 			next:    get(&channel).unwrap().unwrap(),
 
@@ -148,6 +148,11 @@ impl Video {
 		&self.current
 	}
 
+	/// Sets the synchronized start time.
+	pub fn start(&mut self, time: f64) {
+		self.start = time;
+	}
+
 	/// Synchronizes the source to get the current frame.
 	pub fn sync(&mut self) {
 		loop {
@@ -156,7 +161,7 @@ impl Video {
 			}
 
 			// Get how much time has passed since the start in seconds.
-			let time = (time::relative() - self.time) as f64 / 1_000_000.0;
+			let time = time::relative() as f64 / 1_000_000.0 - self.start;
 
 			// Normalize the timestamp with the time base.
 			let pts = self.next.timestamp().unwrap_or(0) as f64 * self.details.time_base;
