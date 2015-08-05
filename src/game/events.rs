@@ -1,45 +1,47 @@
-use std::ops::Deref;
+use std::vec::Drain;
 
-use analyzer::{Analyzer, Channel, Event};
+use analyzer::{Analyzer, Channel, Event, Range};
 
 #[derive(Debug)]
 pub struct Events {
-	start: f64,
-	queue: Vec<Channel>,
+	beats: Vec<(f64, (Range, f64))>,
 }
 
 impl Events {
 	pub fn new() -> Self {
 		Events {
-			start: 0.0,
-			queue: Vec::new(),
+			beats: Vec::new(),
 		}
 	}
 
 	pub fn fetch(&mut self, analyzer: &mut Analyzer) {
-		let high = analyzer.time();
+		while let Ok(event) = analyzer.try_recv() {
+			match event {
+				Channel::Mono(a, Event::Beat(band, flux)) => {
+					match self.beats.binary_search_by(|&(b, _)| b.partial_cmp(&a).unwrap()) {
+						Ok(index) | Err(index) =>
+							self.beats.insert(index, (a, (band, flux)))
+					}
+				},
 
-		self.queue.retain(|e| match e {
-			&Channel::Left(offset, _) =>
-				offset > high,
-
-			&Channel::Right(offset, _) =>
-				offset > high,
-
-			&Channel::Mono(offset, _) =>
-				offset > high,
-		});
-
-		while let Ok(v) = analyzer.try_recv() {
-			self.queue.push(v);
+				_ =>
+					()
+			}
 		}
 	}
-}
 
-impl Deref for Events {
-	type Target = Vec<Channel>;
+	pub fn beats(&mut self, analyzer: &Analyzer) -> Drain<(f64, (Range, f64))> {
+		let     now   = analyzer.time();
+		let mut index = 0;
 
-	fn deref(&self) -> &Self::Target {
-		&self.queue
+		while index < self.beats.len() {
+			index += 1;
+
+			if now > self.beats[index - 1].0 {
+				break;
+			}
+		}
+
+		self.beats.drain(0 .. index)
 	}
 }
