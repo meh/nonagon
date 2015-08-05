@@ -258,9 +258,9 @@ fn main() {
 					return;
 				}
 
-				// If we have 1 second and half worth of samples sleep for the
+				// If we have five seconds worth of samples sleep for the
 				// remaining duration.
-				if duration >= 1.5 {
+				if duration >= 5.0 {
 					// Add the current duration to the offset so we have a baseline to
 					// correct.
 					offset += duration;
