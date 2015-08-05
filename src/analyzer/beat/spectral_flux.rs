@@ -1,5 +1,3 @@
-use num::Complex;
-
 #[derive(Debug)]
 pub struct SpectralFlux {
 	size:     usize,
@@ -20,7 +18,7 @@ impl SpectralFlux {
 		let mut result = 0.0;
 
 		for (current, previous) in input.iter().zip(self.previous.iter_mut()) {
-			let mut value = *current - *previous;
+			let value = *current - *previous;
 
 			result    += (value + value.abs()) / 2.0;
 			*previous  = *current;
