@@ -76,9 +76,9 @@ Options:
 	-h --help       Show this message.
 	-v --version    Show version.
 
-	-c --config PATH    The TOML configuration file.
-	-a --audio-only     Do not show the video.
-	-m --mute           Do not play the sound.
+	-c --config PATHS    The TOML configuration files.
+	-a --audio-only      Do not show the video.
+	-m --no-music        Do not play the music.
 ";
 
 fn main() {
@@ -204,7 +204,7 @@ fn main() {
 	let music = {
 		let analyzer = analyzer.clone();
 		let sound    = sound.clone();
-		let mute     = config.audio().mute();
+		let music    = config.audio().music();
 
 		// Channel for killing.
 		let (sender, receiver) = channel();
@@ -236,8 +236,8 @@ fn main() {
 
 				let frame = frame.unwrap();
 
-				// Only play the sound if it's not muted.
-				if !mute {
+				// Only play the music if it's not muted.
+				if music {
 					sound.lock().unwrap().play(&frame);
 				}
 

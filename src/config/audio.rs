@@ -6,15 +6,15 @@ use config::Load;
 
 #[derive(Clone, Debug)]
 pub struct Audio {
-	mute: bool,
-	only: bool,
+	music: bool,
+	only:  bool,
 }
 
 impl Default for Audio {
 	fn default() -> Audio {
 		Audio {
-			mute: false,
-			only: false,
+			music: true,
+			only:  false,
 		}
 	}
 }
@@ -30,8 +30,8 @@ impl Load for Audio {
 				self.only = expect!(value.as_bool(), "`audio.only` must be a boolean");
 			}
 
-			if let Some(value) = toml.get("mute") {
-				self.mute = expect!(value.as_bool(), "`audio.mute` must be a boolean");
+			if let Some(value) = toml.get("music") {
+				self.music = expect!(value.as_bool(), "`audio.music` must be a boolean");
 			}
 		}
 
@@ -39,8 +39,8 @@ impl Load for Audio {
 			self.only = true;
 		}
 
-		if args.get_bool("--mute") {
-			self.mute = true;
+		if args.get_bool("--no-music") {
+			self.music = false;
 		}
 
 		Ok(())
@@ -48,8 +48,8 @@ impl Load for Audio {
 }
 
 impl Audio {
-	pub fn mute(&self) -> bool {
-		self.mute
+	pub fn music(&self) -> bool {
+		self.music
 	}
 
 	pub fn only(&self) -> bool {
