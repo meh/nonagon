@@ -1,3 +1,6 @@
+[game]
+step = 0.015
+
 [game.window.16-9]
 width  = 640
 height = 360

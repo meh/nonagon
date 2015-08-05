@@ -9,10 +9,23 @@ use game::ship::Shape;
 use util::Fill;
 use config::Load;
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct Game {
+	step: f64,
+
 	window: Window,
 	ship:   Ship,
+}
+
+impl Default for Game {
+	fn default() -> Self {
+		Game {
+			step: 0.015,
+
+			window: Window::default(),
+			ship:   Ship::default(),
+		}
+	}
 }
 
 impl Load for Game {
@@ -21,6 +34,10 @@ impl Load for Game {
 
 		if let Some(toml) = toml.get("game") {
 			let toml = expect!(toml.as_table(), "`game` must be a table");
+
+			if let Some(value) = toml.get("step") {
+				self.step = expect!(value.as_float(), "`game.step` must be a float");
+			}
 
 			if let Some(toml) = toml.get("window") {
 				try!(self.window.load(args, toml));
@@ -36,6 +53,10 @@ impl Load for Game {
 }
 
 impl Game {
+	pub fn step(&self) -> f64 {
+		self.step
+	}
+
 	pub fn window(&self) -> &Window {
 		&self.window
 	}
@@ -79,7 +100,7 @@ impl Load for Window {
 		for (key, toml) in toml {
 			if Regex::new(r"(\d+)-(\d+)").unwrap().is_match(key) {
 				let mut window = Window::default();
-				window.load(args, toml);
+				try!(window.load(args, toml));
 
 				self.aspects.insert(key.clone(), window);
 			}

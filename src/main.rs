@@ -301,8 +301,6 @@ fn main() {
 	// Give it the initial size.
 	renderer.resize(width, height);
 
-	// The static step between each state update.
-	const GRANULARITY: f64 = 0.015;
 
 	// The previous time.
 	let mut previous = time::relative() as f64 / 1_000_000.0;
@@ -348,12 +346,12 @@ fn main() {
 			}
 		}
 
-		// Make sure the state gets updated in splits of `GRANULARITY` seconds.
-		while lag >= GRANULARITY {
+		// Make sure the state gets updated in splits of `step` seconds.
+		while lag >= config.game().step() {
 			// Run an update tick.
 			state.tick(current - lag, &mut analyzer.lock().unwrap());
 
-			lag -= GRANULARITY;
+			lag -= config.game().step();
 		}
 
 		// Render the sounds effects.
