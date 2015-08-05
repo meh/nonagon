@@ -159,8 +159,9 @@ fn main() {
 		}
 	}
 
-	// Open the display with mandatory options.
+	// Start building the display with mandatory options.
 	let mut display = glutin::WindowBuilder::new()
+		.with_visibility(false)
 		.with_title(String::from("nonagon"))
 		.with_dimensions(width, height)
 		.with_depth_buffer(24);
@@ -309,6 +310,11 @@ fn main() {
 		analyzer.lock().unwrap().start(start);
 
 		music.0.send(start).unwrap();
+	}
+
+	// Show the window.
+	if let Some(window) = display.get_window() {
+		window.show();
 	}
 
 	// The previous time.
