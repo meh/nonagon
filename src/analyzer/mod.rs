@@ -7,4 +7,5 @@ pub use self::analyzer::{Analyzer, Channel, Event};
 mod beat;
 pub use self::beat::Beat;
 
-mod util;
+mod window;
+pub use self::window::Window;

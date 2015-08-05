@@ -4,22 +4,24 @@ use std::ops::{Deref, DerefMut};
 
 use ffmpeg::{time, frame};
 
-use super::{util, Beat};
+use super::{Window, Beat, Range};
 use config;
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum Channel {
 	Left(f64, Event),
 	Right(f64, Event),
 	Mono(f64, Event),
 }
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum Event {
-	Beat(f64),
+	Beat(Range, f64),
 }
 
 pub struct Analyzer {
+	config: config::Analyzer,
+
 	receiver: Receiver<Channel>,
 	sender:   Sender<frame::Audio>,
 
@@ -29,56 +31,41 @@ pub struct Analyzer {
 
 impl Analyzer {
 	pub fn spawn(config: &config::Analyzer) -> Analyzer {
-		let config = config.clone();
-
 		let (event_sender, event_receiver) = channel::<Channel>();
 		let (frame_sender, frame_receiver) = channel::<frame::Audio>();
 
-		thread::spawn(move || {
-			// The onset detector.
-			let mut beat = Beat::new(config.window(),
-				(config.threshold().size(), config.threshold().sensitivity()));
+		{
+			let config = config.clone();
 
-			// The buffer for the samples, so we can take out 1024 samples at a time.
-			let mut samples = Vec::new();
+			thread::spawn(move || {
+				// The window handler.
+				let mut window = Window::new(config.window());
 
-			loop {
-				// Get the next frame.
-				let frame = ret!(frame_receiver.recv());
+				// The beat detector.
+				let mut beat = Beat::new(&config);
+				
+				loop {
+					// Get the next frame.
+					let frame = ret!(frame_receiver.recv());
 
-				// Add the samples to the pool.
-				//
-				// TODO: find a more performant way to do this.
-				samples.extend(frame.plane::<i16>(0));
+					// Push the frame to the window.
+					window.push(&frame);
 
-				// We need at least 1024 (2048 since it's stereo) samples before we can
-				// analyze anything.
-				if samples.len() < 2048 {
-					continue;
+					// Get the next FFT channels, if any.
+					if let Some((mono, left, right)) = window.next() {
+						// Send the mono channel to the onset detector and send any peak as
+						// an event.
+						for &(time, band, peak) in &beat.analyze(&mono) {
+							event_sender.send(Channel::Mono(time, Event::Beat(band, peak))).unwrap();
+						}
+					}
 				}
-
-				// Separate into channels and run FFT on them and save them in the
-				// windows.
-				let (mono, left, right) = util::channels(&samples[0..2048]);
-
-				// Drain the extracted samples.
-				//
-				// TODO: find a more performant way to do this.
-				for _ in 0 .. 2048 {
-					samples.remove(0);
-				}
-
-				// Send the mono channel to the onset detector.
-				beat.analyze(&mono);
-
-				// Check if we got a peak and send it as an event.
-				if let Some((time, peak)) = beat.peak() {
-					event_sender.send(Channel::Mono(time, Event::Beat(peak))).unwrap();
-				}
-			}
-		});
+			});
+		}
 
 		Analyzer {
+			config: config.clone(),
+
 			receiver: event_receiver,
 			sender:   frame_sender,
 

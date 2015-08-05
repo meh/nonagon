@@ -6,3 +6,6 @@ pub use self::threshold::Threshold;
 
 mod beat;
 pub use self::beat::Beat;
+
+mod state;
+pub use self::state::State;

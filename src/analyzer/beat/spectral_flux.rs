@@ -14,50 +14,16 @@ impl SpectralFlux {
 		}
 	}
 
-	pub fn rising(&mut self, input: &[Complex<f64>]) -> f64 {
-		debug_assert_eq!(input.len(), self.size, "input size and internal size must match");
+	pub fn compute(&mut self, input: &[f64]) -> f64 {
+		debug_assert_eq!(input.len(), self.size);
 
 		let mut result = 0.0;
 
 		for (current, previous) in input.iter().zip(self.previous.iter_mut()) {
-			let value = current.norm_sqr() - *previous;
+			let mut value = *current - *previous;
 
-			if value > 0.0 {
-				result += value;
-			}
-
-			*previous = current.norm_sqr();
-		}
-
-		result
-	}
-
-	pub fn falling(&mut self, input: &[Complex<f64>]) -> f64 {
-		debug_assert_eq!(input.len(), self.size, "input size and internal size must match");
-
-		let mut result = 0.0;
-
-		for (current, previous) in input.iter().zip(self.previous.iter_mut()) {
-			let value = current.norm_sqr() - *previous;
-
-			if value < 0.0 {
-				result += value;
-			}
-
-			*previous = current.norm_sqr();
-		}
-
-		result
-	}
-
-	pub fn full(&mut self, input: &[Complex<f64>]) -> f64 {
-		debug_assert_eq!(input.len(), self.size, "input size and internal size must match");
-
-		let mut result = 0.0;
-
-		for (current, previous) in input.iter().zip(self.previous.iter_mut()) {
-			 result   += current.norm_sqr() - *previous;
-			*previous  = current.norm_sqr();
+			result    += (value + value.abs()) / 2.0;
+			*previous  = *current;
 		}
 
 		result

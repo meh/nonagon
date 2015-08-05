@@ -1,5 +1,5 @@
 #![allow(dead_code, unused_variables)]
-#![feature(associated_type_defaults)]
+#![feature(drain, associated_type_defaults)]
 
 use std::process::exit;
 use std::thread;
