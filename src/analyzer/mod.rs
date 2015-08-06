@@ -1,5 +1,5 @@
-mod range;
-pub use self::range::Range;
+mod band;
+pub use self::band::Band;
 
 mod analyzer;
 pub use self::analyzer::{Analyzer, Channel, Event};

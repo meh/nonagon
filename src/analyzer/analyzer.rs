@@ -4,7 +4,7 @@ use std::ops::{Deref, DerefMut};
 
 use ffmpeg::{time, frame};
 
-use super::{Window, Beat, Range};
+use super::{Window, Beat, Band};
 use config;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -16,7 +16,7 @@ pub enum Channel {
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Event {
-	Beat(Range, f64),
+	Beat(Band, f64),
 }
 
 pub struct Analyzer {
@@ -55,8 +55,8 @@ impl Analyzer {
 					if let Some((mono, left, right)) = window.next() {
 						// Send the mono channel to the onset detector and send any peak as
 						// an event.
-						for &(time, band, peak) in &beat.analyze(&mono) {
-							event_sender.send(Channel::Mono(time, Event::Beat(band, peak))).unwrap();
+						for &(time, ref band, peak) in &beat.analyze(&mono) {
+							event_sender.send(Channel::Mono(time, Event::Beat(band.clone(), peak))).unwrap();
 						}
 					}
 				}

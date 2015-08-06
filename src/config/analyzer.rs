@@ -1,9 +1,10 @@
+use std::ops::Range;
+
 use docopt::ArgvMap;
 
 use toml::{Value, ParserError};
 
 use config::Load;
-use analyzer::Range;
 
 #[derive(Clone, Default, Debug)]
 pub struct Analyzer {
@@ -181,14 +182,16 @@ impl Beat {
 
 #[derive(Clone, Debug)]
 pub struct Band {
-	range:     Range,
+	name:      Option<String>,
+	range:     Range<u32>,
 	threshold: Threshold,
 }
 
 impl Default for Band {
 	fn default() -> Self {
 		Band {
-			range:     Range::default(),
+			name:      None,
+			range:     Range { start: 0, end: 0 },
 			threshold: Default::default(),
 		}
 	}
@@ -197,6 +200,10 @@ impl Default for Band {
 impl Load for Band {
 	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
 		let top = expect!(toml.as_table(), "`analyzer.beat.band.*` must be a table");
+
+		if let Some(value) = top.get("name") {
+			self.name = Some(expect!(value.as_str(), "`analyzer.beat.band.*.name` must be a string").to_owned());
+		}
 
 		if let Some(value) = top.get("range") {
 			match value {
@@ -208,7 +215,7 @@ impl Load for Band {
 					let lo = expect!(range[0].as_integer(), "`analyzer.beat.band.*.range.0` must be an integer");
 					let hi = expect!(range[1].as_integer(), "`analyzer.beat.band.*.range.1` must be an integer");
 
-					self.range = Range::new(lo as u32, hi as u32);
+					self.range = lo as u32 .. hi as u32;
 				},
 
 				&Value::Boolean(false) =>
@@ -227,8 +234,13 @@ impl Load for Band {
 
 impl Band {
 	#[inline(always)]
-	pub fn range(&self) -> Range {
-		self.range.clone()
+	pub fn name(&self) -> Option<&str> {
+		self.name.as_ref().map(|n| n.as_ref())
+	}
+
+	#[inline(always)]
+	pub fn range(&self) -> &Range<u32> {
+		&self.range
 	}
 
 	#[inline(always)]
@@ -239,7 +251,6 @@ impl Band {
 
 #[derive(Clone, Debug)]
 pub struct Threshold {
-	band:        Option<Range>,
 	size:        usize,
 	sensitivity: f64,
 }
@@ -247,7 +258,6 @@ pub struct Threshold {
 impl Default for Threshold {
 	fn default() -> Self {
 		Threshold {
-			band:        None,
 			size:        20,
 			sensitivity: 1.5,
 		}
