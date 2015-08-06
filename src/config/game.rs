@@ -53,14 +53,17 @@ impl Load for Game {
 }
 
 impl Game {
+	#[inline(always)]
 	pub fn step(&self) -> f64 {
 		self.step
 	}
 
+	#[inline(always)]
 	pub fn window(&self) -> &Window {
 		&self.window
 	}
 
+	#[inline(always)]
 	pub fn ship(&self) -> &Ship {
 		&self.ship
 	}
@@ -111,14 +114,17 @@ impl Load for Window {
 }
 
 impl Window {
+	#[inline(always)]
 	pub fn aspect(&self, aspect: Rational) -> Option<&Window> {
 		self.aspects.get(&format!("{}-{}", aspect.numerator(), aspect.denominator()))
 	}
 
+	#[inline(always)]
 	pub fn width(&self) -> Option<u32> {
 		self.width
 	}
 
+	#[inline(always)]
 	pub fn height(&self) -> Option<u32> {
 		self.height
 	}
@@ -190,14 +196,17 @@ impl Load for Ship {
 }
 
 impl Ship {
+	#[inline(always)]
 	pub fn shape(&self) -> Shape {
 		self.shape
 	}
 
+	#[inline(always)]
 	pub fn face(&self) -> Option<Fill> {
 		self.face.clone()
 	}
 
+	#[inline(always)]
 	pub fn border(&self) -> Option<Option<Fill>> {
 		self.border.clone()
 	}
