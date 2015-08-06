@@ -44,7 +44,7 @@ impl Beat {
 			let max = config.beat().bands().iter().map(|b| b.range().high).max().unwrap();
 
 			// If the first band doesn't include the zero frequency.
-			if min > 0 {
+			if !config.beat().ignore_missing() && min > 0 {
 				let start = rft::spectrum::index_for(0, config.window().size(), 44100);
 				let end   = rft::spectrum::index_for(min, config.window().size(), 44100);
 
@@ -82,7 +82,7 @@ impl Beat {
 			}
 
 			// If the last band doesn't include the nyquist frequency.
-			if max < 44100 / 2 {
+			if !config.beat().ignore_missing() && max < 44100 / 2 {
 				let start = rft::spectrum::index_for(max, config.window().size(), 44100);
 				let end   = rft::spectrum::index_for(44100 / 2, config.window().size(), 44100);
 

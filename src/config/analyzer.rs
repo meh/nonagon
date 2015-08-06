@@ -104,12 +104,15 @@ impl Window {
 #[derive(Clone, Debug)]
 pub struct Beat {
 	threshold: Threshold,
-	bands:     Vec<Band>,
+
+	ignore: bool,
+	bands:  Vec<Band>,
 }
 
 impl Default for Beat {
 	fn default() -> Self {
 		Beat {
+			ignore:    true,
 			threshold: Default::default(),
 			bands:     Vec::new(),
 		}
@@ -122,6 +125,10 @@ impl Load for Beat {
 
 		if let Some(toml) = top.get("threshold") {
 			try!(self.threshold.load(args, toml));
+		}
+
+		if let Some(value) = top.get("ignore-missing") {
+			self.ignore = expect!(value.as_bool(), "`analyzer.beat.ignore-missing` must be a boolean");
 		}
 
 		if let Some(toml) = top.get("band") {
@@ -145,6 +152,11 @@ impl Beat {
 	#[inline(always)]
 	pub fn threshold(&self) -> &Threshold {
 		&self.threshold
+	}
+
+	#[inline(always)]
+	pub fn ignore_missing(&self) -> bool {
+		self.ignore
 	}
 
 	#[inline(always)]
