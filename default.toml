@@ -41,31 +41,24 @@ hop = 512
 # make the window a hamming window
 hamming = true
 
+[analyzer.beat]
+# ignore the missing bands
+ignore-missing = true
+
 [analyzer.beat.threshold]
 # samples of look-ahead and look-behind for the threshold, about a
 # second worth of samples.
 size = 25
 
-# magic number from the gods
+# default magic number from the gods
 sensitivity = 1.5
 
 [[analyzer.beat.band]]
-# the band frequency range
-range = [80, 4000]
-
-# a custom sensitivity for this band
-sensitivity = 2.0
+name        = "kick"
+range       = [50, 500]
+sensitivity = 1.3
 
 [[analyzer.beat.band]]
-# the band frequency range
-range = [4000, 10000]
-
-# a custom sensitivity for this band
-sensitivity = 2.0
-
-[[analyzer.beat.band]]
-# the band frequency range
-range = [10000, 16000]
-
-# a custom sensitivity for this band
-sensitivity = 2.0
+name        = "snare"
+range       = [100, 240]
+sensitivity = 1.4
