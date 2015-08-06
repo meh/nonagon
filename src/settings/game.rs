@@ -7,7 +7,7 @@ use regex::Regex;
 
 use game::ship::Shape;
 use util::Fill;
-use config::Load;
+use settings::Load;
 
 #[derive(Clone, Debug)]
 pub struct Game {

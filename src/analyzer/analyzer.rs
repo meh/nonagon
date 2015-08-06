@@ -5,7 +5,7 @@ use std::ops::{Deref, DerefMut};
 use ffmpeg::{time, frame};
 
 use super::{Window, Beat, Band};
-use config;
+use settings;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Channel {
@@ -20,7 +20,7 @@ pub enum Event {
 }
 
 pub struct Analyzer {
-	config: config::Analyzer,
+	settings: settings::Analyzer,
 
 	receiver: Receiver<Channel>,
 	sender:   Sender<frame::Audio>,
@@ -30,19 +30,19 @@ pub struct Analyzer {
 }
 
 impl Analyzer {
-	pub fn spawn(config: &config::Analyzer) -> Analyzer {
+	pub fn spawn(settings: &settings::Analyzer) -> Analyzer {
 		let (event_sender, event_receiver) = channel::<Channel>();
 		let (frame_sender, frame_receiver) = channel::<frame::Audio>();
 
 		{
-			let config = config.clone();
+			let settings = settings.clone();
 
 			thread::spawn(move || {
 				// The window handler.
-				let mut window = Window::new(config.window());
+				let mut window = Window::new(settings.window());
 
 				// The beat detector.
-				let mut beat = Beat::new(&config);
+				let mut beat = Beat::new(&settings);
 				
 				loop {
 					// Get the next frame.
@@ -64,7 +64,7 @@ impl Analyzer {
 		}
 
 		Analyzer {
-			config: config.clone(),
+			settings: settings.clone(),
 
 			receiver: event_receiver,
 			sender:   frame_sender,

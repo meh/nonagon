@@ -7,7 +7,7 @@ use glium::glutin::VirtualKeyCode as Key;
 use ffmpeg::Rational;
 
 use util::Aspect;
-use config;
+use settings;
 use analyzer::Analyzer;
 use game::{Update, Alive, Support, Position, Player, Ship, Projectile, Particle, Events};
 
@@ -18,18 +18,18 @@ pub struct State {
 	projectiles: Vec<Projectile>,
 	particles:   Vec<Particle>,
 
-	config: config::Game,
-	aspect: Rational,
-	keys:   HashSet<Key>,
-	tick:   usize,
-	events: Events,
+	settings: settings::Game,
+	aspect:   Rational,
+	keys:     HashSet<Key>,
+	tick:     usize,
+	events:   Events,
 }
 
 impl State {
-	pub fn new(config: &config::Game, aspect: Rational) -> Self {
+	pub fn new(settings: &settings::Game, aspect: Rational) -> Self {
 		let mut player = Player::default();
 
-		player.shape = config.ship().shape();
+		player.shape = settings.ship().shape();
 
 		player.position = Position {
 			x: (aspect.width() as f32 / 2.0),
@@ -37,11 +37,11 @@ impl State {
 			z: 0.0,
 		};
 
-		if let Some(face) = config.ship().face() {
+		if let Some(face) = settings.ship().face() {
 			player.face = face;
 		}
 
-		if let Some(border) = config.ship().border() {
+		if let Some(border) = settings.ship().border() {
 			player.border = border;
 		}
 
@@ -53,11 +53,11 @@ impl State {
 			projectiles: Vec::new(),
 			particles:   Vec::new(),
 
-			config: config.clone(),
-			aspect: aspect.reduce(),
-			keys:   HashSet::new(),
-			tick:   0,
-			events: Events::new(),
+			settings: settings.clone(),
+			aspect:   aspect.reduce(),
+			keys:     HashSet::new(),
+			tick:     0,
+			events:   Events::new(),
 		}
 	}
 	
@@ -173,7 +173,7 @@ impl State {
 		// Update the state.
 		{
 			// Create the support.
-			let support = Support::new(&self.config, self.aspect, self.tick, time, &self.events);
+			let support = Support::new(&self.settings, self.aspect, self.tick, time, &self.events);
 
 			// Update the player state.
 			self.player.update(&support);

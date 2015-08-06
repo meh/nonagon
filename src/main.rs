@@ -50,8 +50,8 @@ extern crate strided;
 mod util;
 
 #[macro_use]
-mod config;
-use config::Config;
+mod settings;
+use settings::Settings;
 
 mod source;
 
@@ -76,9 +76,9 @@ Options:
 	-h --help       Show this message.
 	-v --version    Show version.
 
-	-c --config PATHS    The TOML configuration files.
-	-a --audio-only      Do not show the video.
-	-m --no-music        Do not play the music.
+	-s --settings PATHS    The TOML settings files.
+	-a --audio-only        Do not show the video.
+	-m --no-music          Do not play the music.
 ";
 
 fn main() {
@@ -86,15 +86,15 @@ fn main() {
 	env_logger::init().unwrap();
 	ffmpeg::init().unwrap();
 
-	// Load the config from the given args.
-	let config = Config::load(&Docopt::new(USAGE).
+	// Load the settings from the given args.
+	let settings = Settings::load(&Docopt::new(USAGE).
 		and_then(|d| d.parse()).
 		unwrap_or_else(|e| e.exit())).unwrap();
 
-	debug!("{:#?}", config);
+	debug!("{:#?}", settings);
 
 	// Spawn the source decoder.
-	let (a, v) = source::spawn(config.input(), config.audio().only());
+	let (a, v) = source::spawn(settings.input(), settings.audio().only());
 
 	// Check for errors for the audio decoder.
 	let mut audio = match a {
@@ -141,20 +141,20 @@ fn main() {
 		}
 	};
 
-	if let Some(w) = config.game().window().width() {
+	if let Some(w) = settings.game().window().width() {
 		width = w;
 	}
 
-	if let Some(h) = config.game().window().height() {
+	if let Some(h) = settings.game().window().height() {
 		height = h;
 	}
 
-	if let Some(config) = config.game().window().aspect(aspect) {
-		if let Some(w) = config.width() {
+	if let Some(settings) = settings.game().window().aspect(aspect) {
+		if let Some(w) = settings.width() {
 			width = w;
 		}
 
-		if let Some(h) = config.height() {
+		if let Some(h) = settings.height() {
 			height = h;
 		}
 	}
@@ -166,19 +166,19 @@ fn main() {
 		.with_dimensions(width, height)
 		.with_depth_buffer(24);
 
-	// Enable vsync if the config says so.
-	if config.video().vsync() {
+	// Enable vsync if the settings says so.
+	if settings.video().vsync() {
 		display = display.with_vsync();
 	}
 
-	// Enable multisampling if the config says so.
-	if let Some(value) = config.video().multisampling() {
+	// Enable multisampling if the settings says so.
+	if let Some(value) = settings.video().multisampling() {
 		display = display.with_multisampling(value);
 	}
 
 	// Build the display.
 	let display = display.build_glium().unwrap_or_else(|err| {
-		println!("error: opengl: configuration not supported: {}", err);
+		println!("error: opengl: settings not supported: {}", err);
 		exit(4);
 	});
 
@@ -186,7 +186,7 @@ fn main() {
 	//
 	// It's in an Arc<Mutex<_>> because it's accessed both from the main thread
 	// and the music thread.
-	let sound = Arc::new(Mutex::new(Sound::new(config.audio()).unwrap_or_else(|err| {
+	let sound = Arc::new(Mutex::new(Sound::new(settings.audio()).unwrap_or_else(|err| {
 		println!("error: sound: {}", err);
 		exit(5);
 	})));
@@ -195,18 +195,18 @@ fn main() {
 	//
 	// It's in an Arc<Mutex<_>> because it's accessed both from the main thread
 	// and the music thread.
-	let analyzer = Arc::new(Mutex::new(Analyzer::spawn(config.analyzer())));
+	let analyzer = Arc::new(Mutex::new(Analyzer::spawn(settings.analyzer())));
 
 	// Create the state to keep track of the game.
-	let mut state = State::new(config.game(), aspect);
+	let mut state = State::new(settings.game(), aspect);
 
 	// Music thread, the result is stored so it can be killed from the main later
 	// on.
 	let music = {
 		let analyzer = analyzer.clone();
 		let sound    = sound.clone();
-		let music    = config.audio().music();
-		let cache    = config.analyzer().min_cache();
+		let music    = settings.audio().music();
+		let cache    = settings.analyzer().min_cache();
 
 		// Channel for killing.
 		let (sender, receiver) = channel::<f64>();
@@ -295,7 +295,7 @@ fn main() {
 	};
 
 	// Create the renderer.
-	let mut renderer = Renderer::new(&display, config.video(), aspect);
+	let mut renderer = Renderer::new(&display, settings.video(), aspect);
 
 	// Give it the initial size.
 	renderer.resize(width, height);
@@ -363,11 +363,11 @@ fn main() {
 		}
 
 		// Make sure the state gets updated in splits of `step` seconds.
-		while lag >= config.game().step() {
+		while lag >= settings.game().step() {
 			// Run an update tick.
 			state.tick(current - lag, &mut analyzer.lock().unwrap());
 
-			lag -= config.game().step();
+			lag -= settings.game().step();
 		}
 
 		// Render the sounds effects.
@@ -395,7 +395,7 @@ fn main() {
 		match target.finish() {
 			// If we lost the context (it can happen) recreate the renderer.
 			Err(ContextLost) => {
-				renderer = Renderer::new(&display, config.video(), aspect);
+				renderer = Renderer::new(&display, settings.video(), aspect);
 				renderer.resize(width, height);
 			},
 

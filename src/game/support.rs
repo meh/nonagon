@@ -1,28 +1,28 @@
-use config;
+use settings;
 use game::Events;
 use ffmpeg::Rational;
 
-pub struct Support<'c, 'e> {
-	config: &'c config::Game,
-	aspect: Rational,
-	tick:   usize,
-	time:   f64,
-	events: &'e Events,
+pub struct Support<'s, 'e> {
+	settings: &'s settings::Game,
+	aspect:   Rational,
+	tick:     usize,
+	time:     f64,
+	events:   &'e Events,
 }
 
-impl<'c, 'e> Support<'c, 'e> {
-	pub fn new(config: &'c config::Game, aspect: Rational, tick: usize, time: f64, events: &'e Events) -> Self {
+impl<'s, 'e> Support<'s, 'e> {
+	pub fn new(settings: &'s settings::Game, aspect: Rational, tick: usize, time: f64, events: &'e Events) -> Self {
 		Support {
-			config: config,
-			aspect: aspect,
-			tick:   tick,
-			time:   time,
-			events: events,
+			settings: settings,
+			aspect:   aspect,
+			tick:     tick,
+			time:     time,
+			events:   events,
 		}
 	}
 
-	pub fn config(&self) -> &config::Game {
-		self.config
+	pub fn settings(&self) -> &settings::Game {
+		self.settings
 	}
 
 	pub fn aspect(&self) -> Rational {

@@ -4,7 +4,7 @@ use docopt::ArgvMap;
 
 use toml::{Value, ParserError};
 
-use config::Load;
+use settings::Load;
 
 #[derive(Clone, Default, Debug)]
 pub struct Analyzer {

@@ -49,7 +49,7 @@ pub mod video;
 pub use self::video::Video;
 
 #[derive(Clone, Default, Debug)]
-pub struct Config {
+pub struct Settings {
 	input: Option<String>,
 
 	game:     Game,
@@ -58,20 +58,20 @@ pub struct Config {
 	video:    Video,
 }
 
-impl Config {
-	pub fn load(args: &ArgvMap) -> Result<Config, ParserError> {
-		let mut config = Config::default();
-		let     files  = args.get_vec("--config");
+impl Settings {
+	pub fn load(args: &ArgvMap) -> Result<Settings, ParserError> {
+		let mut settings = Settings::default();
+		let     files    = args.get_vec("--settings");
 
-		config.input = Some(String::from(args.get_str("<input>")));
+		settings.input = Some(String::from(args.get_str("<input>")));
 
 		if !files.is_empty() {
 			for file in &files {
-				try!(config.merge(args, &file));
+				try!(settings.merge(args, &file));
 			}
 		}
 
-		Ok(config)
+		Ok(settings)
 	}
 
 	pub fn merge<P: AsRef<Path>>(&mut self, args: &ArgvMap, path: P) -> Result<(), ParserError> {

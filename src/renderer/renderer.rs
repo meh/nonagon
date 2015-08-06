@@ -2,7 +2,7 @@ use ffmpeg::{frame, Rational};
 use glium::{Display, Surface};
 
 use game;
-use config;
+use settings;
 use renderer::{Render, Support, Background, Interface, Ship, Projectile, Particle};
 
 pub struct Renderer<'a> {
@@ -17,10 +17,10 @@ pub struct Renderer<'a> {
 }
 
 impl<'a> Renderer<'a> {
-	pub fn new<'b>(display: &'b Display, config: &config::Video, aspect: Rational) -> Renderer<'b> {
+	pub fn new<'b>(display: &'b Display, settings: &settings::Video, aspect: Rational) -> Renderer<'b> {
 		Renderer {
 			display:    display,
-			support:    Support::new(display, config, aspect),
+			support:    Support::new(display, settings, aspect),
 			background: Background::new(display),
 			interface:  Interface::new(display),
 

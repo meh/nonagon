@@ -5,7 +5,7 @@ use toml::{Value, ParserError};
 use glium;
 use glium::uniforms::{Sampler, SamplerWrapFunction, MagnifySamplerFilter, MinifySamplerFilter};
 
-use config::Load;
+use settings::Load;
 
 #[derive(Clone, Debug)]
 pub struct Video {

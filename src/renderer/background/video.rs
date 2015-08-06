@@ -110,7 +110,7 @@ impl<'a> Video<'a> {
 
 		let uniforms = uniform! {
 			alpha: 0.8,
-			tex:  support.config().texture().filtering().background().sampled(self.texture.as_ref().unwrap()),
+			tex:  support.settings().texture().filtering().background().sampled(self.texture.as_ref().unwrap()),
 		};
 
 		target.clear_color(1.0, 1.0, 1.0, 1.0);

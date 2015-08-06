@@ -1,10 +1,10 @@
 use std::vec::Drain;
 
-use analyzer::{Analyzer, Channel, Event, Range};
+use analyzer::{Analyzer, Channel, Event, Band};
 
 #[derive(Debug)]
 pub struct Events {
-	beats: Vec<(f64, (Range, f64))>,
+	beats: Vec<(f64, (Band, f64))>,
 }
 
 impl Events {
@@ -20,7 +20,7 @@ impl Events {
 				Channel::Mono(a, Event::Beat(band, flux)) => {
 					match self.beats.binary_search_by(|&(b, _)| b.partial_cmp(&a).unwrap()) {
 						Ok(index) | Err(index) =>
-							self.beats.insert(index, (a, (band, flux)))
+							self.beats.insert(index, (a, (band.clone(), flux)))
 					}
 				},
 
@@ -30,7 +30,7 @@ impl Events {
 		}
 	}
 
-	pub fn beats(&mut self, analyzer: &Analyzer) -> Drain<(f64, (Range, f64))> {
+	pub fn beats(&mut self, analyzer: &Analyzer) -> Drain<(f64, (Band, f64))> {
 		let     now   = analyzer.time();
 		let mut index = 0;
 

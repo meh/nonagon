@@ -5,12 +5,12 @@ use glium::texture::Texture2d;
 
 use ffmpeg::Rational;
 
-use config;
+use settings;
 use renderer::support::{Scene, Assets, Debug};
 
 pub struct Support<'a> {
-	display: &'a Display,
-	config:  config::Video,
+	display:  &'a Display,
+	settings: settings::Video,
 
 	background: Option<Rc<Texture2d>>,
 
@@ -20,10 +20,10 @@ pub struct Support<'a> {
 }
 
 impl<'a> Support<'a> {
-	pub fn new(display: &'a Display, config: &config::Video, aspect: Rational) -> Self {
+	pub fn new(display: &'a Display, settings: &settings::Video, aspect: Rational) -> Self {
 		Support {
-			display: display,
-			config:  config.clone(),
+			display:  display,
+			settings: settings.clone(),
 
 			background: None,
 
@@ -42,8 +42,8 @@ impl<'a> Support<'a> {
 		self.background = Some(background);
 	}
 
-	pub fn config(&self) -> &config::Video {
-		&self.config
+	pub fn settings(&self) -> &settings::Video {
+		&self.settings
 	}
 
 	pub fn debug(&self) -> &Debug {

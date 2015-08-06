@@ -3,20 +3,20 @@ use ffmpeg::frame;
 use rft;
 use strided::MutStrided;
 
-use config;
+use settings;
 
 #[derive(Debug)]
 pub struct Window {
-	config: config::analyzer::Window,
-	buffer: Vec<i16>,
+	settings: settings::analyzer::Window,
+	buffer:   Vec<i16>,
 }
 
 impl Window {
 	/// Creates a new window.
-	pub fn new(config: &config::analyzer::Window) -> Self {
+	pub fn new(settings: &settings::analyzer::Window) -> Self {
 		Window {
-			config: config.clone(),
-			buffer: Vec::with_capacity(config.size() * 2 + config.hop() * 2),
+			settings: settings.clone(),
+			buffer:   Vec::with_capacity(settings.size() * 2 + settings.hop() * 2),
 		}
 	}
 
@@ -27,13 +27,13 @@ impl Window {
 
 	/// Get the FFT applied to the next available samples split into channels.
 	pub fn next(&mut self) -> Option<(Vec<Complex<f64>>, Vec<Complex<f64>>, Vec<Complex<f64>>)> {
-		if self.buffer.len() < self.config.size() * 2 {
+		if self.buffer.len() < self.settings.size() * 2 {
 			return None;
 		}
 
 		let (mono, left, right) = {
 			// Get 2N samples since it's packed stereo.
-			let samples = &mut self.buffer[0 .. self.config.size() * 2];
+			let samples = &mut self.buffer[0 .. self.settings.size() * 2];
 
 			// Our samples are stereo packed signed shorts, so split the two channels.
 			let (mut left, mut right) = samples.as_stride_mut().substrides2_mut();
@@ -45,12 +45,12 @@ impl Window {
 				.collect::<Vec<i16>>();
 		
 			// Apply the hamming if it's enabled.
-			if self.config.is_hamming() {
+			if self.settings.is_hamming() {
 				rft::window::hamming_on(&mut *mono);
 
 				// We cannot apply the hamming in-place for left and right when we're
 				// hopping.
-				if self.config.size() != self.config.hop() {
+				if self.settings.size() != self.settings.hop() {
 					(rft::forward(&*mono),
 				 	 rft::forward(&*rft::window::hamming(left)),
 				 	 rft::forward(&*rft::window::hamming(right)))
@@ -74,7 +74,7 @@ impl Window {
 		// Drain the extracted samples.
 		//
 		// We drain the hop size so we can implement hopping.
-		self.buffer.drain(0 .. self.config.hop() * 2);
+		self.buffer.drain(0 .. self.settings.hop() * 2);
 
 		Some((mono, left, right))
 	}
