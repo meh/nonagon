@@ -48,10 +48,12 @@ impl Load for Audio {
 }
 
 impl Audio {
+	#[inline(always)]
 	pub fn music(&self) -> bool {
 		self.music
 	}
 
+	#[inline(always)]
 	pub fn only(&self) -> bool {
 		self.only
 	}
