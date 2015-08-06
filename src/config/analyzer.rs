@@ -41,6 +41,20 @@ impl Analyzer {
 	pub fn beat(&self) -> &Beat {
 		&self.beat
 	}
+
+	pub fn min_cache(&self) -> f64 {
+		let mut result = (1.0 / 44100.0) * (self.beat().threshold().size() * 2 + 1) as f64;
+
+		for band in self.beat().bands() {
+			let current = (1.0 / 44100.0) * (band.threshold().size() * 2 + 1) as f64;
+
+			if current > result {
+				result = current;
+			}
+		}
+
+		result
+	}
 }
 
 #[derive(Clone, Debug)]

@@ -206,6 +206,7 @@ fn main() {
 		let analyzer = analyzer.clone();
 		let sound    = sound.clone();
 		let music    = config.audio().music();
+		let cache    = config.analyzer().min_cache();
 
 		// Channel for killing.
 		let (sender, receiver) = channel::<f64>();
@@ -256,9 +257,9 @@ fn main() {
 				// Feed the frame to the analyzer.
 				analyzer.lock().unwrap().feed(frame);
 
-				// If we have five seconds worth of samples sleep for the
+				// If we have the minimum cache duration worth of samples sleep for the
 				// remaining duration.
-				if duration >= 5.0 {
+				if duration >= cache {
 					// Add the current duration to the offset so we have a baseline to
 					// correct.
 					offset += duration;
