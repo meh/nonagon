@@ -32,10 +32,12 @@ impl Load for Analyzer {
 }
 
 impl Analyzer {
+	#[inline(always)]
 	pub fn window(&self) -> &Window {
 		&self.window
 	}
 
+	#[inline(always)]
 	pub fn beat(&self) -> &Beat {
 		&self.beat
 	}
@@ -83,14 +85,17 @@ impl Load for Window {
 }
 
 impl Window {
+	#[inline(always)]
 	pub fn size(&self) -> usize {
 		self.size
 	}
 
+	#[inline(always)]
 	pub fn hop(&self) -> usize {
 		self.hop
 	}
 
+	#[inline(always)]
 	pub fn is_hamming(&self) -> bool {
 		self.hamming
 	}
@@ -137,10 +142,12 @@ impl Load for Beat {
 }
 
 impl Beat {
+	#[inline(always)]
 	pub fn threshold(&self) -> &Threshold {
 		&self.threshold
 	}
 
+	#[inline(always)]
 	pub fn bands(&self) -> &[Band] {
 		&*self.bands
 	}
@@ -193,10 +200,12 @@ impl Load for Band {
 }
 
 impl Band {
+	#[inline(always)]
 	pub fn range(&self) -> Range {
 		self.range.clone()
 	}
 
+	#[inline(always)]
 	pub fn threshold(&self) -> &Threshold {
 		&self.threshold
 	}
@@ -236,10 +245,12 @@ impl Load for Threshold {
 }
 
 impl Threshold {
+	#[inline(always)]
 	pub fn size(&self) -> usize {
 		self.size
 	}
 
+	#[inline(always)]
 	pub fn sensitivity(&self) -> f64 {
 		self.sensitivity
 	}
