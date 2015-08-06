@@ -24,11 +24,13 @@ impl Beat {
 
 		// If we have no bands just analyze the whole spectrum.
 		if settings.beat().bands().is_empty() {
+			let size = rft::spectrum::index_for(44100 / 2, settings.window().size(), 44100);
+
 			bands.push(Band::new::<&str>(
 				None, 0, 44100 / 2));
 
 			spectrals.push(SpectralFlux::new(
-				settings.window().size()));
+				size));
 
 			thresholds.push(Threshold::new(
 				settings.beat().threshold().size(), settings.beat().threshold().sensitivity()));
