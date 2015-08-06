@@ -68,6 +68,28 @@ impl Load for Video {
 	}
 }
 
+impl Video {
+	#[inline(always)]
+	pub fn vsync(&self) -> bool {
+		self.vsync
+	}
+
+	#[inline(always)]
+	pub fn multisampling(&self) -> Option<u16> {
+		self.multisampling
+	}
+
+	#[inline(always)]
+	pub fn effects(&self) -> &Effects {
+		&self.effects
+	}
+
+	#[inline(always)]
+	pub fn texture(&self) -> &Texture {
+		&self.texture
+	}
+}
+
 #[derive(Clone, Default, Debug)]
 pub struct Effects {
 	bullet: Bullet,
@@ -85,6 +107,12 @@ impl Load for Effects {
 	}
 }
 
+impl Effects {
+	pub fn bullet(&self) -> &Bullet {
+		&self.bullet
+	}
+}
+
 #[derive(Clone, Default, Debug)]
 pub struct Bullet {
 	plasma: Plasma,
@@ -99,6 +127,13 @@ impl Load for Bullet {
 		}
 
 		Ok(())
+	}
+}
+
+impl Bullet {
+	#[inline(always)]
+	pub fn plasma(&self) -> &Plasma {
+		&self.plasma
 	}
 }
 
@@ -127,6 +162,13 @@ impl Load for Plasma {
 	}
 }
 
+impl Plasma {
+	#[inline(always)]
+	pub fn glow(&self) -> bool {
+		self.glow
+	}
+}
+
 #[derive(Clone, Default, Debug)]
 pub struct Texture {
 	filtering: Filtering,
@@ -141,6 +183,13 @@ impl Load for Texture {
 		}
 
 		Ok(())
+	}
+}
+
+impl Texture {
+	#[inline(always)]
+	pub fn filtering(&self) -> &Filtering {
+		&self.filtering
 	}
 }
 
@@ -163,6 +212,18 @@ impl Load for Filtering {
 		}
 
 		Ok(())
+	}
+}
+
+impl Filtering {
+	#[inline(always)]
+	pub fn background(&self) -> &Filter {
+		&self.background
+	}
+
+	#[inline(always)]
+	pub fn ship(&self) -> &Filter {
+		&self.ship
 	}
 }
 
@@ -302,75 +363,28 @@ impl Load for Filter {
 	}
 }
 
-impl Video {
-	pub fn vsync(&self) -> bool {
-		self.vsync
-	}
-
-	pub fn multisampling(&self) -> Option<u16> {
-		self.multisampling
-	}
-
-	pub fn effects(&self) -> &Effects {
-		&self.effects
-	}
-
-	pub fn texture(&self) -> &Texture {
-		&self.texture
-	}
-}
-
-impl Effects {
-	pub fn bullet(&self) -> &Bullet {
-		&self.bullet
-	}
-}
-
-impl Bullet {
-	pub fn plasma(&self) -> &Plasma {
-		&self.plasma
-	}
-}
-
-impl Plasma {
-	pub fn glow(&self) -> bool {
-		self.glow
-	}
-}
-
-impl Texture {
-	pub fn filtering(&self) -> &Filtering {
-		&self.filtering
-	}
-}
-
-impl Filtering {
-	pub fn background(&self) -> &Filter {
-		&self.background
-	}
-
-	pub fn ship(&self) -> &Filter {
-		&self.ship
-	}
-}
-
 impl Filter {
+	#[inline(always)]
 	pub fn wrap(&self) -> Option<SamplerWrapFunction> {
 		self.wrap
 	}
 
+	#[inline(always)]
 	pub fn magnify(&self) -> Option<MagnifySamplerFilter> {
 		self.magnify
 	}
 
+	#[inline(always)]
 	pub fn minify(&self) -> Option<MinifySamplerFilter> {
 		self.minify
 	}
 
+	#[inline(always)]
 	pub fn anisotropy(&self) -> Option<u16> {
 		self.anisotropy
 	}
 
+	#[inline]
 	pub fn sampled<'a, T: glium::Texture>(&self, texture: &'a T) -> Sampler<'a, T> {
 		let mut sampled = Sampler::new(texture);
 
