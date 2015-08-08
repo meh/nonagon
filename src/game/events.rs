@@ -1,10 +1,11 @@
 use std::vec::Drain;
 
 use analyzer::{Analyzer, Channel, Event, Band};
+use settings::analyzer as settings;
 
 #[derive(Debug)]
 pub struct Events {
-	beats: Vec<(f64, (Band, f64))>,
+	beats: Vec<(f64, (Band<settings::Band>, f64))>,
 }
 
 impl Events {
@@ -30,7 +31,7 @@ impl Events {
 		}
 	}
 
-	pub fn beats(&mut self, analyzer: &Analyzer) -> Drain<(f64, (Band, f64))> {
+	pub fn beats(&mut self, analyzer: &Analyzer) -> Drain<(f64, (Band<settings::Band>, f64))> {
 		let     now   = analyzer.time();
 		let mut index = 0;
 

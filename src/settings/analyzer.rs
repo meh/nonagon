@@ -5,6 +5,7 @@ use docopt::ArgvMap;
 use toml::{Value, ParserError};
 
 use settings::Load;
+use util::Color;
 
 #[derive(Clone, Default, Debug)]
 pub struct Analyzer {
@@ -60,17 +61,17 @@ impl Analyzer {
 
 #[derive(Clone, Debug)]
 pub struct Window {
-	size:    usize,
-	hop:     usize,
-	hamming: bool,
+	size:   usize,
+	hop:    usize,
+	filter: Filter,
 }
 
 impl Default for Window {
 	fn default() -> Self {
 		Window {
-			size:    1024,
-			hop:     512,
-			hamming: true,
+			size:   1024,
+			hop:    512,
+			filter: Filter::None,
 		}
 	}
 }
@@ -87,8 +88,17 @@ impl Load for Window {
 			self.hop = expect!(value.as_integer(), "`analyzer.window.hop` must be an integer") as usize;
 		}
 
-		if let Some(value) = top.get("hamming") {
-			self.hamming = expect!(value.as_bool(), "`analyzer.window.hamming` must be a boolean");
+		if let Some(value) = top.get("filter") {
+			match value {
+				&Value::String(ref filter) =>
+					self.filter = Filter::from(filter),
+
+				&Value::Boolean(false) =>
+					self.filter = Filter::None,
+
+				_ =>
+					expect!("`analyzer.window.filter` must be either \"hamming\" or false"),
+			}
 		}
 
 		if self.size < self.hop {
@@ -111,8 +121,26 @@ impl Window {
 	}
 
 	#[inline(always)]
-	pub fn is_hamming(&self) -> bool {
-		self.hamming
+	pub fn filter(&self) -> Filter {
+		self.filter
+	}
+}
+
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+pub enum Filter {
+	None,
+	Hamming,
+}
+
+impl<T: AsRef<str>> From<T> for Filter {
+	fn from(value: T) -> Filter {
+		match value.as_ref() {
+			"hamming" =>
+				Filter::Hamming,
+
+			_ =>
+				panic!("unsupported filter"),
+		}
 	}
 }
 
@@ -182,7 +210,9 @@ impl Beat {
 
 #[derive(Clone, Debug)]
 pub struct Band {
-	name:      Option<String>,
+	name:  Option<String>,
+	color: Option<Color>,
+
 	range:     Range<u32>,
 	threshold: Threshold,
 }
@@ -191,6 +221,7 @@ impl Default for Band {
 	fn default() -> Self {
 		Band {
 			name:      None,
+			color:     None,
 			range:     Range { start: 0, end: 0 },
 			threshold: Default::default(),
 		}
@@ -202,7 +233,13 @@ impl Load for Band {
 		let top = expect!(toml.as_table(), "`analyzer.beat.band.*` must be a table");
 
 		if let Some(value) = top.get("name") {
-			self.name = Some(expect!(value.as_str(), "`analyzer.beat.band.*.name` must be a string").to_owned());
+			self.name = Some(expect!(value.as_str(),
+				"`analyzer.beat.band.*.name` must be a string").to_owned());
+		}
+
+		if let Some(value) = top.get("color") {
+			self.color = Some(Color::from(expect!(value.as_str(),
+				"`analyzer.beat.band.*.color` must be a string")));
 		}
 
 		if let Some(value) = top.get("range") {
@@ -212,8 +249,11 @@ impl Load for Band {
 						expect!("`analyzer.beat.band.*.range` must be an array of two elements");
 					}
 
-					let lo = expect!(range[0].as_integer(), "`analyzer.beat.band.*.range.0` must be an integer");
-					let hi = expect!(range[1].as_integer(), "`analyzer.beat.band.*.range.1` must be an integer");
+					let lo = expect!(range[0].as_integer(),
+						"`analyzer.beat.band.*.range.0` must be an integer");
+
+					let hi = expect!(range[1].as_integer(),
+						"`analyzer.beat.band.*.range.1` must be an integer");
 
 					self.range = lo as u32 .. hi as u32;
 				},
@@ -239,6 +279,11 @@ impl Band {
 	}
 
 	#[inline(always)]
+	pub fn color(&self) -> Option<Color> {
+		self.color
+	}
+
+	#[inline(always)]
 	pub fn range(&self) -> &Range<u32> {
 		&self.range
 	}
@@ -258,7 +303,7 @@ pub struct Threshold {
 impl Default for Threshold {
 	fn default() -> Self {
 		Threshold {
-			size:        20,
+			size:        25,
 			sensitivity: 1.5,
 		}
 	}

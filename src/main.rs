@@ -1,5 +1,5 @@
 #![allow(dead_code, unused_variables)]
-#![feature(drain, associated_type_defaults)]
+#![feature(drain, associated_type_defaults, default_type_parameter_fallback)]
 
 use std::process::exit;
 use std::thread;
@@ -40,7 +40,7 @@ extern crate ncollide as nc;
 extern crate log;
 extern crate env_logger;
 
-extern crate rft;
+extern crate male;
 
 extern crate num;
 
