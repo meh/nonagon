@@ -1,3 +1,4 @@
 target
 ffplay.c
 Cargo.lock
+settings/
