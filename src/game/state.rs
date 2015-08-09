@@ -9,7 +9,7 @@ use ffmpeg::Rational;
 use util::Aspect;
 use settings;
 use analyzer::Analyzer;
-use game::{Update, Alive, Support, Position, Player, Ship, Projectile, Particle, Events};
+use game::{Update, Alive, Support, Position, Player, Ship, Projectile, Particle};
 
 #[derive(Debug)]
 pub struct State {
@@ -22,7 +22,6 @@ pub struct State {
 	aspect:   Rational,
 	keys:     HashSet<Key>,
 	tick:     usize,
-	events:   Events,
 }
 
 impl State {
@@ -57,7 +56,6 @@ impl State {
 			aspect:   aspect.reduce(),
 			keys:     HashSet::new(),
 			tick:     0,
-			events:   Events::new(),
 		}
 	}
 	
@@ -99,8 +97,6 @@ impl State {
 	}
 
 	pub fn tick(&mut self, time: f64, analyzer: &mut Analyzer) {
-		// Fetch events from the analyzer.
-		self.events.fetch(analyzer);
 
 		// Deal with the player.
 		{
@@ -173,7 +169,7 @@ impl State {
 		// Update the state.
 		{
 			// Create the support.
-			let support = Support::new(&self.settings, self.aspect, self.tick, time, &self.events);
+			let support = Support::new(&self.settings, self.aspect, self.tick, time, analyzer);
 
 			// Update the player state.
 			self.player.update(&support);

@@ -1,23 +1,24 @@
-use settings;
-use game::Events;
 use ffmpeg::Rational;
 
-pub struct Support<'s, 'e> {
+use settings;
+use analyzer::Analyzer;
+
+pub struct Support<'s, 'a> {
 	settings: &'s settings::Game,
 	aspect:   Rational,
 	tick:     usize,
 	time:     f64,
-	events:   &'e Events,
+	analyzer: &'a Analyzer,
 }
 
-impl<'s, 'e> Support<'s, 'e> {
-	pub fn new(settings: &'s settings::Game, aspect: Rational, tick: usize, time: f64, events: &'e Events) -> Self {
+impl<'s, 'a> Support<'s, 'a> {
+	pub fn new(settings: &'s settings::Game, aspect: Rational, tick: usize, time: f64, analyzer: &'a Analyzer) -> Self {
 		Support {
 			settings: settings,
 			aspect:   aspect,
 			tick:     tick,
 			time:     time,
-			events:   events,
+			analyzer: analyzer,
 		}
 	}
 
@@ -37,7 +38,7 @@ impl<'s, 'e> Support<'s, 'e> {
 		self.time
 	}
 
-	pub fn events(&self) -> &Events {
-		self.events
+	pub fn analyzer(&self) -> &Analyzer {
+		self.analyzer
 	}
 }

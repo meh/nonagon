@@ -1,27 +1,13 @@
 use std::thread;
 use std::sync::mpsc::{channel, Receiver, Sender};
-use std::ops::{Deref, DerefMut};
 
 use ffmpeg::{time, frame};
-use male::{Window, Beat};
+use male::{Window, Onset, Band};
 use male::window::filter;
 
+use analyzer::{beats, Beats, Channel, Event};
 use settings::analyzer as settings;
 use settings::analyzer::Filter;
-
-pub use male::Band;
-
-#[derive(PartialEq, Clone, Debug)]
-pub enum Channel {
-	Left(f64, Event),
-	Right(f64, Event),
-	Mono(f64, Event),
-}
-
-#[derive(PartialEq, Clone, Debug)]
-pub enum Event {
-	Beat(Band<settings::Band>, f64),
-}
 
 pub struct Analyzer {
 	settings: settings::Analyzer,
@@ -31,6 +17,8 @@ pub struct Analyzer {
 
 	start:     f64,
 	timestamp: i64,
+
+	beats: Beats,
 }
 
 impl Analyzer {
@@ -54,7 +42,7 @@ impl Analyzer {
 				}
 
 				// The beat detector.
-				let mut beat = Beat::new(&window);
+				let mut onset = Onset::new(&window);
 
 				// Add bands from configuration.
 				for band in settings.beat().bands().iter().cloned() {
@@ -62,7 +50,7 @@ impl Analyzer {
 					let high      = band.range().end;
 					let threshold = (band.threshold().size(), band.threshold().sensitivity());
 
-					beat = beat.with_band(Band::<()>::new(low, high).with(band), Some(threshold));
+					onset = onset.with_band(Band::<()>::new(low, high).with(band), Some(threshold));
 				}
 				
 				loop {
@@ -76,8 +64,10 @@ impl Analyzer {
 					if let Ok(channels) = window.next() {
 						// Send the mono channel to the onset detector and send any peak as
 						// an event.
-						for &(time, ref band, peak) in &beat.analyze(&channels.mono()) {
-							event_sender.send(Channel::Mono(time, Event::Beat(band.clone(), peak))).unwrap();
+						for peak in onset.analyze(&channels.mono()) {
+							if let Ok(peak) = peak {
+								event_sender.send(Channel::Mono(peak.offset(), Event::Beat(peak))).unwrap();
+							}
 						}
 					}
 				}
@@ -92,7 +82,13 @@ impl Analyzer {
 
 			start:     0.0,
 			timestamp: -1,
+
+			beats: Beats::new(settings),
 		}
+	}
+
+	pub fn settings(&self) -> &settings::Analyzer {
+		&self.settings
 	}
 
 	pub fn start(&mut self, time: f64) {
@@ -111,24 +107,17 @@ impl Analyzer {
 		self.timestamp = frame.timestamp().unwrap();
 		self.sender.send(frame).unwrap();
 	}
-}
 
-impl ::std::fmt::Debug for Analyzer {
-	fn fmt(&self, f: &mut ::std::fmt::Formatter) -> Result<(), ::std::fmt::Error> {
-		write!(f, "Analyzer {{ start: {} }}", self.start)
+	fn fetch(&mut self) {
+		while let Ok(ref event) = self.receiver.try_recv() {
+			self.beats.handle(event);
+		}
 	}
-}
 
-impl Deref for Analyzer {
-	type Target = Receiver<Channel>;
+	pub fn beats(&mut self) -> beats::Result {
+		let now = self.time();
 
-	fn deref(&self) -> &Self::Target {
-		&self.receiver
-	}
-}
-
-impl DerefMut for Analyzer {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.receiver
+		self.fetch();
+		self.beats.fetch(now)
 	}
 }

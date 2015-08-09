@@ -9,8 +9,8 @@ use util::Color;
 
 #[derive(Clone, Default, Debug)]
 pub struct Analyzer {
-	window: Window,
-	beat:   Beat,
+	window:   Window,
+	beat:     Beat,
 }
 
 impl Load for Analyzer {
@@ -146,18 +146,19 @@ impl<T: AsRef<str>> From<T> for Filter {
 
 #[derive(Clone, Debug)]
 pub struct Beat {
+	throttle:  f64,
 	threshold: Threshold,
 
-	ignore: bool,
-	bands:  Vec<Band>,
+	bands: Vec<Band>,
 }
 
 impl Default for Beat {
 	fn default() -> Self {
 		Beat {
-			ignore:    true,
+			throttle:  0.0,
 			threshold: Default::default(),
-			bands:     Vec::new(),
+
+			bands: Vec::new(),
 		}
 	}
 }
@@ -166,12 +167,12 @@ impl Load for Beat {
 	fn load(&mut self, args: &ArgvMap, toml: &Value) -> Result<(), ParserError> {
 		let top = expect!(toml.as_table(), "`analyzer.beat` must be a table");
 
-		if let Some(toml) = top.get("threshold") {
-			try!(self.threshold.load(args, toml));
+		if let Some(value) = top.get("throttle") {
+			self.throttle = expect!(value.as_float(), "`analyzer.beat.throttle` must be a float");
 		}
 
-		if let Some(value) = top.get("ignore-missing") {
-			self.ignore = expect!(value.as_bool(), "`analyzer.beat.ignore-missing` must be a boolean");
+		if let Some(toml) = top.get("threshold") {
+			try!(self.threshold.load(args, toml));
 		}
 
 		if let Some(toml) = top.get("band") {
@@ -193,13 +194,13 @@ impl Load for Beat {
 
 impl Beat {
 	#[inline(always)]
-	pub fn threshold(&self) -> &Threshold {
-		&self.threshold
+	pub fn throttle(&self) -> f64 {
+		self.throttle
 	}
 
 	#[inline(always)]
-	pub fn ignore_missing(&self) -> bool {
-		self.ignore
+	pub fn threshold(&self) -> &Threshold {
+		&self.threshold
 	}
 
 	#[inline(always)]
@@ -215,6 +216,7 @@ pub struct Band {
 
 	range:     Range<u32>,
 	threshold: Threshold,
+	throttle:  f64,
 }
 
 impl Default for Band {
@@ -224,6 +226,7 @@ impl Default for Band {
 			color:     None,
 			range:     Range { start: 0, end: 0 },
 			threshold: Default::default(),
+			throttle:  0.0,
 		}
 	}
 }
@@ -266,6 +269,10 @@ impl Load for Band {
 			}
 		}
 
+		if let Some(value) = top.get("throttle") {
+			self.throttle = expect!(value.as_float(), "`analyzer.beat.band.*.throttle` must be a float");
+		}
+
 		try!(self.threshold.load(args, &Value::Table(top.clone())));
 
 		Ok(())
@@ -291,6 +298,11 @@ impl Band {
 	#[inline(always)]
 	pub fn threshold(&self) -> &Threshold {
 		&self.threshold
+	}
+
+	#[inline(always)]
+	pub fn throttle(&self) -> f64 {
+		self.throttle
 	}
 }
 
