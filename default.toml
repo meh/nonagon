@@ -11,8 +11,8 @@ face   = "#ff69b4"
 border = "#000"
 
 [audio]
-only = false
-mute = false
+only  = false
+music = true
 
 [video]
 vsync         = true
@@ -38,27 +38,16 @@ size = 1024
 # number of overlapping samples
 hop = 512
 
-# make the window a hamming window
-hamming = true
+# specify what filter to use for the window
+filter = "hamming"
 
 [analyzer.beat]
-# ignore the missing bands
-ignore-missing = true
+# the amount of seconds after a beat where beats are ignored
+throttle = 0.25
 
 [analyzer.beat.threshold]
-# samples of look-ahead and look-behind for the threshold, about a
-# second worth of samples.
+# number of samples behind and in front of the current, about one second worth
 size = 25
 
-# default magic number from the gods
+# magic number from the gods
 sensitivity = 1.5
-
-[[analyzer.beat.band]]
-name        = "kick"
-range       = [50, 500]
-sensitivity = 1.3
-
-[[analyzer.beat.band]]
-name        = "snare"
-range       = [100, 240]
-sensitivity = 1.4
