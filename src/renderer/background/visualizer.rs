@@ -16,6 +16,6 @@ impl<'a> Visualizer<'a>{
 
 	// FIXME: using the state is no good unless it provides an interface to the analyzer
 	pub fn render<S: Surface>(&mut self, target: &mut S, support: &Support, state: &game::State) {
-		target.clear_color(0.5, 0.5, 0.5, 1.0);
+		target.clear_color(0.3, 0.3, 0.3, 1.0);
 	}
 }

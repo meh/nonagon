@@ -48,7 +48,7 @@ pub fn spawn(path: &str, no_video: bool) -> (Result<Option<Audio>, Error>, Resul
 	// to the appropriate thread.
 	thread::spawn(move || {
 		// Try to open the file, returning in case of error.
-		let mut context = match format::open(&path) {
+		let mut context = match format::input(&path) {
 			Ok(context) =>
 				context,
 
@@ -61,13 +61,13 @@ pub fn spawn(path: &str, no_video: bool) -> (Result<Option<Audio>, Error>, Resul
 		};
 
 		if log_enabled!(LogLevel::Debug) {
-			format::dump(&context, 0, Some(&path));
+			format::context::input::dump(&context, 0, Some(&path));
 		}
 		
 		// Spawn the audio decoder.
 		let audio = match context.streams().find(|s| s.codec().medium() == media::Type::Audio) {
 			Some(ref stream) => {
-				let codec = match stream.codec().decoder().and_then(|c| c.audio()) {
+				let codec = match stream.codec().decoder().audio() {
 					Ok(codec) =>
 						codec,
 
@@ -90,7 +90,7 @@ pub fn spawn(path: &str, no_video: bool) -> (Result<Option<Audio>, Error>, Resul
 		// Spawn the video decoder.
 		let video = match context.streams().find(|s| s.codec().medium() == media::Type::Video) {
 			Some(ref stream) if !no_video => {
-				let codec = match stream.codec().decoder().and_then(|c| c.video()) {
+				let codec = match stream.codec().decoder().video() {
 					Ok(codec) =>
 						codec,
 

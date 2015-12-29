@@ -97,6 +97,23 @@ impl State {
 	}
 
 	pub fn tick(&mut self, time: f64, analyzer: &mut Analyzer) {
+		// --
+		if let Ok(peaks) = analyzer.beats() {
+			for peak in peaks {
+				self.projectiles.push(Projectile::Plasma(::game::projectile::Plasma::Dynamic {
+					min:  1.0,
+					max:  5.0,
+					step: 0.2,
+
+					radius: 1.0,
+					border: peak.band().color().unwrap_or(::util::Color::from("#fff")),
+
+					position: ::game::Position { x: 10.0, y: 10.0, z: 0.0 },
+					velocity: ::game::Velocity { x: 0.56, y: 1.0, .. Default::default() },
+				}));
+			}
+		}
+		// --
 
 		// Deal with the player.
 		{

@@ -40,13 +40,13 @@ impl<'a> Render<game::State> for Interface<'a> {
 	fn render<S: Surface + 'static>(&self, target: &mut S, support: &Support, state: &Self::State) {
 		let mut face = self.face(target, support, &self.normal)
 			.color("#f00")
-			.size(2);
+			.size(1);
 
 		face.draw(&format!("FPS={:.0} min={:.0}ms max={:.0}ms avg={:.0}ms",
 			1.0 / support.debug().avg_frame_time(),
 			support.debug().min_frame_time() * 1_000.0,
 			support.debug().max_frame_time() * 1_000.0,
 			support.debug().avg_frame_time() * 1_000.0),
-		7, 30);
+		5, 30);
 	}
 }

@@ -1,4 +1,5 @@
 use glium::{Program, Display, VertexBuffer, Surface, DrawParameters};
+use glium::{Depth, Blend};
 use glium::DepthTest::IfLessOrEqual;
 use glium::BlendingFunction::Addition;
 use glium::LinearBlendingFactor::{SourceAlpha, OneMinusSourceAlpha};
@@ -108,7 +109,7 @@ impl<'a> Render<game::Plasma> for Plasma<'a> {
 					support.scene().depth(position);
 
 				let uniforms = uniform! {
-					mvp: mvp,
+					mvp: *mvp.as_ref(),
 
 					background: support.as_ref(),
 					width:      support.scene().width() as f32,
@@ -119,13 +120,26 @@ impl<'a> Render<game::Plasma> for Plasma<'a> {
 				};
 
 				target.draw(&self.vertices, &NoIndices(TriangleStrip), &self.program, &uniforms, &DrawParameters {
-					blending_function: Some(Addition {
-						source:      SourceAlpha,
-						destination: OneMinusSourceAlpha
-					}),
+					blend: Blend {
+						color: Addition {
+							source:      SourceAlpha,
+							destination: OneMinusSourceAlpha
+						},
 
-					depth_test:  IfLessOrEqual,
-					depth_write: true,
+						alpha: Addition {
+							source:      SourceAlpha,
+							destination: OneMinusSourceAlpha
+						},
+
+						.. Default::default()
+					},
+
+					depth: Depth {
+						test:  IfLessOrEqual,
+						write: true,
+
+						.. Default::default()
+					},
 
 					.. Default::default() }).unwrap();
 			}

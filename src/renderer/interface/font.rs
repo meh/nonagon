@@ -3,7 +3,8 @@ use std::io::Read;
 use std::ops::Deref;
 
 use glium::Display;
-use glium::texture::Texture2d;
+use glium::texture::{RawImage2d, Texture2d};
+use glium::texture::MipmapsOption::NoMipmap;
 
 use image::{DynamicImage, GenericImage, Luma};
 
@@ -77,6 +78,11 @@ impl<'a> Font<'a> {
 			}
 		}
 
+		let img = image.to_rgba();
+		let dim = img.dimensions();
+		let raw = RawImage2d::from_raw_rgba_reversed(img.into_raw(), dim);
+		let tex = Texture2d::with_mipmaps(display, raw, NoMipmap).unwrap();
+
 		Font {
 			display: display,
 			font:    font,
@@ -88,7 +94,7 @@ impl<'a> Font<'a> {
 			columns: columns,
 
 			table: table,
-			sheet: Texture2d::new(display, image).unwrap(),
+			sheet: tex,
 		}
 	}
 

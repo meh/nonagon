@@ -92,7 +92,7 @@ impl<'a> Background<'a>{
 	pub fn render<S: Surface>(&mut self, target: &mut S, support: &Support, state: &game::State, frame: Option<&frame::Video>) {
 		// render video or visualizer to the internal texture
 		{
-			let mut surface = SimpleFrameBuffer::new(self.display, &*self.texture);
+			let mut surface = SimpleFrameBuffer::new(self.display, &*self.texture).unwrap();
 
 			if let Some(frame) = frame {
 				self.video.render(&mut surface, support, frame);

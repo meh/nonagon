@@ -1,5 +1,5 @@
 #![allow(dead_code, unused_variables)]
-#![feature(drain, associated_type_defaults, default_type_parameter_fallback)]
+#![feature(associated_type_defaults, default_type_parameter_fallback)]
 
 use std::process::exit;
 use std::thread;
@@ -316,6 +316,7 @@ fn main() {
 	// Show the window.
 	if let Some(window) = display.get_window() {
 		window.show();
+		window.set_position(0, 0);
 	}
 
 	// The previous time.

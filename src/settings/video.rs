@@ -2,7 +2,6 @@ use docopt::ArgvMap;
 
 use toml::{Value, ParserError};
 
-use glium;
 use glium::uniforms::{Sampler, SamplerWrapFunction, MagnifySamplerFilter, MinifySamplerFilter};
 
 use settings::Load;
@@ -385,7 +384,7 @@ impl Filter {
 	}
 
 	#[inline]
-	pub fn sampled<'a, T: glium::Texture>(&self, texture: &'a T) -> Sampler<'a, T> {
+	pub fn sampled<'a, T: 'a>(&self, texture: &'a T) -> Sampler<'a, T> {
 		let mut sampled = Sampler::new(texture);
 
 		if let Some(value) = self.wrap() {

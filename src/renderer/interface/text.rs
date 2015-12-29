@@ -1,4 +1,5 @@
 use glium::{Display, Surface, Program, VertexBuffer, DrawParameters};
+use glium::Blend;
 use glium::uniforms::{MagnifySamplerFilter, MinifySamplerFilter};
 use glium::BlendingFunction::Addition;
 use glium::LinearBlendingFactor::{SourceAlpha, OneMinusSourceAlpha};
@@ -139,7 +140,7 @@ impl<'a> Render<(&'a Font<'a>, Color, (u32, u32), u32, &'a str)> for Text<'a> {
 			scale(support.scene(), font, size);
 
 		let uniforms = uniform! {
-			mvp:   mvp,
+			mvp:   *mvp.as_ref(),
 			color: color,
 
 			font: font.as_ref().sampled()
@@ -148,10 +149,19 @@ impl<'a> Render<(&'a Font<'a>, Color, (u32, u32), u32, &'a str)> for Text<'a> {
 		};
 
 		target.draw(&VertexBuffer::new(self.display, &vertices).unwrap(), &NoIndices(TrianglesList), &self.program, &uniforms, &DrawParameters {
-			blending_function: Some(Addition {
-				source:      SourceAlpha,
-				destination: OneMinusSourceAlpha
-			}),
+			blend: Blend {
+				color: Addition {
+					source:      SourceAlpha,
+					destination: OneMinusSourceAlpha
+				},
+
+				alpha: Addition {
+					source:      SourceAlpha,
+					destination: OneMinusSourceAlpha
+				},
+
+				.. Default::default()
+			},
 
 			.. Default::default() }).unwrap();
 	}

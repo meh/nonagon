@@ -1,8 +1,9 @@
 use glium::{Program, Display, VertexBuffer, IndexBuffer, Surface, DrawParameters};
+use glium::{Depth, Blend};
 use glium::DepthTest::{IfLess, IfLessOrEqual};
 use glium::BlendingFunction::Addition;
 use glium::LinearBlendingFactor::{SourceAlpha, OneMinusSourceAlpha};
-use glium::BackfaceCullingMode::CullClockWise;
+use glium::BackfaceCullingMode::CullClockwise;
 use glium::index::NoIndices;
 use glium::index::PrimitiveType::{TrianglesList, LinesList};
 
@@ -388,20 +389,33 @@ impl<'a> Render<game::Ship> for Ship<'a> {
 		match state.face {
 			Fill::Color(color) => {
 				let uniforms = uniform! {
-					mvp:   mvp,
+					mvp:   *mvp.as_ref(),
 					color: color,
 				};
 
 				target.draw(faces, &NoIndices(TrianglesList), &self.with_color, &uniforms, &DrawParameters {
-					backface_culling: CullClockWise,
+					backface_culling: CullClockwise,
 
-					blending_function: Some(Addition {
-						source:      SourceAlpha,
-						destination: OneMinusSourceAlpha
-					}),
+					blend: Blend {
+						color: Addition {
+							source:      SourceAlpha,
+							destination: OneMinusSourceAlpha
+						},
 
-					depth_test:  IfLess,
-					depth_write: true,
+						alpha: Addition {
+							source:      SourceAlpha,
+							destination: OneMinusSourceAlpha
+						},
+
+						.. Default::default()
+					},
+
+					depth: Depth {
+						test:  IfLess,
+						write: true,
+
+						.. Default::default()
+					},
 
 					.. Default::default() }).unwrap();
 			},
@@ -409,20 +423,33 @@ impl<'a> Render<game::Ship> for Ship<'a> {
 			Fill::Texture(ref path) => {
 				let texture  = support.assets().texture(path);
 				let uniforms = uniform! {
-					mvp: mvp,
+					mvp: *mvp.as_ref(),
 					tex: &*texture,
 				};
 
 				target.draw(faces, &NoIndices(TrianglesList), &self.with_texture, &uniforms, &DrawParameters {
-					backface_culling: CullClockWise,
+					backface_culling: CullClockwise,
 
-					blending_function: Some(Addition {
-						source:      SourceAlpha,
-						destination: OneMinusSourceAlpha
-					}),
+					blend: Blend {
+						color: Addition {
+							source:      SourceAlpha,
+							destination: OneMinusSourceAlpha
+						},
 
-					depth_test:  IfLess,
-					depth_write: true,
+						alpha: Addition {
+							source:      SourceAlpha,
+							destination: OneMinusSourceAlpha
+						},
+
+						.. Default::default()
+					},
+
+					depth: Depth {
+						test:  IfLess,
+						write: true,
+
+						.. Default::default()
+					},
 
 					.. Default::default() }).unwrap();
 			}
@@ -432,18 +459,31 @@ impl<'a> Render<game::Ship> for Ship<'a> {
 		match state.border {
 			Some(Fill::Color(color)) => {
 				let uniforms = uniform! {
-					mvp:   mvp,
+					mvp:   *mvp.as_ref(),
 					color: color,
 				};
 
 				target.draw(faces, borders, &self.with_color, &uniforms, &DrawParameters {
-					blending_function: Some(Addition {
-						source:      SourceAlpha,
-						destination: OneMinusSourceAlpha
-					}),
+					blend: Blend {
+						color: Addition {
+							source:      SourceAlpha,
+							destination: OneMinusSourceAlpha
+						},
 
-					depth_test:  IfLessOrEqual,
-					depth_write: true,
+						alpha: Addition {
+							source:      SourceAlpha,
+							destination: OneMinusSourceAlpha
+						},
+
+						.. Default::default()
+					},
+
+					depth: Depth {
+						test:  IfLessOrEqual,
+						write: true,
+
+						.. Default::default()
+					},
 
 					line_width: Some(2.0),
 
@@ -453,18 +493,31 @@ impl<'a> Render<game::Ship> for Ship<'a> {
 			Some(Fill::Texture(ref path)) => {
 				let texture  = support.assets().texture(path);
 				let uniforms = uniform! {
-					mvp: mvp,
+					mvp: *mvp.as_ref(),
 					tex: &*texture,
 				};
 
 				target.draw(faces, borders, &self.with_texture, &uniforms, &DrawParameters {
-					blending_function: Some(Addition {
-						source:      SourceAlpha,
-						destination: OneMinusSourceAlpha
-					}),
+					blend: Blend {
+						color: Addition {
+							source:      SourceAlpha,
+							destination: OneMinusSourceAlpha
+						},
 
-					depth_test:  IfLessOrEqual,
-					depth_write: true,
+						alpha: Addition {
+							source:      SourceAlpha,
+							destination: OneMinusSourceAlpha
+						},
+
+						.. Default::default()
+					},
+
+					depth: Depth {
+						test:  IfLessOrEqual,
+						write: true,
+
+						.. Default::default()
+					},
 
 					line_width: Some(2.0),
 
